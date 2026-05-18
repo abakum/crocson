@@ -5,7 +5,7 @@ Icon = "Icon.png"
 Name = "crocson"
 ID = "com.github.abakum.crocson"
 Version = "1.11.57"
-Build = 1930
+Build = 1932
 
 [Source]
 Repo = "https://github.com/abakum/crocson"
@@ -13,4 +13,4 @@ Repo = "https://github.com/abakum/crocson"
 [LinuxAndBSD]
 GenericName = "GUI for croc"
 Categories = ["FileTransfer"]
-Comment = "A nice simple GUI for croc"
+Comment = "A simple GUI for croc"

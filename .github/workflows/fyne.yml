@@ -209,10 +209,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libxkbcommon-dev
 
-      # Step 6: Install Fyne CLI
+      # Step 6.1: Checkout tools dependency
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      # Step 6.2: Install Fyne CLI
       - name: Install Fyne CLI
         run: |
-          go install fyne.io/tools/cmd/fyne@latest
+          cd $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
+          go install
 
       # Step 7: Build the application using fyne package for Linux
       - name: Build with fyne for Linux
