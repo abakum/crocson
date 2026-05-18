@@ -34,6 +34,9 @@ on:
           - macos-arm64
           - android
 
+permissions:
+  contents: write
+
 # Define the jobs for the workflow
 jobs:
   # Job to build the application for Windows target
