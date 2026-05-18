@@ -1,0 +1,898 @@
+# GitHub Actions workflow file for building and releasing a Fyne app for all platforms
+# Includes installation of dependencies like MinGW-w64 cross-compiler, Mesa OpenGL, GLFW, etc.
+# Manual trigger only with platform selection options
+name: Fyne package All and Release
+
+# Define triggers for the workflow
+on:
+  # Manual trigger from GitHub interface with configurable inputs
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (e.g., 1.2.3) - leave empty to auto-detect from FyneApp.toml'
+        required: false
+        default: ''
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - snapshot
+      # Platform selection for targeted builds
+      build_target:
+        description: 'Select platform(s) to build'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows
+          - linux
+          - macos-amd64
+          - macos-arm64
+          - android
+
+# Define the jobs for the workflow
+jobs:
+  # Job to build the application for Windows target
+  build-windows:
+    if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'windows' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout main repository (crocgui)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocgui
+
+      - name: Checkout croc dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakCroc/croc
+          ref: main
+          path: workspace/croc
+
+      - name: Checkout peerdiscovery dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/peerdiscovery
+          ref: main
+          path: workspace/peerdiscovery
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      - name: Install Fyne CLI
+        if: github.event.inputs.build_type != 'snapshot'
+        run: |
+          cd "${{ github.workspace }}\workspace\tools\cmd\fyne"
+          go install
+
+      - name: Decode and place P12 Certificate
+        if: github.event.inputs.build_type != 'snapshot'
+        shell: pwsh
+        run: |
+          $certPath = "${{ github.workspace }}\workspace\crocgui\croc.p12"
+          
+          Write-Host "Saving certificate to: $certPath"
+
+          try {
+              $certBytes = [System.Convert]::FromBase64String("${{ secrets.P12_BASE64 }}")
+              [System.IO.File]::WriteAllBytes($certPath, $certBytes)
+              Write-Host "Certificate successfully saved. File size: $($certBytes.Length) bytes"
+          }
+          catch {
+              Write-Error "::error title=Certificate Decode Failed::Failed to decode or save certificate. Ensure P12_BASE64 contains valid base64 data. $_"
+              exit 1
+          }
+
+      - name: Build Windows console exe (snapshot)
+        if: github.event.inputs.build_type == 'snapshot'
+        shell: pwsh
+        run: |
+          cd "${{ github.workspace }}\workspace\crocgui"
+          $env:CGO_ENABLED = "1"
+          $env:GOARCH = "amd64"
+          go build -o crocgui.exe .
+          Write-Host "Built crocgui.exe (console mode, no -H windowsgui)"
+          if (-not (Test-Path "crocgui.exe")) {
+            throw "ERROR: crocgui.exe was not created!"
+          }
+
+      - name: Build Windows AppX package
+        if: github.event.inputs.build_type != 'snapshot'
+        shell: pwsh
+        run: |
+          cd "${{ github.workspace }}\workspace\crocgui"
+          
+          $certPath = "croc.p12"
+          if (-not (Test-Path $certPath)) {
+            throw "Certificate file not found at: $certPath"
+          }
+          
+          Write-Host "Building AppX package for x64"
+
+          $env:GOARCH = "amd64"
+          
+          fyne release --os windows `
+            -certificate "$certPath" `
+            -profile "croc" `
+            -developer "${{ secrets.SUBJECT }}" `
+            -password "${{ secrets.P12_PASSWORD }}"
+          
+          Write-Host "Post-build workspace contents:"
+          Get-ChildItem
+          
+          if (-not (Test-Path "crocgui.appx")) {
+            throw "ERROR: crocgui.appx was not created!"
+          }
+
+      - name: Upload windows artifact (snapshot)
+        if: github.event.inputs.build_type == 'snapshot'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            ${{ github.workspace }}/workspace/crocgui/crocgui.exe
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Upload windows artifact (release)
+        if: github.event.inputs.build_type != 'snapshot'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            ${{ github.workspace }}/workspace/crocgui/crocgui.exe
+            ${{ github.workspace }}/workspace/crocgui/crocgui.appx
+            ${{ github.workspace }}/workspace/crocgui/croc.cer
+            ${{ github.workspace }}/workspace/crocgui/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
+          retention-days: 7
+          if-no-files-found: error
+          
+  # Job to build the application for Linux target
+  build-linux:
+    # Run only if 'all' or 'linux' is selected
+    if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'linux' }}
+    runs-on: ubuntu-latest # Runs on Ubuntu to build natively for Linux
+    steps:
+      # Step 1: Checkout the main repository directly into workspace/crocgui
+      - name: Checkout main repository (crocgui)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocgui
+
+      # Step 2: Checkout the croc dependency repository directly into workspace/croc
+      - name: Checkout croc dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakCroc/croc
+          ref: main
+          path: workspace/croc
+
+      # Step 3: Checkout the peerdiscovery dependency repository directly into workspace/peerdiscovery
+      - name: Checkout peerdiscovery dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/peerdiscovery
+          ref: main
+          path: workspace/peerdiscovery
+
+      # Step 4: Install Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+
+      # Step 5: Install Linux dependencies required by Fyne (OpenGL, X11, etc.)
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libxkbcommon-dev
+
+      # Step 6: Install Fyne CLI
+      - name: Install Fyne CLI
+        run: |
+          go install fyne.io/tools/cmd/fyne@latest
+
+      # Step 7: Build the application using fyne package for Linux
+      - name: Build with fyne for Linux
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocgui
+          
+          echo "Building for Linux amd64..."
+          
+          # Set environment variables for native compilation
+          export CGO_ENABLED=1
+          export GOOS=linux
+          export GOARCH=amd64
+          
+          # Use fyne package to build the Linux executable and package it
+          fyne package --os linux --release
+          
+          # Verify the .tar.xz archive file was created
+          if [ ! -f "crocgui.tar.xz" ]; then
+              echo "ERROR: fyne package did not create crocgui.tar.xz"
+              ls -la .
+              exit 1
+          fi
+          
+          echo "Contents of current directory after build:"
+          ls -la .
+
+      # Step 8: Build .deb package
+      - name: Build .deb package
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocgui || { echo "Failed to cd to project directory"; exit 1; }
+          
+          echo "Building .deb package..."
+          
+          # Ensure build-deb.sh is executable
+          chmod +x build-deb.sh 2>/dev/null || true
+          
+          # Run build-deb.sh to build the .deb package
+          ./build-deb.sh
+          
+          # Verify .deb package was created
+          if ! ls crocgui_*_amd64.deb 1> /dev/null 2>&1; then
+              echo "ERROR: build-deb.sh did not create .deb package"
+              ls -la .
+              exit 1
+          fi
+
+      # Step 9: Upload the built Linux artifacts
+      - name: Upload Linux artifacts
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-amd64-build
+          path: |
+            ${{ github.workspace }}/workspace/crocgui/crocgui.tar.xz
+            ${{ github.workspace }}/workspace/crocgui/crocgui_*_amd64.deb
+          retention-days: 7
+          if-no-files-found: error
+
+  # Job to build the application for macOS x86_64 (Intel) target
+  build-macos-amd64:
+    # Run only if 'all' or 'macos-amd64' is selected
+    if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'macos-amd64' }}
+    runs-on: macos-15-intel
+    steps:
+      # Step 1: Checkout the main repository directly into workspace/crocgui
+      - name: Checkout main repository (crocgui)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocgui
+
+      # Step 2: Checkout the croc dependency repository directly into workspace/croc
+      - name: Checkout croc dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakCroc/croc
+          ref: main
+          path: workspace/croc
+
+      # Step 3: Checkout the peerdiscovery dependency repository directly into workspace/peerdiscovery
+      - name: Checkout peerdiscovery dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/peerdiscovery
+          ref: main
+          path: workspace/peerdiscovery
+
+      # Step 4: Install Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+
+      # Step 5: Install Fyne CLI
+      - name: Install Fyne CLI
+        run: |
+          go install fyne.io/tools/cmd/fyne@latest
+
+      # Step 7: Build the application for macOS amd64 (Intel)
+      - name: Build for macOS amd64 (Intel)
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocgui
+          
+          echo "Building for macOS amd64 (Intel)..."
+          
+          # Set environment variables
+          export CGO_ENABLED=1
+          export GOOS=darwin
+          export GOARCH=amd64
+          
+          # Use fyne package to create the .app bundle for amd64
+          fyne package --os darwin --release
+          APP_NAME="crocgui.app"
+          
+          # Verify the .app bundle was created
+          if [ ! -d "$APP_NAME" ]; then
+              echo "ERROR: fyne package did not create $APP_NAME for amd64"
+              ls -la .
+              exit 1
+          fi
+          
+          # Create DMG file using hdiutil (macOS utility)
+          echo "Creating DMG for $APP_NAME"
+          DMG_NAME="crocgui-amd64.dmg"
+          hdiutil create -srcfolder "$APP_NAME" -volname "crocgui-amd64" -ov -format UDZO "$DMG_NAME"
+          
+          # Verify DMG was created
+          if [ ! -f "$DMG_NAME" ]; then
+              echo "ERROR: Failed to create DMG file"
+              ls -la .
+              exit 1
+          fi
+          
+          echo "Contents of current directory after DMG creation:"
+          ls -la *.dmg
+
+      # Step 7: Upload the built .dmg file as an artifact
+      - name: Upload macOS amd64 artifact
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-amd64-build
+          path: ${{ github.workspace }}/workspace/crocgui/crocgui-amd64.dmg
+          retention-days: 7
+          if-no-files-found: error
+
+  # Job to build the application for macOS arm64 (Apple Silicon) target
+  build-macos-arm64:
+    # Run only if 'all' or 'macos-arm64' is selected
+    if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'macos-arm64' }}
+    runs-on: macos-latest # Runs on a macOS runner
+    steps:
+      # Step 1: Checkout the main repository directly into workspace/crocgui
+      - name: Checkout main repository (crocgui)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocgui
+
+      # Step 2: Checkout the croc dependency repository directly into workspace/croc
+      - name: Checkout croc dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakCroc/croc
+          ref: main
+          path: workspace/croc
+
+      # Step 3: Checkout the peerdiscovery dependency repository directly into workspace/peerdiscovery
+      - name: Checkout peerdiscovery dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/peerdiscovery
+          ref: main
+          path: workspace/peerdiscovery
+
+      # Step 4: Install Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+
+      # Step 5: Install Fyne CLI
+      - name: Install Fyne CLI
+        run: |
+          go install fyne.io/tools/cmd/fyne@latest
+
+      # Step 7: Build the application for macOS arm64 (Apple Silicon)
+      - name: Build for macOS arm64 (Apple Silicon)
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocgui
+          
+          echo "Building for macOS arm64 (Apple Silicon)..."
+          
+          # Set environment variables
+          export CGO_ENABLED=1
+          export GOOS=darwin
+          export GOARCH=arm64
+          
+          # Use fyne package to create the .app bundle for arm64
+          fyne package --os darwin --release
+          APP_NAME="crocgui.app"
+          
+          # Verify the .app bundle was created
+          if [ ! -d "$APP_NAME" ]; then
+              echo "ERROR: fyne package did not create $APP_NAME for arm64"
+              ls -la .
+              exit 1
+          fi
+
+          sync
+          sleep 2
+          #TEMP_DIR=$(mktemp -d)
+          #cp -R "$APP_NAME" "$TEMP_DIR/"
+          hdiutil detach "/Volumes/crocgui-arm64" || true
+
+          # Create DMG file using hdiutil (macOS utility)
+          echo "Creating DMG for $APP_NAME"
+          DMG_NAME="crocgui-arm64.dmg"
+          rm -f "$DMG_NAME"  || true
+          hdiutil create -srcfolder "$APP_NAME" -volname "crocgui-arm64" -ov -format UDZO "$DMG_NAME"
+          #hdiutil create -srcfolder "$TEMP_DIR/$APP_NAME" -volname "crocgui-arm64" -ov -format UDZO "$DMG_NAME"
+          
+          # Verify DMG was created
+          if [ ! -f "$DMG_NAME" ]; then
+              echo "ERROR: Failed to create DMG file"
+              ls -la .
+              exit 1
+          fi
+          
+          echo "Contents of current directory after DMG creation:"
+          ls -la *.dmg
+          #rm -rf "$TEMP_DIR" || true
+ 
+      # Step 7: Upload the built .dmg file as an artifact
+      - name: Upload macOS arm64 artifact
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-build
+          path: ${{ github.workspace }}/workspace/crocgui/crocgui-arm64.dmg
+          retention-days: 7
+          if-no-files-found: error
+
+  # Job to build the application for Android target
+  build-android:
+    # Run only if 'all' or 'android' is selected
+    if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'android' }}
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the main repository directly into workspace/crocgui
+      - name: Checkout main repository (crocgui)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocgui
+
+      # Step 2: Checkout the croc dependency repository directly into workspace/croc
+      - name: Checkout croc dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakCroc/croc
+          ref: main
+          path: workspace/croc
+
+      # Step 3: Checkout the peerdiscovery dependency repository directly into workspace/peerdiscovery
+      - name: Checkout peerdiscovery dependency
+        if: false # temporarily disabled: using make repo instead
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/peerdiscovery
+          ref: main
+          path: workspace/peerdiscovery
+
+      # Step 4: Verify FyneApp.toml and AndroidManifest.xml
+      - name: Verify FyneApp.toml and AndroidManifest.xml
+        run: |
+          echo "Workspace structure (crocgui):"
+          ls -la $GITHUB_WORKSPACE/workspace/crocgui/
+          if [ -f "$GITHUB_WORKSPACE/workspace/crocgui/FyneApp.toml" ]; then
+            echo "FyneApp.toml found"
+          else
+            echo "ERROR: FyneApp.toml not found in $GITHUB_WORKSPACE/workspace/crocgui/"
+            exit 1
+          fi
+          if [ -f "$GITHUB_WORKSPACE/workspace/crocgui/AndroidManifest.xml" ]; then
+            echo "AndroidManifest.xml found."
+          else
+            echo "ERROR: AndroidManifest.xml not found in $GITHUB_WORKSPACE/workspace/crocgui/"
+            exit 1
+          fi
+
+      # Step 5: Install Go
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+
+      # Step 6.1: Checkout Fyne CLI repository directly into workspace/tools
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      # Step 6.2: Install Fyne CLI
+      - name: Install Fyne CLI
+        run: |
+          cd  $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
+          go install
+
+      # Step 6.3: Set up JDK 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Step 7: Build the application using fyne package for Android targets
+      - name: Build with fyne package for Android targets
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocgui
+          
+          # Read version and build number from FyneApp.toml
+          echo "Reading version and build number from FyneApp.toml..."
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          BUILD_NUMBER=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          
+          if [ -z "$VERSION_NAME" ] || [ -z "$BUILD_NUMBER" ]; then
+              echo "ERROR: Could not extract Version or Build number from FyneApp.toml."
+              cat FyneApp.toml
+              exit 1
+          fi
+          
+          echo "Extracted Version Name: $VERSION_NAME"
+          echo "Extracted Build Number: $BUILD_NUMBER"
+          
+          # Update AndroidManifest.xml with the extracted values
+          echo "Updating AndroidManifest.xml with versionName=$VERSION_NAME and versionCode=$BUILD_NUMBER"
+          sed -i.bak "s/android:versionName=\"[^\"]*\"/android:versionName=\"$VERSION_NAME\"/g" AndroidManifest.xml
+          sed -i.bak "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"$BUILD_NUMBER\"/g" AndroidManifest.xml
+          
+          echo "Building for Android targets: android/arm, android/arm64, android/386, android/amd64"
+          
+          # Define the targets as a bash array
+          TARGETS=("android/arm" "android/arm64" "android/386" "android/amd64")
+          
+          # Loop through each target
+          for target in "${TARGETS[@]}"; do
+            echo "Building for target: $target"
+            
+            # Extract OS and ARCH from target (format: os/arch)
+            GOOS=${target%/*}
+            GOARCH=${target#*/}
+            
+            # Set environment variables for cross-compilation
+            export CGO_ENABLED=1
+            export GOOS=$GOOS
+            export GOARCH=$GOARCH
+            
+            echo "Environment: GOOS=$GOOS, GOARCH=$GOARCH"
+            
+            # Use fyne package to build the Android APK for the target
+            fyne package -os $target --release
+            APK_NAME="crocgui.apk"
+            if [ -f "$APK_NAME" ]; then
+                mv "$APK_NAME" "crocgui-${GOARCH}.apk"
+                echo "Renamed APK to: crocgui-${GOARCH}.apk"
+            else
+                echo "ERROR: fyne package did not create crocgui.apk for $target"
+                exit 1
+            fi
+          done
+          
+          echo "Contents of current directory after all builds:"
+          ls -la *.apk
+
+      - name: Patch SDK versions and APK manifest
+        if: false
+        run: |
+          cd ${{ github.workspace }}/workspace/crocgui
+          echo "=== Patching SDK versions in APK manifests ==="
+          
+          if ! command -v apktool &> /dev/null; then
+            echo "ERROR: apktool is not installed or not in PATH"
+            echo "Installing apktool..."
+            wget -q https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O /tmp/apktool.jar
+            echo '#!/bin/bash' > /usr/local/bin/apktool
+            echo 'java -jar /tmp/apktool.jar "$@"' >> /usr/local/bin/apktool
+            chmod +x /usr/local/bin/apktool
+          fi
+
+          for ORIGINAL_APK in crocgui-*.apk; do
+            if [ ! -f "$ORIGINAL_APK" ]; then
+              continue
+            fi
+            
+            echo "Processing: $ORIGINAL_APK"
+            echo "  File size: $(wc -c < "$ORIGINAL_APK") bytes"
+            
+            TEMP_DIR=$(mktemp -d)
+            echo "  Using temp directory: $TEMP_DIR"
+            
+            echo "  Decoding APK with apktool..."
+            apktool d "$ORIGINAL_APK" -o "$TEMP_DIR" --force
+            APKTOOL_EXIT_CODE=$?
+            
+            if [ $APKTOOL_EXIT_CODE -ne 0 ]; then
+              echo "  ERROR: apktool decode failed for $ORIGINAL_APK (exit code: $APKTOOL_EXIT_CODE)"
+              echo "  Possible reasons:"
+              echo "  1. APK is corrupted"
+              echo "  2. APK uses unsupported compression"
+              echo "  3. APK is already processed/zipped"
+              
+              echo "  Checking if file is a valid ZIP..."
+              if unzip -t "$ORIGINAL_APK" > /dev/null 2>&1; then
+                echo "  File is a valid ZIP archive"
+              else
+                echo "  ERROR: File is NOT a valid ZIP archive - may be corrupted"
+              fi
+              
+              rm -rf "$TEMP_DIR"
+              continue
+            fi
+            
+            echo "  APK successfully decoded to $TEMP_DIR"
+            
+            MANIFEST_PATH="$TEMP_DIR/AndroidManifest.xml"
+            APKTOOL_YAML="$TEMP_DIR/apktool.yml"
+            echo "  Patching $APKTOOL_YAML"
+            
+            if [ ! -f "$MANIFEST_PATH" ]; then
+              echo "  ERROR: AndroidManifest.xml not found in decoded APK!"
+              rm -rf "$TEMP_DIR"
+              continue
+            fi
+            #cat "$MANIFEST_PATH"
+            sed -i 's/android:launchMode="standard"/android:launchMode="singleTop"/g' "$MANIFEST_PATH"
+
+            mkdir -p "$TEMP_DIR/res/mipmap-xxxhdpi-v4"
+            cp "${{ github.workspace }}/workspace/crocgui/Icon.png" "$TEMP_DIR/res/mipmap-xxxhdpi-v4/icon.png"
+
+            PUBLIC_XML="$TEMP_DIR/res/values/public.xml"
+            cat "$PUBLIC_XML" || true
+            if [ ! -f "$PUBLIC_XML" ]; then
+              mkdir -p "$TEMP_DIR/res/values"
+              echo '<?xml version="1.0" encoding="utf-8"?><resources></resources>' > "$PUBLIC_XML"
+            fi
+            sed -i '/<\/resources>/i <public type="mipmap" name="icon" id="0x7f020000" />' "$PUBLIC_XML"
+
+            sed -i 's|android:icon="@null"|android:icon="@mipmap/icon"|g' "$MANIFEST_PATH"
+            echo "  Verification in AndroidManifest.xml:"
+            grep "launchMode" "$MANIFEST_PATH" || true
+            grep "icon" "$MANIFEST_PATH" || true
+
+            if [ ! -f "$APKTOOL_YAML" ]; then
+              echo "  ERROR: apktool.yml not found in decoded APK!"
+              rm -rf "$TEMP_DIR"
+              continue
+            fi
+            cat "$APKTOOL_YAML"
+            sed -i 's/minSdkVersion: .*/minSdkVersion: 21/g' "$APKTOOL_YAML"
+            sed -i 's/targetSdkVersion: .*/targetSdkVersion: 34/g' "$APKTOOL_YAML"
+            echo "  Verification in apktool.yml:"
+            grep "minSdkVersion" "$APKTOOL_YAML" || true
+            grep "targetSdkVersion" "$APKTOOL_YAML" || true
+
+            NEW_APK="${ORIGINAL_APK%.apk}-patched.apk"
+            echo "  Rebuilding APK..."
+            apktool b "$TEMP_DIR" -o "$NEW_APK" --use-aapt2
+            
+            if [ $? -ne 0 ]; then
+              echo "  ERROR: apktool build failed"
+              rm -rf "$TEMP_DIR"
+              continue
+            fi
+            
+            echo "  APK rebuilt successfully: $NEW_APK ($(wc -c < "$NEW_APK") bytes)"
+            
+            mv "$NEW_APK" "$ORIGINAL_APK"
+            echo "  Successfully patched SDK versions in $ORIGINAL_APK"
+                
+            rm -rf "$TEMP_DIR"
+          done
+          
+          echo "=== SDK version patching complete ==="
+          echo "Patched APKs:"
+          ls -la crocgui-*.apk
+
+      # Step 8: Sign Android APKs
+      - name: Sign and rename APK for Android
+        id: sign_apk
+        uses: ilharp/sign-android-release@v2
+        with:
+          releaseDir: ${{ github.workspace }}/workspace/crocgui
+          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
+          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          buildToolsVersion: "36.0.0"
+
+      # Step 9: Remove '-signed' suffix from APK filenames
+      - name: Clean signed APK filenames
+        run: |
+          cd ${{ github.workspace }}/workspace/crocgui
+
+          rm -f *-temp.apk
+
+          if ! compgen -G "*-signed.apk" > /dev/null; then
+            echo "::error file=,title=Missing Signed APKs::No *-signed.apk files found. The signing step may have failed or produced no output."
+            exit 1
+          fi
+
+          for f in *-signed.apk; do
+            mv "$f" "${f%-signed.apk}.apk"
+          done
+
+      # Step 10: Upload the signed APK files as artifacts
+      - name: Upload Android artifacts
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: |
+            ${{ github.workspace }}/workspace/crocgui/crocgui-*.apk
+          retention-days: 7
+          if-no-files-found: error
+
+  # Job to create a GitHub Release and upload artifacts
+  # Only runs when 'all' is selected to avoid creating releases for partial builds
+  create-release:
+    # Run only if 'all' is selected
+    if: ${{ github.event.inputs.build_target == 'all' }}
+    # This job waits for all build jobs to finish
+    needs: [build-windows, build-linux, build-macos-amd64, build-macos-arm64, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the repository to access FyneApp.toml
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: repo-checkout
+
+      # Step 2: Determine the release version from input or FyneApp.toml
+      - name: Determine Release Version
+        id: get_version
+        run: |
+          # Get the version from the workflow input
+          INPUT_VERSION="${{ github.event.inputs.release_version }}"
+          
+          # If input version is empty, try to read it from the checked-out FyneApp.toml
+          if [ -z "$INPUT_VERSION" ]; then
+              echo "Input version is empty, attempting to auto-detect from checked-out FyneApp.toml"
+              FYNEAPP_TOML_PATH="$GITHUB_WORKSPACE/repo-checkout/FyneApp.toml"
+              if [ -f "$FYNEAPP_TOML_PATH" ]; then
+                  AUTO_VERSION=$(grep -E '^\s*Version\s*=' "$FYNEAPP_TOML_PATH" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+                  if [ -n "$AUTO_VERSION" ]; then
+                      echo "Auto-detected version: $AUTO_VERSION"
+                      RELEASE_VERSION="$AUTO_VERSION"
+                  else
+                      echo "ERROR: Could not extract version from FyneApp.toml (format might be incorrect)."
+                      cat "$FYNEAPP_TOML_PATH"
+                      exit 1
+                  fi
+              else
+                  echo "ERROR: FyneApp.toml not found at $FYNEAPP_TOML_PATH"
+                  ls -la "$GITHUB_WORKSPACE/repo-checkout/"
+                  exit 1
+              fi
+          else
+              echo "Using provided input version: $INPUT_VERSION"
+              RELEASE_VERSION="$INPUT_VERSION"
+          fi
+          
+          # Set the determined version as an output for later use
+          echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "Determined release version for this run: $RELEASE_VERSION"
+
+      # Step 3: Download all artifacts from previous jobs
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      # Step 4: Prepare the release assets
+      - name: Prepare release assets
+        run: |
+          echo "Preparing release assets..."
+          mkdir -p release-assets
+          
+          # Copy all artifacts to release-assets directory
+          for artifact_dir in artifacts/*/; do
+            if [ -d "$artifact_dir" ]; then
+              echo "Copying contents from $artifact_dir to release-assets/"
+              cp -r "$artifact_dir"* release-assets/
+            fi
+          done
+          
+          # Copy the FyneApp.toml from the checked-out repository to release assets
+          cp -f "$GITHUB_WORKSPACE/repo-checkout/FyneApp.toml" release-assets/
+          
+          # Create a build information file
+          echo "Build Information" > release-assets/BUILD_INFO.txt
+          echo "=================" >> release-assets/BUILD_INFO.txt
+          echo "Project: crocgui (from FyneApp.toml)" >> release-assets/BUILD_INFO.txt
+          echo "Version: ${{ steps.get_version.outputs.release_version || 'manual_run' }}" >> release-assets/BUILD_INFO.txt
+          echo "Build Type: ${{ github.event.inputs.build_type || 'manual' }}" >> release-assets/BUILD_INFO.txt
+          BUILD_DATE=$(date -u)
+          echo "Build Date: $BUILD_DATE" >> release-assets/BUILD_INFO.txt
+          echo "GitHub Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> release-assets/BUILD_INFO.txt
+          echo "" >> release-assets/BUILD_INFO.txt
+          echo "Generated files:" >> release-assets/BUILD_INFO.txt
+          echo "----------------" >> release-assets/BUILD_INFO.txt
+          ls -la release-assets/ >> release-assets/BUILD_INFO.txt
+
+      # Step 5: Create the GitHub Release and upload assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Use the version for the release tag
+          tag_name: ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
+          # Name the release
+          name: Release ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
+          draft: false # Make it a public release
+          prerelease: ${{ github.event.inputs.build_type == 'snapshot' }} # Mark as pre-release if type is 'snapshot'
+          # Upload all files from the prepared release-assets directory
+          files: |
+            release-assets/*
+            workspace/crocgui/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
+          # Body text for the release description
+          body: |
+            ## crocgui ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
+
+            Release built via GitHub Actions for multiple platforms.
+            App Version read from `FyneApp.toml`.
+
+            ### Included Platforms & Files:
+            - **Windows (x86_64)**: `crocgui.exe`, `crocgui.appx`, `croc.cer`, `I_trust_the_signer_of_this.exe`
+            - **Linux (x86_64)**: `.tar.xz` archive and `.deb` package  
+            - **macOS**: `.dmg` files for Apple Silicon (`crocgui-arm64.dmg`) and Intel (`crocgui-amd64.dmg`)
+            - **Android**: APK files for ARM64, ARM, x86_64, x86 architectures
+            - Metadata: `FyneApp.toml` (version info), `BUILD_INFO.txt` (build details)
+
+            ### Package Manager Installation (Recommended):
+            - **macOS**: run once `brew install --cask abakum/tap/crocgui` then `brew --cask upgrade crocgui`
+            - **Linux**: run once `brew install abakum/tap/crocgui` then `brew upgrade crocgui`
+            - **Linux**: run `sudo dpkg -i crocgui_*_amd64.deb`
+            - **Windows**: run once `scoop bucket add abakum https://github.com/abakum/homebrew-tap && scoop install crocgui` then `scoop update crocgui`
+            - **Windows**: run once as Administrator `certutil -addstore -f TrustedPeople croc.cer` then as user `crocgui.appx`
+            - **Windows**: run once as user `I_trust_the_signer_of_this.exe` then `crocgui.appx`
+
+            ### Manual Installation:
+
+            #### Linux (from tar.xz):
+
+            **System installation (requires sudo):**
+            ```
+            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocgui.tar.xz -C "$TEMP_DIR" && sudo make -C "$TEMP_DIR" -f Makefile install
+            ```
+
+            **User installation (no sudo):**
+            ```
+            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocgui.tar.xz -C "$TEMP_DIR" && make -C "$TEMP_DIR" -f Makefile user-install
+            ```
+            
+            #### macOS (from .dmg):
+            Mount the .dmg file and drag crocgui.app to Applications folder
+
+            ### Launch Instructions:
+            - **macOS**: `open /Applications/crocgui.app` or click in Launchpad
+            - **Linux**: `crocgui` or `gtk-launch com.github.howeyc.crocgui`
+            - **Windows**: `crocgui` from Command Prompt/PowerShell
+
+            ### Notes:
+            - Homebrew installations on Linux require [Homebrew for Linux](https://docs.brew.sh/Homebrew-on-Linux)
+            - After manual installation, you may need to log out and back in for desktop menu integration
+            - Android APKs are developer-signed and can be directly sideloaded or installed via ADB
+            - Since `crocgui.appx` is signed with a self-signed certificate, you must either manually install `croc.cer` into the **Trusted People** store for all users, or simply run `I_trust_the_signer_of_this.exe`, which will perform this action automatically. 
+        env:
+          # Token required to create the release
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

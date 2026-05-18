@@ -1,0 +1,347 @@
+{
+    "language": "zh-TW",
+    "messages": [
+        {
+            "id": "License Info",
+            "message": "License Info",
+            "translation": "",
+            "position": "crocgui/about.go:72:38"
+        },
+        {
+            "id": "App info",
+            "message": "App info",
+            "translation": "",
+            "position": "crocgui/about.go:95:40"
+        },
+        {
+            "id": "Click the Deep Link above to test",
+            "message": "Click the Deep Link above to test",
+            "translation": "",
+            "position": "crocgui/applinks.go:312:30"
+        },
+        {
+            "id": "If a browser opens then:",
+            "message": "If a browser opens then:",
+            "translation": "",
+            "position": "crocgui/applinks.go:317:30"
+        },
+        {
+            "id": "Allow",
+            "message": "Allow",
+            "translation": "",
+            "position": "crocgui/applinks.go:322:44"
+        },
+        {
+            "id": "Use",
+            "message": "Use",
+            "translation": "",
+            "position": "crocgui/applinks.go:343:21"
+        },
+        {
+            "id": "on page",
+            "message": "on page",
+            "translation": "",
+            "position": "crocgui/applinks.go:345:21"
+        },
+        {
+            "id": "to",
+            "message": "to",
+            "translation": "",
+            "position": "crocgui/applinks.go:347:21"
+        },
+        {
+            "id": "Scan QRs",
+            "message": "Scan QRs",
+            "translation": "",
+            "position": "crocgui/applinks.go:351:33"
+        },
+        {
+            "id": "with:",
+            "message": "with:",
+            "translation": "",
+            "position": "crocgui/applinks.go:391:53"
+        },
+        {
+            "id": "Export full log",
+            "message": "Export full log",
+            "translation": "",
+            "position": "crocgui/log.go:219:45"
+        },
+        {
+            "id": "Saved all files to",
+            "message": "Saved all files to",
+            "translation": "",
+            "position": "crocgui/log.go:272:7"
+        },
+        {
+            "id": "App closed. Tap to start.",
+            "message": "App closed. Tap to start.",
+            "translation": "",
+            "position": "crocgui/main.go:344:16"
+        },
+        {
+            "id": "Cancel",
+            "message": "Cancel",
+            "translation": "",
+            "position": "crocgui/recv.go:65:44"
+        },
+        {
+            "id": "Wait for them before pressing Download",
+            "message": "Wait for them before pressing Download",
+            "translation": "",
+            "position": "crocgui/recv.go:84:31"
+        },
+        {
+            "id": "Relay",
+            "message": "Relay",
+            "translation": "",
+            "position": "crocgui/recv.go:111:33"
+        },
+        {
+            "id": "Download",
+            "message": "Download",
+            "translation": "",
+            "position": "crocgui/recv.go:571:42"
+        },
+        {
+            "id": "Secret must be longer than 5 characters",
+            "message": "Secret must be longer than 5 characters",
+            "translation": "",
+            "position": "crocgui/recv.go:574:18"
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "",
+            "position": "crocgui/recv.go:579:35"
+        },
+        {
+            "id": "Receive cancelled.",
+            "message": "Receive cancelled.",
+            "translation": "",
+            "position": "crocgui/recv.go:699:34"
+        },
+        {
+            "id": "Receiving file",
+            "message": "Receiving file",
+            "translation": "",
+            "position": "crocgui/recv.go:722:27"
+        },
+        {
+            "id": "Send cancelled.",
+            "message": "Send cancelled.",
+            "translation": "",
+            "position": "crocgui/recv.go:797:36"
+        },
+        {
+            "id": "Received",
+            "message": "Received",
+            "translation": "",
+            "position": "crocgui/recv.go:804:46"
+        },
+        {
+            "id": "Receive",
+            "message": "Receive",
+            "translation": "",
+            "position": "crocgui/recv.go:1089:38"
+        },
+        {
+            "id": "Empty name",
+            "message": "Empty name",
+            "translation": "",
+            "position": "crocgui/relays.go:165:18"
+        },
+        {
+            "id": "Last item of list",
+            "message": "Last item of list",
+            "translation": "",
+            "position": "crocgui/relays.go:236:18"
+        },
+        {
+            "id": "Pick a file to send",
+            "message": "Pick a file to send",
+            "translation": "",
+            "position": "crocgui/send.go:103:31"
+        },
+        {
+            "id": "Have them not press the Download yet",
+            "message": "Have them not press the Download yet",
+            "translation": "",
+            "position": "crocgui/send.go:716:24"
+        },
+        {
+            "id": "Have them press the Download now",
+            "message": "Have them press the Download now",
+            "translation": "",
+            "position": "crocgui/send.go:782:28"
+        },
+        {
+            "id": "Sending file",
+            "message": "Sending file",
+            "translation": "",
+            "position": "crocgui/send.go:793:57"
+        },
+        {
+            "id": "Sent file",
+            "message": "Sent file",
+            "translation": "",
+            "position": "crocgui/send.go:843:47"
+        },
+        {
+            "id": "Allow access to read",
+            "message": "Allow access to read",
+            "translation": "",
+            "position": "crocgui/send.go:1027:23"
+        },
+        {
+            "id": "Hide",
+            "message": "Hide",
+            "translation": "",
+            "position": "crocgui/settings.go:121:34"
+        },
+        {
+            "id": "Send only via relay",
+            "message": "Send only via relay",
+            "translation": "",
+            "position": "crocgui/settings.go:160:49"
+        },
+        {
+            "id": "Ask the sender for their address",
+            "message": "Ask the sender for their address",
+            "translation": "",
+            "position": "crocgui/settings.go:163:44"
+        },
+        {
+            "id": "Connect to local senders only",
+            "message": "Connect to local senders only",
+            "translation": "",
+            "position": "crocgui/settings.go:166:46"
+        },
+        {
+            "id": "Overwrite",
+            "message": "Overwrite",
+            "translation": "",
+            "position": "crocgui/settings.go:172:46"
+        },
+        {
+            "id": "Restore",
+            "message": "Restore",
+            "translation": "",
+            "position": "crocgui/settings.go:315:44"
+        },
+        {
+            "id": "Language",
+            "message": "Language",
+            "translation": "",
+            "position": "crocgui/settings.go:334:24"
+        },
+        {
+            "id": "Theme",
+            "message": "Theme",
+            "translation": "",
+            "position": "crocgui/settings.go:335:24"
+        },
+        {
+            "id": "Font",
+            "message": "Font",
+            "translation": "",
+            "position": "crocgui/settings.go:336:24"
+        },
+        {
+            "id": "Logo",
+            "message": "Logo",
+            "translation": "",
+            "position": "crocgui/settings.go:337:24"
+        },
+        {
+            "id": "Configs",
+            "message": "Configs",
+            "translation": "",
+            "position": "crocgui/settings.go:342:24"
+        },
+        {
+            "id": "Config",
+            "message": "Config",
+            "translation": "",
+            "position": "crocgui/settings.go:347:24"
+        },
+        {
+            "id": "Value may be file with value",
+            "message": "Value may be file with value",
+            "translation": "",
+            "position": "crocgui/settings.go:358:21"
+        },
+        {
+            "id": "If value like 0IP then it used as --ip IP",
+            "message": "If value like 0IP then it used as --ip IP",
+            "translation": "",
+            "position": "crocgui/settings.go:368:24"
+        },
+        {
+            "id": "Name",
+            "message": "Name",
+            "translation": "",
+            "position": "crocgui/settings.go:372:24"
+        },
+        {
+            "id": "UnZip files",
+            "message": "UnZip files",
+            "translation": "",
+            "position": "crocgui/settings.go:426:8"
+        },
+        {
+            "id": "Zip folders",
+            "message": "Zip folders",
+            "translation": "",
+            "position": "crocgui/settings.go:428:9"
+        },
+        {
+            "id": "File path CSV parts",
+            "message": "File path CSV parts",
+            "translation": "",
+            "position": "crocgui/settings.go:438:16"
+        },
+        {
+            "id": "Disable Multiplexing",
+            "message": "Disable Multiplexing",
+            "translation": "",
+            "position": "crocgui/settings.go:446:60"
+        },
+        {
+            "id": "Disable Compression",
+            "message": "Disable Compression",
+            "translation": "",
+            "position": "crocgui/settings.go:447:63"
+        },
+        {
+            "id": "speed e.g. 500k",
+            "message": "speed e.g. 500k",
+            "translation": "",
+            "position": "crocgui/settings.go:452:16"
+        },
+        {
+            "id": "Appearance",
+            "message": "Appearance",
+            "translation": "",
+            "position": "crocgui/settings.go:461:29"
+        },
+        {
+            "id": "Network Local",
+            "message": "Network Local",
+            "translation": "",
+            "position": "crocgui/settings.go:464:29"
+        },
+        {
+            "id": "Storage Options",
+            "message": "Storage Options",
+            "translation": "",
+            "position": "crocgui/settings.go:465:29"
+        },
+        {
+            "id": "Transfer Options",
+            "message": "Transfer Options",
+            "translation": "",
+            "position": "crocgui/settings.go:466:29"
+        }
+    ]
+}
