@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Get version from FyneApp.toml
 VERSION=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
-NAME="crocgui_${VERSION}_amd64"
+NAME="crocson_${VERSION}_amd64"
 DEB_FILE="${NAME}.deb"
 
 echo "=== Building .deb package ==="
@@ -13,12 +13,12 @@ echo "Version: $VERSION"
 echo "Package: $DEB_FILE"
 
 # Cleanup and create structure
-rm -f crocgui_*.deb 2>/dev/null || true
+rm -f crocson_*.deb 2>/dev/null || true
 rm -rf "$NAME" 2>/dev/null || true
-mkdir -p "$NAME/DEBIAN" "$NAME/usr/share/crocgui"
+mkdir -p "$NAME/DEBIAN" "$NAME/usr/share/crocson"
 
 # Copy files
-cp crocgui.tar.xz "$NAME/usr/share/crocgui/"
+cp crocson.tar.xz "$NAME/usr/share/crocson/"
 cp DEBIAN/control "$NAME/DEBIAN/"
 sed -i "s/^Version:.*/Version: $VERSION/" "$NAME/DEBIAN/control"
 
@@ -52,10 +52,10 @@ dpkg -c "$DEB_FILE" 2>/dev/null | awk '!seen[$0]++'
 echo ""
 echo "=== Verification ==="
 # Verify key files exist in package
-if dpkg -c "$DEB_FILE" 2>/dev/null | grep -q "crocgui.tar.xz"; then
-    echo "✅ crocgui.tar.xz included"
+if dpkg -c "$DEB_FILE" 2>/dev/null | grep -q "crocson.tar.xz"; then
+    echo "✅ crocson.tar.xz included"
 else
-    echo "❌ ERROR: crocgui.tar.xz missing"
+    echo "❌ ERROR: crocson.tar.xz missing"
     exit 1
 fi
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crocgui/internal/croctheme"
+	"crocson/internal/croctheme"
 	"fmt"
 	"image/color"
 	"io"

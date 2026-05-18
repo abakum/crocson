@@ -136,7 +136,7 @@ static void openAppSettings(JNIEnv* env, jobject context) {
         return;
     }
 
-    jstring uri_str = (*env)->NewStringUTF(env, "package:com.github.howeyc.crocgui");
+    jstring uri_str = (*env)->NewStringUTF(env, "package:com.github.abakum.crocson");
     jobject uri = (*env)->CallStaticObjectMethod(env, uri_class, parse_method, uri_str);
     (*env)->DeleteLocalRef(env, uri_str);
 

@@ -3,7 +3,7 @@ SETTINGS_FILE := $(VSCODE_DIR)/settings.json
 WSL_HOST_IP := $(shell ip route list default | awk '{print $$3}')
 VERSION_NAME := $(shell grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
 BUILD_NUMBER := $(shell grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
-DEB_FILE := crocgui_$(VERSION_NAME)_amd64.deb
+DEB_FILE := crocson_$(VERSION_NAME)_amd64.deb
 
 .PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui ver deb debi debr useri userr repo local relay
 
@@ -82,8 +82,8 @@ android: main.go send.go recv.go settings.go theme.go about.go AndroidManifest.x
 
 clean:
 	go clean
-	rm -f crocgui.apk crocgui.exe crocgui_*.deb crocgui*.xy
-	rm -rf crocgui.app
+	rm -f crocson.apk crocson.exe crocson_*.deb crocson*.xy
+	rm -rf crocson.app
 
 arm: ver
 	fyne package -os android/arm --release
@@ -101,19 +101,19 @@ emulator:
 	emulator -avd Medium_Phone_API_36.1
 
 adb:
-	adb install crocgui.apk
+	adb install crocson.apk
 
 apk:
-	apkanalyzer manifest print crocgui.apk
+	apkanalyzer manifest print crocson.apk
 
 aapt:
-	aapt2 dump badging crocgui.apk
+	aapt2 dump badging crocson.apk
 
 apksigner:
-	apksigner verify -v --print-certs crocgui.apk
+	apksigner verify -v --print-certs crocson.apk
 
 align:
-	$(ANDROID_HOME)/build-tools/35.0.0/zipalign -c -p -v 4 crocgui.apk
+	$(ANDROID_HOME)/build-tools/35.0.0/zipalign -c -p -v 4 crocson.apk
 	
 logcat:
 	adb logcat|grep "croc    :"
@@ -141,7 +141,7 @@ signexe:
 	osslsigncode sign -pkcs12 croc.p12 -pass "$(CERT_PASS)" \
 		-n "croc" \
 		-t http://timestamp.digicert.com \
-		-in crocgui.exe -out crocgui-signed.exe
+		-in crocson.exe -out crocson-signed.exe
 
 signps1:
 	osslsigncode sign -pkcs12 croc.p12 -pass "$(CERT_PASS)" \
@@ -169,17 +169,17 @@ trust:
 	rm tmp_build.exe
 
 links:
-	adb shell pm get-app-links com.github.howeyc.crocgui
+	adb shell pm get-app-links com.github.abakum.crocson
 
 view:
-	adb shell am start -a android.intent.action.VIEW -d "https://abakum.github.io/#123" com.github.howeyc.crocgui
+	adb shell am start -a android.intent.action.VIEW -d "https://abakum.github.io/#123" com.github.abakum.crocson
 
 signappx: 
 	osslsigncode sign -pkcs12 croc.p12 -pass "$(CERT_PASS)" \
 		-appx \
 		-n "croc" \
 		-t http://timestamp.digicert.com \
-		-in crocgui.appx -out crocgui-signed.appx
+		-in crocson.appx -out crocson-signed.appx
 
 
 windowsgui:
@@ -194,7 +194,7 @@ wsl:
 
 darwin: 
 	fyne package -os darwin --release
-	cp -r crocgui.app /Applications/
+	cp -r crocson.app /Applications/
 
 ios: 
 	fyne package -os ios --release
@@ -217,14 +217,14 @@ relay:
 darm: 
 	#brew install glfw
 	GOARCH=arm64 fyne package -os darwin --release
-	cp -r crocgui.app /Applications/
+	cp -r crocson.app /Applications/
 
 damd: 
 	#brew install glfw
 	GOARCH=amd64 fyne package -os darwin --release
-	cp -r crocgui.app /Applications/
+	cp -r crocson.app /Applications/
 
-deb: crocgui.tar.xz build-deb.sh DEBIAN/control DEBIAN/postinst DEBIAN/prerm DEBIAN/postrm
+deb: crocson.tar.xz build-deb.sh DEBIAN/control DEBIAN/postinst DEBIAN/prerm DEBIAN/postrm
 	@echo "Building .deb package..."
 	@chmod +x build-deb.sh
 	@./build-deb.sh
@@ -240,33 +240,33 @@ $(DEB_FILE):
 	fi
 
 debr: ver
-	@echo "Removing crocgui package..."
-	@sudo dpkg -r crocgui
+	@echo "Removing crocson package..."
+	@sudo dpkg -r crocson
 
 debp: ver
-	@echo "Purging crocgui package..."
-	@sudo dpkg -P crocgui
+	@echo "Purging crocson package..."
+	@sudo dpkg -P crocson
 
-useri: crocgui.tar.xz
+useri: crocson.tar.xz
 	@echo "User installation from tar.xz..."
 	@echo "Creating temporary directory..."
 	@TEMP_DIR=$$(mktemp -d); \
 	trap "rm -rf $$TEMP_DIR" EXIT; \
 	echo "Extracting to $$TEMP_DIR..."; \
-	tar -xf crocgui.tar.xz -C "$$TEMP_DIR"; \
+	tar -xf crocson.tar.xz -C "$$TEMP_DIR"; \
 	cd "$$TEMP_DIR"; \
 	echo "Installing for current user..."; \
 	make user-install; \
 	echo "User installation completed! Installed to ~/.local/bin/"; \
-	echo "Run it with: gtk-launch com.github.howeyc.crocgui"
+	echo "Run it with: gtk-launch com.github.abakum.crocson"
 
-userr: crocgui.tar.xz
+userr: crocson.tar.xz
 	@echo "User uninstallation..."
 	@echo "Creating temporary directory..."
 	@TEMP_DIR=$$(mktemp -d); \
 	trap "rm -rf $$TEMP_DIR" EXIT; \
 	echo "Extracting to $$TEMP_DIR..."; \
-	tar -xf crocgui.tar.xz -C "$$TEMP_DIR"; \
+	tar -xf crocson.tar.xz -C "$$TEMP_DIR"; \
 	cd "$$TEMP_DIR"; \
 	echo "Uninstalling from user directory..."; \
 	make user-uninstall; \

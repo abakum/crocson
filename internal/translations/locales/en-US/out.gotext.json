@@ -7,7 +7,7 @@
             "translation": "License Info",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/about.go:72:38"
+            "position": "crocson/about.go:72:38"
         },
         {
             "id": "App info",
@@ -15,7 +15,7 @@
             "translation": "App info",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/about.go:95:40"
+            "position": "crocson/about.go:95:40"
         },
         {
             "id": "Click the Deep Link above to test",
@@ -23,7 +23,7 @@
             "translation": "Click the Deep Link above to test",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:312:30"
+            "position": "crocson/applinks.go:312:30"
         },
         {
             "id": "If a browser opens then:",
@@ -31,7 +31,7 @@
             "translation": "If a browser opens then:",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:317:30"
+            "position": "crocson/applinks.go:317:30"
         },
         {
             "id": "Allow",
@@ -39,7 +39,7 @@
             "translation": "Allow",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:322:44"
+            "position": "crocson/applinks.go:322:44"
         },
         {
             "id": "Use",
@@ -47,7 +47,7 @@
             "translation": "Use",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:343:21"
+            "position": "crocson/applinks.go:343:21"
         },
         {
             "id": "on page",
@@ -55,7 +55,7 @@
             "translation": "on page",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:345:21"
+            "position": "crocson/applinks.go:345:21"
         },
         {
             "id": "to",
@@ -63,7 +63,7 @@
             "translation": "to",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:347:21"
+            "position": "crocson/applinks.go:347:21"
         },
         {
             "id": "Scan QRs",
@@ -71,7 +71,7 @@
             "translation": "Scan QRs",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:351:33"
+            "position": "crocson/applinks.go:351:33"
         },
         {
             "id": "with:",
@@ -79,7 +79,7 @@
             "translation": "with:",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/applinks.go:391:53"
+            "position": "crocson/applinks.go:391:53"
         },
         {
             "id": "Export full log",
@@ -87,7 +87,7 @@
             "translation": "Export full log",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/log.go:219:45"
+            "position": "crocson/log.go:219:45"
         },
         {
             "id": "Saved all files to",
@@ -95,7 +95,7 @@
             "translation": "Saved all files to",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/log.go:272:7"
+            "position": "crocson/log.go:272:7"
         },
         {
             "id": "App closed. Tap to start.",
@@ -103,7 +103,7 @@
             "translation": "App closed. Tap to start.",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/main.go:344:16"
+            "position": "crocson/main.go:344:16"
         },
         {
             "id": "Cancel",
@@ -111,7 +111,7 @@
             "translation": "Cancel",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:65:44"
+            "position": "crocson/recv.go:65:44"
         },
         {
             "id": "Wait for them before pressing Download",
@@ -119,7 +119,7 @@
             "translation": "Wait for them before pressing Download",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:84:31"
+            "position": "crocson/recv.go:84:31"
         },
         {
             "id": "Relay",
@@ -127,7 +127,7 @@
             "translation": "Relay",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:111:33"
+            "position": "crocson/recv.go:111:33"
         },
         {
             "id": "Download",
@@ -135,7 +135,7 @@
             "translation": "Download",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:571:42"
+            "position": "crocson/recv.go:571:42"
         },
         {
             "id": "Secret must be longer than 5 characters",
@@ -143,7 +143,7 @@
             "translation": "Secret must be longer than 5 characters",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:574:18"
+            "position": "crocson/recv.go:574:18"
         },
         {
             "id": "Send",
@@ -151,7 +151,7 @@
             "translation": "Send",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:579:35"
+            "position": "crocson/recv.go:579:35"
         },
         {
             "id": "Receive cancelled.",
@@ -159,7 +159,7 @@
             "translation": "Receive cancelled.",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:699:34"
+            "position": "crocson/recv.go:699:34"
         },
         {
             "id": "Receiving file",
@@ -167,7 +167,7 @@
             "translation": "Receiving file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:722:27"
+            "position": "crocson/recv.go:722:27"
         },
         {
             "id": "Send cancelled.",
@@ -175,7 +175,7 @@
             "translation": "Send cancelled.",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:797:36"
+            "position": "crocson/recv.go:797:36"
         },
         {
             "id": "Received",
@@ -183,7 +183,7 @@
             "translation": "Received",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:804:46"
+            "position": "crocson/recv.go:804:46"
         },
         {
             "id": "Receive",
@@ -191,7 +191,7 @@
             "translation": "Receive",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/recv.go:1089:38"
+            "position": "crocson/recv.go:1089:38"
         },
         {
             "id": "Empty name",
@@ -199,7 +199,7 @@
             "translation": "Empty name",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/relays.go:165:18"
+            "position": "crocson/relays.go:165:18"
         },
         {
             "id": "Last item of list",
@@ -207,7 +207,7 @@
             "translation": "Last item of list",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/relays.go:236:18"
+            "position": "crocson/relays.go:236:18"
         },
         {
             "id": "Pick a file to send",
@@ -215,7 +215,7 @@
             "translation": "Pick a file to send",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:103:31"
+            "position": "crocson/send.go:103:31"
         },
         {
             "id": "Have them not press the Download yet",
@@ -223,7 +223,7 @@
             "translation": "Have them not press the Download yet",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:716:24"
+            "position": "crocson/send.go:716:24"
         },
         {
             "id": "Have them press the Download now",
@@ -231,7 +231,7 @@
             "translation": "Have them press the Download now",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:782:28"
+            "position": "crocson/send.go:782:28"
         },
         {
             "id": "Sending file",
@@ -239,7 +239,7 @@
             "translation": "Sending file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:793:57"
+            "position": "crocson/send.go:793:57"
         },
         {
             "id": "Sent file",
@@ -247,7 +247,7 @@
             "translation": "Sent file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:843:47"
+            "position": "crocson/send.go:843:47"
         },
         {
             "id": "Allow access to read",
@@ -255,7 +255,7 @@
             "translation": "Allow access to read",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/send.go:1027:23"
+            "position": "crocson/send.go:1027:23"
         },
         {
             "id": "Hide",
@@ -263,7 +263,7 @@
             "translation": "Hide",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:121:34"
+            "position": "crocson/settings.go:121:34"
         },
         {
             "id": "Send only via relay",
@@ -271,7 +271,7 @@
             "translation": "Send only via relay",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:160:49"
+            "position": "crocson/settings.go:160:49"
         },
         {
             "id": "Ask the sender for their address",
@@ -279,7 +279,7 @@
             "translation": "Ask the sender for their address",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:163:44"
+            "position": "crocson/settings.go:163:44"
         },
         {
             "id": "Connect to local senders only",
@@ -287,7 +287,7 @@
             "translation": "Connect to local senders only",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:166:46"
+            "position": "crocson/settings.go:166:46"
         },
         {
             "id": "Overwrite",
@@ -295,7 +295,7 @@
             "translation": "Overwrite",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:172:46"
+            "position": "crocson/settings.go:172:46"
         },
         {
             "id": "Restore",
@@ -303,7 +303,7 @@
             "translation": "Restore",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:315:44"
+            "position": "crocson/settings.go:315:44"
         },
         {
             "id": "Language",
@@ -311,7 +311,7 @@
             "translation": "Language",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:334:24"
+            "position": "crocson/settings.go:334:24"
         },
         {
             "id": "Theme",
@@ -319,7 +319,7 @@
             "translation": "Theme",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:335:24"
+            "position": "crocson/settings.go:335:24"
         },
         {
             "id": "Font",
@@ -327,7 +327,7 @@
             "translation": "Font",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:336:24"
+            "position": "crocson/settings.go:336:24"
         },
         {
             "id": "Logo",
@@ -335,7 +335,7 @@
             "translation": "Logo",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:337:24"
+            "position": "crocson/settings.go:337:24"
         },
         {
             "id": "Configs",
@@ -343,7 +343,7 @@
             "translation": "Configs",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:342:24"
+            "position": "crocson/settings.go:342:24"
         },
         {
             "id": "Config",
@@ -351,7 +351,7 @@
             "translation": "Config",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:347:24"
+            "position": "crocson/settings.go:347:24"
         },
         {
             "id": "Value may be file with value",
@@ -359,7 +359,7 @@
             "translation": "Value may be file with value",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:358:21"
+            "position": "crocson/settings.go:358:21"
         },
         {
             "id": "If value like 0IP then it used as --ip IP",
@@ -367,7 +367,7 @@
             "translation": "If value like 0IP then it used as --ip IP",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:368:24"
+            "position": "crocson/settings.go:368:24"
         },
         {
             "id": "Name",
@@ -375,7 +375,7 @@
             "translation": "Name",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:372:24"
+            "position": "crocson/settings.go:372:24"
         },
         {
             "id": "UnZip files",
@@ -383,7 +383,7 @@
             "translation": "UnZip files",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:426:8"
+            "position": "crocson/settings.go:426:8"
         },
         {
             "id": "Zip folders",
@@ -391,7 +391,7 @@
             "translation": "Zip folders",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:428:9"
+            "position": "crocson/settings.go:428:9"
         },
         {
             "id": "File path CSV parts",
@@ -399,7 +399,7 @@
             "translation": "File path CSV parts",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:438:16"
+            "position": "crocson/settings.go:438:16"
         },
         {
             "id": "Disable Multiplexing",
@@ -407,7 +407,7 @@
             "translation": "Disable Multiplexing",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:446:60"
+            "position": "crocson/settings.go:446:60"
         },
         {
             "id": "Disable Compression",
@@ -415,7 +415,7 @@
             "translation": "Disable Compression",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:447:63"
+            "position": "crocson/settings.go:447:63"
         },
         {
             "id": "speed e.g. 500k",
@@ -423,7 +423,7 @@
             "translation": "speed e.g. 500k",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:452:16"
+            "position": "crocson/settings.go:452:16"
         },
         {
             "id": "Appearance",
@@ -431,7 +431,7 @@
             "translation": "Appearance",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:461:29"
+            "position": "crocson/settings.go:461:29"
         },
         {
             "id": "Network Local",
@@ -439,7 +439,7 @@
             "translation": "Network Local",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:464:29"
+            "position": "crocson/settings.go:464:29"
         },
         {
             "id": "Storage Options",
@@ -447,7 +447,7 @@
             "translation": "Storage Options",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:465:29"
+            "position": "crocson/settings.go:465:29"
         },
         {
             "id": "Transfer Options",
@@ -455,7 +455,7 @@
             "translation": "Transfer Options",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocgui/settings.go:466:29"
+            "position": "crocson/settings.go:466:29"
         }
     ]
 }

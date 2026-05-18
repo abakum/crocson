@@ -1240,8 +1240,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					case <-tt.C:
 						// В Андроид 9 если нажать Хоум или кнопку Недавние
 						// то ни один из хуков lifecycle не сработает.
-						// Если выбрать не crocgui а потом выбрать crocgui
-						// то crocgui зависнет.
+						// Если выбрать не crocson а потом выбрать crocson
+						// то crocson зависнет.
 						// Чтоб это предотвратить ослеживаем смену хэндла окна w
 						// и в этот момент открепляем и прикрепляем активность к w
 						nH := wHandle(w)
@@ -1496,7 +1496,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		})
 		if !GUI {
 			if stat, err := os.Stdin.Stat(); err == nil && ((stat.Mode() & os.ModeCharDevice) == 0) {
-				// cat file|crocgui
+				// cat file|crocson
 				go func() {
 					fnames, err := getStdin()
 					if err != nil {

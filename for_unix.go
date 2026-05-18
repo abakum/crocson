@@ -131,10 +131,10 @@ func registerScheme(scheme string) error {
 	return nil
 }
 
-// findRunningInhibitor ищет уже запущенный процесс systemd-inhibit с аргументом "crocgui transfer in progress"
+// findRunningInhibitor ищет уже запущенный процесс systemd-inhibit с аргументом "crocson transfer in progress"
 // Возвращает PID найденного процесса или 0, если не найден
 func findRunningInhibitor() int {
-	out, err := exec.Command("pgrep", "-f", "systemd-inhibit.*crocgui transfer in progress").Output()
+	out, err := exec.Command("pgrep", "-f", "systemd-inhibit.*crocson transfer in progress").Output()
 	if err != nil {
 		// pgrep может вернуть ошибку если процесс не найден, это нормально
 		log.Debugf("pgrep search failed: %v", err)
@@ -163,7 +163,7 @@ func createNewInhibitor(path string) {
 	log.Debugf("Creating new systemd-inhibit process")
 	cmd := exec.Command(path,
 		"--what=idle",
-		"--why=crocgui transfer in progress",
+		"--why=crocson transfer in progress",
 		"sleep", "infinity")
 
 	if err := cmd.Start(); err == nil {

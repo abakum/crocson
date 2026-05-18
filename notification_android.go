@@ -168,7 +168,7 @@ static void showCrocNotification(JNIEnv* env, jobject context, char* title, char
         return;
     }
 
-    jstring package_name = (*env)->NewStringUTF(env, "com.github.howeyc.crocgui");
+    jstring package_name = (*env)->NewStringUTF(env, "com.github.abakum.crocson");
     jstring class_name = (*env)->NewStringUTF(env, "org.golang.app.GoNativeActivity");
     (*env)->CallObjectMethod(env, launch_intent, set_class, package_name, class_name);
 

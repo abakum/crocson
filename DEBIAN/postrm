@@ -1,5 +1,5 @@
 #!/bin/bash
-# Post-removal script for crocgui .deb package
+# Post-removal script for crocson .deb package
 
 set -e
 
@@ -10,7 +10,7 @@ ACTION="$1"
 case "$ACTION" in
     purge)
         # Package is being completely removed (including config files)
-        echo "Purging crocgui..."
+        echo "Purging crocson..."
         
         # Get the home directory of the user running this script
         if [ "$(id -u)" -eq 0 ]; then
@@ -21,7 +21,7 @@ case "$ACTION" in
             HOME_DIR="$HOME"
         fi
         
-        CONFIG_FILE="$HOME_DIR/.config/fyne/com.github.howeyc.crocgui/preferences.json"
+        CONFIG_FILE="$HOME_DIR/.config/fyne/com.github.abakum.crocson/preferences.json"
         
         if [ -f "$CONFIG_FILE" ]; then
             echo "Removing: $CONFIG_FILE"

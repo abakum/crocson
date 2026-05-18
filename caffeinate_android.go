@@ -48,7 +48,7 @@ static void acquireWakeLock(JNIEnv* env, jobject activity) {
         "newWakeLock", "(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;");
     if (caseException(env, "GetMethodID newWakeLock")) return;
 
-    jstring tag = (*env)->NewStringUTF(env, "crocgui:transfer");
+    jstring tag = (*env)->NewStringUTF(env, "crocson:transfer");
     if (caseException(env, "NewStringUTF")) return;
 
     jobject localWakeLock = (*env)->CallObjectMethod(env, powerManager, newWakeLockMethod, 1, tag);

@@ -250,8 +250,8 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				err = relayRun(w, pass, host, ports)
 			}
 			log.Debugf("relayRun: %v", err)
-			// netstat -tlnp|grep crocgui
-			// ss -tlnp|grep crocgui
+			// netstat -tlnp|grep crocson
+			// ss -tlnp|grep crocson
 			// netstat -a -n -p tcp |find ":90"
 			fyne.Do(func() {
 				hostSelect.SetSelected(OFF) // рекурсия

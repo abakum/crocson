@@ -41,10 +41,10 @@ jobs:
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'windows' }}
     runs-on: windows-latest
     steps:
-      - name: Checkout main repository (crocgui)
+      - name: Checkout main repository (crocson)
         uses: actions/checkout@v4
         with:
-          path: workspace/crocgui
+          path: workspace/crocson
 
       - name: Checkout croc dependency
         if: false # temporarily disabled: using make repo instead
@@ -66,7 +66,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       - name: Checkout tools dependency
         uses: actions/checkout@v4
@@ -85,7 +85,7 @@ jobs:
         if: github.event.inputs.build_type != 'snapshot'
         shell: pwsh
         run: |
-          $certPath = "${{ github.workspace }}\workspace\crocgui\croc.p12"
+          $certPath = "${{ github.workspace }}\workspace\crocson\croc.p12"
           
           Write-Host "Saving certificate to: $certPath"
 
@@ -103,20 +103,20 @@ jobs:
         if: github.event.inputs.build_type == 'snapshot'
         shell: pwsh
         run: |
-          cd "${{ github.workspace }}\workspace\crocgui"
+          cd "${{ github.workspace }}\workspace\crocson"
           $env:CGO_ENABLED = "1"
           $env:GOARCH = "amd64"
-          go build -o crocgui.exe .
-          Write-Host "Built crocgui.exe (console mode, no -H windowsgui)"
-          if (-not (Test-Path "crocgui.exe")) {
-            throw "ERROR: crocgui.exe was not created!"
+          go build -o crocson.exe .
+          Write-Host "Built crocson.exe (console mode, no -H windowsgui)"
+          if (-not (Test-Path "crocson.exe")) {
+            throw "ERROR: crocson.exe was not created!"
           }
 
       - name: Build Windows AppX package
         if: github.event.inputs.build_type != 'snapshot'
         shell: pwsh
         run: |
-          cd "${{ github.workspace }}\workspace\crocgui"
+          cd "${{ github.workspace }}\workspace\crocson"
           
           $certPath = "croc.p12"
           if (-not (Test-Path $certPath)) {
@@ -136,8 +136,8 @@ jobs:
           Write-Host "Post-build workspace contents:"
           Get-ChildItem
           
-          if (-not (Test-Path "crocgui.appx")) {
-            throw "ERROR: crocgui.appx was not created!"
+          if (-not (Test-Path "crocson.appx")) {
+            throw "ERROR: crocson.appx was not created!"
           }
 
       - name: Upload windows artifact (snapshot)
@@ -146,7 +146,7 @@ jobs:
         with:
           name: windows-build
           path: |
-            ${{ github.workspace }}/workspace/crocgui/crocgui.exe
+            ${{ github.workspace }}/workspace/crocson/crocson.exe
           retention-days: 7
           if-no-files-found: error
 
@@ -156,10 +156,10 @@ jobs:
         with:
           name: windows-build
           path: |
-            ${{ github.workspace }}/workspace/crocgui/crocgui.exe
-            ${{ github.workspace }}/workspace/crocgui/crocgui.appx
-            ${{ github.workspace }}/workspace/crocgui/croc.cer
-            ${{ github.workspace }}/workspace/crocgui/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
+            ${{ github.workspace }}/workspace/crocson/crocson.exe
+            ${{ github.workspace }}/workspace/crocson/crocson.appx
+            ${{ github.workspace }}/workspace/crocson/croc.cer
+            ${{ github.workspace }}/workspace/crocson/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
           retention-days: 7
           if-no-files-found: error
           
@@ -169,11 +169,11 @@ jobs:
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'linux' }}
     runs-on: ubuntu-latest # Runs on Ubuntu to build natively for Linux
     steps:
-      # Step 1: Checkout the main repository directly into workspace/crocgui
-      - name: Checkout main repository (crocgui)
+      # Step 1: Checkout the main repository directly into workspace/crocson
+      - name: Checkout main repository (crocson)
         uses: actions/checkout@v4
         with:
-          path: workspace/crocgui
+          path: workspace/crocson
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -198,7 +198,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Linux dependencies required by Fyne (OpenGL, X11, etc.)
       - name: Install Linux dependencies
@@ -214,7 +214,7 @@ jobs:
       # Step 7: Build the application using fyne package for Linux
       - name: Build with fyne for Linux
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocgui
+          cd $GITHUB_WORKSPACE/workspace/crocson
           
           echo "Building for Linux amd64..."
           
@@ -227,8 +227,8 @@ jobs:
           fyne package --os linux --release
           
           # Verify the .tar.xz archive file was created
-          if [ ! -f "crocgui.tar.xz" ]; then
-              echo "ERROR: fyne package did not create crocgui.tar.xz"
+          if [ ! -f "crocson.tar.xz" ]; then
+              echo "ERROR: fyne package did not create crocson.tar.xz"
               ls -la .
               exit 1
           fi
@@ -239,7 +239,7 @@ jobs:
       # Step 8: Build .deb package
       - name: Build .deb package
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocgui || { echo "Failed to cd to project directory"; exit 1; }
+          cd $GITHUB_WORKSPACE/workspace/crocson || { echo "Failed to cd to project directory"; exit 1; }
           
           echo "Building .deb package..."
           
@@ -250,7 +250,7 @@ jobs:
           ./build-deb.sh
           
           # Verify .deb package was created
-          if ! ls crocgui_*_amd64.deb 1> /dev/null 2>&1; then
+          if ! ls crocson_*_amd64.deb 1> /dev/null 2>&1; then
               echo "ERROR: build-deb.sh did not create .deb package"
               ls -la .
               exit 1
@@ -263,8 +263,8 @@ jobs:
         with:
           name: linux-amd64-build
           path: |
-            ${{ github.workspace }}/workspace/crocgui/crocgui.tar.xz
-            ${{ github.workspace }}/workspace/crocgui/crocgui_*_amd64.deb
+            ${{ github.workspace }}/workspace/crocson/crocson.tar.xz
+            ${{ github.workspace }}/workspace/crocson/crocson_*_amd64.deb
           retention-days: 7
           if-no-files-found: error
 
@@ -274,11 +274,11 @@ jobs:
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'macos-amd64' }}
     runs-on: macos-15-intel
     steps:
-      # Step 1: Checkout the main repository directly into workspace/crocgui
-      - name: Checkout main repository (crocgui)
+      # Step 1: Checkout the main repository directly into workspace/crocson
+      - name: Checkout main repository (crocson)
         uses: actions/checkout@v4
         with:
-          path: workspace/crocgui
+          path: workspace/crocson
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -303,7 +303,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Fyne CLI
       - name: Install Fyne CLI
@@ -313,7 +313,7 @@ jobs:
       # Step 7: Build the application for macOS amd64 (Intel)
       - name: Build for macOS amd64 (Intel)
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocgui
+          cd $GITHUB_WORKSPACE/workspace/crocson
           
           echo "Building for macOS amd64 (Intel)..."
           
@@ -324,7 +324,7 @@ jobs:
           
           # Use fyne package to create the .app bundle for amd64
           fyne package --os darwin --release
-          APP_NAME="crocgui.app"
+          APP_NAME="crocson.app"
           
           # Verify the .app bundle was created
           if [ ! -d "$APP_NAME" ]; then
@@ -335,8 +335,8 @@ jobs:
           
           # Create DMG file using hdiutil (macOS utility)
           echo "Creating DMG for $APP_NAME"
-          DMG_NAME="crocgui-amd64.dmg"
-          hdiutil create -srcfolder "$APP_NAME" -volname "crocgui-amd64" -ov -format UDZO "$DMG_NAME"
+          DMG_NAME="crocson-amd64.dmg"
+          hdiutil create -srcfolder "$APP_NAME" -volname "crocson-amd64" -ov -format UDZO "$DMG_NAME"
           
           # Verify DMG was created
           if [ ! -f "$DMG_NAME" ]; then
@@ -354,7 +354,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-amd64-build
-          path: ${{ github.workspace }}/workspace/crocgui/crocgui-amd64.dmg
+          path: ${{ github.workspace }}/workspace/crocson/crocson-amd64.dmg
           retention-days: 7
           if-no-files-found: error
 
@@ -364,11 +364,11 @@ jobs:
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'macos-arm64' }}
     runs-on: macos-latest # Runs on a macOS runner
     steps:
-      # Step 1: Checkout the main repository directly into workspace/crocgui
-      - name: Checkout main repository (crocgui)
+      # Step 1: Checkout the main repository directly into workspace/crocson
+      - name: Checkout main repository (crocson)
         uses: actions/checkout@v4
         with:
-          path: workspace/crocgui
+          path: workspace/crocson
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -393,7 +393,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Fyne CLI
       - name: Install Fyne CLI
@@ -403,7 +403,7 @@ jobs:
       # Step 7: Build the application for macOS arm64 (Apple Silicon)
       - name: Build for macOS arm64 (Apple Silicon)
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocgui
+          cd $GITHUB_WORKSPACE/workspace/crocson
           
           echo "Building for macOS arm64 (Apple Silicon)..."
           
@@ -414,7 +414,7 @@ jobs:
           
           # Use fyne package to create the .app bundle for arm64
           fyne package --os darwin --release
-          APP_NAME="crocgui.app"
+          APP_NAME="crocson.app"
           
           # Verify the .app bundle was created
           if [ ! -d "$APP_NAME" ]; then
@@ -427,14 +427,14 @@ jobs:
           sleep 2
           #TEMP_DIR=$(mktemp -d)
           #cp -R "$APP_NAME" "$TEMP_DIR/"
-          hdiutil detach "/Volumes/crocgui-arm64" || true
+          hdiutil detach "/Volumes/crocson-arm64" || true
 
           # Create DMG file using hdiutil (macOS utility)
           echo "Creating DMG for $APP_NAME"
-          DMG_NAME="crocgui-arm64.dmg"
+          DMG_NAME="crocson-arm64.dmg"
           rm -f "$DMG_NAME"  || true
-          hdiutil create -srcfolder "$APP_NAME" -volname "crocgui-arm64" -ov -format UDZO "$DMG_NAME"
-          #hdiutil create -srcfolder "$TEMP_DIR/$APP_NAME" -volname "crocgui-arm64" -ov -format UDZO "$DMG_NAME"
+          hdiutil create -srcfolder "$APP_NAME" -volname "crocson-arm64" -ov -format UDZO "$DMG_NAME"
+          #hdiutil create -srcfolder "$TEMP_DIR/$APP_NAME" -volname "crocson-arm64" -ov -format UDZO "$DMG_NAME"
           
           # Verify DMG was created
           if [ ! -f "$DMG_NAME" ]; then
@@ -453,7 +453,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-arm64-build
-          path: ${{ github.workspace }}/workspace/crocgui/crocgui-arm64.dmg
+          path: ${{ github.workspace }}/workspace/crocson/crocson-arm64.dmg
           retention-days: 7
           if-no-files-found: error
 
@@ -463,11 +463,11 @@ jobs:
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'android' }}
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the main repository directly into workspace/crocgui
-      - name: Checkout main repository (crocgui)
+      # Step 1: Checkout the main repository directly into workspace/crocson
+      - name: Checkout main repository (crocson)
         uses: actions/checkout@v4
         with:
-          path: workspace/crocgui
+          path: workspace/crocson
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -490,18 +490,18 @@ jobs:
       # Step 4: Verify FyneApp.toml and AndroidManifest.xml
       - name: Verify FyneApp.toml and AndroidManifest.xml
         run: |
-          echo "Workspace structure (crocgui):"
-          ls -la $GITHUB_WORKSPACE/workspace/crocgui/
-          if [ -f "$GITHUB_WORKSPACE/workspace/crocgui/FyneApp.toml" ]; then
+          echo "Workspace structure (crocson):"
+          ls -la $GITHUB_WORKSPACE/workspace/crocson/
+          if [ -f "$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml" ]; then
             echo "FyneApp.toml found"
           else
-            echo "ERROR: FyneApp.toml not found in $GITHUB_WORKSPACE/workspace/crocgui/"
+            echo "ERROR: FyneApp.toml not found in $GITHUB_WORKSPACE/workspace/crocson/"
             exit 1
           fi
-          if [ -f "$GITHUB_WORKSPACE/workspace/crocgui/AndroidManifest.xml" ]; then
+          if [ -f "$GITHUB_WORKSPACE/workspace/crocson/AndroidManifest.xml" ]; then
             echo "AndroidManifest.xml found."
           else
-            echo "ERROR: AndroidManifest.xml not found in $GITHUB_WORKSPACE/workspace/crocgui/"
+            echo "ERROR: AndroidManifest.xml not found in $GITHUB_WORKSPACE/workspace/crocson/"
             exit 1
           fi
 
@@ -510,7 +510,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-          cache-dependency-path: ${{ github.workspace }}/workspace/crocgui/go.sum
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 6.1: Checkout Fyne CLI repository directly into workspace/tools
       - name: Checkout tools dependency
@@ -536,7 +536,7 @@ jobs:
       # Step 7: Build the application using fyne package for Android targets
       - name: Build with fyne package for Android targets
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocgui
+          cd $GITHUB_WORKSPACE/workspace/crocson
           
           # Read version and build number from FyneApp.toml
           echo "Reading version and build number from FyneApp.toml..."
@@ -579,12 +579,12 @@ jobs:
             
             # Use fyne package to build the Android APK for the target
             fyne package -os $target --release
-            APK_NAME="crocgui.apk"
+            APK_NAME="crocson.apk"
             if [ -f "$APK_NAME" ]; then
-                mv "$APK_NAME" "crocgui-${GOARCH}.apk"
-                echo "Renamed APK to: crocgui-${GOARCH}.apk"
+                mv "$APK_NAME" "crocson-${GOARCH}.apk"
+                echo "Renamed APK to: crocson-${GOARCH}.apk"
             else
-                echo "ERROR: fyne package did not create crocgui.apk for $target"
+                echo "ERROR: fyne package did not create crocson.apk for $target"
                 exit 1
             fi
           done
@@ -595,7 +595,7 @@ jobs:
       - name: Patch SDK versions and APK manifest
         if: false
         run: |
-          cd ${{ github.workspace }}/workspace/crocgui
+          cd ${{ github.workspace }}/workspace/crocson
           echo "=== Patching SDK versions in APK manifests ==="
           
           if ! command -v apktool &> /dev/null; then
@@ -607,7 +607,7 @@ jobs:
             chmod +x /usr/local/bin/apktool
           fi
 
-          for ORIGINAL_APK in crocgui-*.apk; do
+          for ORIGINAL_APK in crocson-*.apk; do
             if [ ! -f "$ORIGINAL_APK" ]; then
               continue
             fi
@@ -655,7 +655,7 @@ jobs:
             sed -i 's/android:launchMode="standard"/android:launchMode="singleTop"/g' "$MANIFEST_PATH"
 
             mkdir -p "$TEMP_DIR/res/mipmap-xxxhdpi-v4"
-            cp "${{ github.workspace }}/workspace/crocgui/Icon.png" "$TEMP_DIR/res/mipmap-xxxhdpi-v4/icon.png"
+            cp "${{ github.workspace }}/workspace/crocson/Icon.png" "$TEMP_DIR/res/mipmap-xxxhdpi-v4/icon.png"
 
             PUBLIC_XML="$TEMP_DIR/res/values/public.xml"
             cat "$PUBLIC_XML" || true
@@ -702,14 +702,14 @@ jobs:
           
           echo "=== SDK version patching complete ==="
           echo "Patched APKs:"
-          ls -la crocgui-*.apk
+          ls -la crocson-*.apk
 
       # Step 8: Sign Android APKs
       - name: Sign and rename APK for Android
         id: sign_apk
         uses: ilharp/sign-android-release@v2
         with:
-          releaseDir: ${{ github.workspace }}/workspace/crocgui
+          releaseDir: ${{ github.workspace }}/workspace/crocson
           signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
           keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -719,7 +719,7 @@ jobs:
       # Step 9: Remove '-signed' suffix from APK filenames
       - name: Clean signed APK filenames
         run: |
-          cd ${{ github.workspace }}/workspace/crocgui
+          cd ${{ github.workspace }}/workspace/crocson
 
           rm -f *-temp.apk
 
@@ -739,7 +739,7 @@ jobs:
         with:
           name: android-apks
           path: |
-            ${{ github.workspace }}/workspace/crocgui/crocgui-*.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-*.apk
           retention-days: 7
           if-no-files-found: error
 
@@ -819,7 +819,7 @@ jobs:
           # Create a build information file
           echo "Build Information" > release-assets/BUILD_INFO.txt
           echo "=================" >> release-assets/BUILD_INFO.txt
-          echo "Project: crocgui (from FyneApp.toml)" >> release-assets/BUILD_INFO.txt
+          echo "Project: crocson (from FyneApp.toml)" >> release-assets/BUILD_INFO.txt
           echo "Version: ${{ steps.get_version.outputs.release_version || 'manual_run' }}" >> release-assets/BUILD_INFO.txt
           echo "Build Type: ${{ github.event.inputs.build_type || 'manual' }}" >> release-assets/BUILD_INFO.txt
           BUILD_DATE=$(date -u)
@@ -843,28 +843,28 @@ jobs:
           # Upload all files from the prepared release-assets directory
           files: |
             release-assets/*
-            workspace/crocgui/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
+            workspace/crocson/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
           # Body text for the release description
           body: |
-            ## crocgui ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
+            ## crocson ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
 
             Release built via GitHub Actions for multiple platforms.
             App Version read from `FyneApp.toml`.
 
             ### Included Platforms & Files:
-            - **Windows (x86_64)**: `crocgui.exe`, `crocgui.appx`, `croc.cer`, `I_trust_the_signer_of_this.exe`
+            - **Windows (x86_64)**: `crocson.exe`, `crocson.appx`, `croc.cer`, `I_trust_the_signer_of_this.exe`
             - **Linux (x86_64)**: `.tar.xz` archive and `.deb` package  
-            - **macOS**: `.dmg` files for Apple Silicon (`crocgui-arm64.dmg`) and Intel (`crocgui-amd64.dmg`)
+            - **macOS**: `.dmg` files for Apple Silicon (`crocson-arm64.dmg`) and Intel (`crocson-amd64.dmg`)
             - **Android**: APK files for ARM64, ARM, x86_64, x86 architectures
             - Metadata: `FyneApp.toml` (version info), `BUILD_INFO.txt` (build details)
 
             ### Package Manager Installation (Recommended):
-            - **macOS**: run once `brew install --cask abakum/tap/crocgui` then `brew --cask upgrade crocgui`
-            - **Linux**: run once `brew install abakum/tap/crocgui` then `brew upgrade crocgui`
-            - **Linux**: run `sudo dpkg -i crocgui_*_amd64.deb`
-            - **Windows**: run once `scoop bucket add abakum https://github.com/abakum/homebrew-tap && scoop install crocgui` then `scoop update crocgui`
-            - **Windows**: run once as Administrator `certutil -addstore -f TrustedPeople croc.cer` then as user `crocgui.appx`
-            - **Windows**: run once as user `I_trust_the_signer_of_this.exe` then `crocgui.appx`
+            - **macOS**: run once `brew install --cask abakum/tap/crocson` then `brew --cask upgrade crocson`
+            - **Linux**: run once `brew install abakum/tap/crocson` then `brew upgrade crocson`
+            - **Linux**: run `sudo dpkg -i crocson_*_amd64.deb`
+            - **Windows**: run once `scoop bucket add abakum https://github.com/abakum/homebrew-tap && scoop install crocson` then `scoop update crocson`
+            - **Windows**: run once as Administrator `certutil -addstore -f TrustedPeople croc.cer` then as user `crocson.appx`
+            - **Windows**: run once as user `I_trust_the_signer_of_this.exe` then `crocson.appx`
 
             ### Manual Installation:
 
@@ -872,27 +872,27 @@ jobs:
 
             **System installation (requires sudo):**
             ```
-            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocgui.tar.xz -C "$TEMP_DIR" && sudo make -C "$TEMP_DIR" -f Makefile install
+            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocson.tar.xz -C "$TEMP_DIR" && sudo make -C "$TEMP_DIR" -f Makefile install
             ```
 
             **User installation (no sudo):**
             ```
-            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocgui.tar.xz -C "$TEMP_DIR" && make -C "$TEMP_DIR" -f Makefile user-install
+            TEMP_DIR=$(mktemp -d) && trap "rm -rf $TEMP_DIR" EXIT && tar -xf crocson.tar.xz -C "$TEMP_DIR" && make -C "$TEMP_DIR" -f Makefile user-install
             ```
             
             #### macOS (from .dmg):
-            Mount the .dmg file and drag crocgui.app to Applications folder
+            Mount the .dmg file and drag crocson.app to Applications folder
 
             ### Launch Instructions:
-            - **macOS**: `open /Applications/crocgui.app` or click in Launchpad
-            - **Linux**: `crocgui` or `gtk-launch com.github.howeyc.crocgui`
-            - **Windows**: `crocgui` from Command Prompt/PowerShell
+            - **macOS**: `open /Applications/crocson.app` or click in Launchpad
+            - **Linux**: `crocson` or `gtk-launch com.github.abakum.crocson`
+            - **Windows**: `crocson` from Command Prompt/PowerShell
 
             ### Notes:
             - Homebrew installations on Linux require [Homebrew for Linux](https://docs.brew.sh/Homebrew-on-Linux)
             - After manual installation, you may need to log out and back in for desktop menu integration
             - Android APKs are developer-signed and can be directly sideloaded or installed via ADB
-            - Since `crocgui.appx` is signed with a self-signed certificate, you must either manually install `croc.cer` into the **Trusted People** store for all users, or simply run `I_trust_the_signer_of_this.exe`, which will perform this action automatically. 
+            - Since `crocson.appx` is signed with a self-signed certificate, you must either manually install `croc.cer` into the **Trusted People** store for all users, or simply run `I_trust_the_signer_of_this.exe`, which will perform this action automatically. 
         env:
           # Token required to create the release
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

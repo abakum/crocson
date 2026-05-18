@@ -24,7 +24,7 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	_ "crocgui/internal/translations"
+	_ "crocson/internal/translations"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -39,6 +39,7 @@ const (
 	EMULATE                = time.Second * 0
 	CROC_SECRET            = "CROC_SECRET"
 	CROC                   = "croc"
+	CROCGUI                = "crocgui"
 	STDIN                  = CROC + "-stdin-"
 	CROCDEBUGLOG           = CROC + "debuglog.txt"
 	SCHOLLZ                = "schollz"
@@ -47,12 +48,12 @@ const (
 	DOTTXT                 = ".txt"
 	ZhangHai               = "content://me.zhanghai.android.files.file_provider/"
 	Ghisler                = "content://com.ghisler.files/"
-	CG                     = "crocgui"
+	CS                     = "crocson"
 	SEND                   = "send"
 	RECV                   = "recv"
 	MIME_TYPE_DIR          = "vnd.android.document/directory"
 	MIME_TYPE_OCTET_STREAM = "application/octet-stream"
-	ID                     = "com.github.howeyc.crocgui"
+	ID                     = "com.github.abakum.crocson"
 	LastFolder             = "fyne:fileDialogLastFolder"
 	DEFAULT                = "default"
 	NONDEFAULT             = "non-default: "
@@ -63,8 +64,8 @@ const (
 	DEFAULT_PASSPHRASE     = "pass123"
 	REFUSING               = "refusing files"
 
-	// cmd/c "set LOGGER=trace&crocgui.exe"
-	// LOGGER=trace crocgui
+	// cmd/c "set LOGGER=trace&crocson.exe"
+	// LOGGER=trace crocson
 	LEVEL                   = "debug"
 	FORKfrom                = "howeyc"
 	FORKfromVersion         = "1.11.5"
@@ -125,33 +126,33 @@ var (
 	size            = fyne.NewSize(350, 700)
 
 	// Чтоб на десктопе отладить как будто это мобильная ОС
-	// cmd/c "set CROC_AS_MOBILE=1&crocgui.exe"
-	// CROC_AS_MOBILE=1 crocgui
+	// cmd/c "set CROC_AS_MOBILE=1&crocson.exe"
+	// CROC_AS_MOBILE=1 crocson
 	asMobile = os.Getenv("CROC_AS_MOBILE") != ""
 
 	// Чтоб отладить план Б при отсутствии com.android.DocumentsUI - сохранять протокол и полученные файлы в Download
-	// cmd/c "set CROC_NO_DIALOGS=1&crocgui.exe"
-	// CROC_NO_DIALOGS=1 crocgui
+	// cmd/c "set CROC_NO_DIALOGS=1&crocson.exe"
+	// CROC_NO_DIALOGS=1 crocson
 	noDialogs = os.Getenv("CROC_NO_DIALOGS") != ""
 
 	// Чтоб перезапускать приложение при завершении передачи
-	// cmd/c "set CROC_RESTART=1&crocgui.exe"
-	// CROC_RESTART=1 crocgui
+	// cmd/c "set CROC_RESTART=1&crocson.exe"
+	// CROC_RESTART=1 crocson
 	noRestart = os.Getenv("CROC_RESTART") == ""
 
 	// Чтоб на десктопе отладить копирование вместо переноса из кэша приёма
-	// cmd/c "set CROC_NO_RENAME=1&crocgui.exe"
-	// CROC_NO_RENAME=1 crocgui
+	// cmd/c "set CROC_NO_RENAME=1&crocson.exe"
+	// CROC_NO_RENAME=1 crocson
 	noRename = os.Getenv("CROC_NO_RENAME") != ""
 
 	// Чтоб отладить cdLocked
-	// cmd/c "set CROC_CD_LOCK=1&crocgui.exe"
-	// CROC_CD_LOCK=1 crocgui
+	// cmd/c "set CROC_CD_LOCK=1&crocson.exe"
+	// CROC_CD_LOCK=1 crocson
 	longCdLock = os.Getenv("CROC_CD_LOCK") != ""
 
 	// Чтоб отладить GUI
-	// cmd/c "set CROC_DEBUG=1&crocgui.exe"
-	// CROC_DEBUG=1 crocgui
+	// cmd/c "set CROC_DEBUG=1&crocson.exe"
+	// CROC_DEBUG=1 crocson
 	crocDebug = os.Getenv("CROC_DEBUG") != ""
 
 	pass        = os.Getenv("CROC_PASS")
@@ -265,7 +266,7 @@ func main() {
 	}
 
 	log.Info(tempDir)
-	w := a.NewWindow(CROC)
+	w := a.NewWindow(CS)
 
 	w.SetCloseIntercept(func() {
 		log.Debug("CloseIntercept")

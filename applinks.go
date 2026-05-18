@@ -290,7 +290,7 @@ func (qr *QR) Show() {
 // generateQR создает QR-код из текста
 func (qr *QR) generateQR() {
 	if qr.currentText == "" {
-		qr.currentText = fmt.Sprintf("%s://%s/%s/%s/releases", HTTPS, GH, FORKto, CG)
+		qr.currentText = fmt.Sprintf("%s://%s/%s/%s/releases", HTTPS, GH, FORKto, CS)
 	}
 
 	// Генерируем QR-код

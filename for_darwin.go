@@ -13,7 +13,7 @@ int preventSleep(int on) {
     if (on) {
         if (assertionID != 0) return 0; // уже включено
 
-        CFStringRef reasonForActivity = CFSTR("crocgui transfer in progress");
+        CFStringRef reasonForActivity = CFSTR("crocson transfer in progress");
         IOReturn success = IOPMAssertionCreateWithName(
             kIOPMAssertionTypeNoIdleSleep,
             kIOPMAssertionLevelOn,

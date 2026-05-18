@@ -2,9 +2,9 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1927"
-    android:versionName="1.11.56"
-    package="com.github.howeyc.crocgui">
+    android:versionCode="1929"
+    android:versionName="1.11.57"
+    package="com.github.abakum.crocson">
 
     <!--
     <uses-sdk
@@ -13,19 +13,19 @@
     -->
 
     <application
-        android:label="Croc">
+        android:label="crocson">
   
         <activity
             android:name="org.golang.app.GoNativeActivity"
             android:exported="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
-            android:label="Croc"
+            android:label="crocson"
             android:launchMode="singleTop"
             android:theme="@android:style/Theme.Light">
             
             <meta-data
                 android:name="android.app.lib_name"
-                android:value="croc" />
+                android:value="crocson" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

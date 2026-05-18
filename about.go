@@ -19,7 +19,7 @@ import (
 var metadata embed.FS
 
 //go:embed LICENSE
-var crocguiLicense string
+var crocsonLicense string
 
 //go:embed third-party-licenses.txt
 var thirdPartyLicenses string
@@ -38,7 +38,7 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	// acLicense := widget.NewAccordion()
 	var ais []*widget.AccordionItem
 
-	licenseReader := bytes.NewBufferString(crocguiLicense + thirdPartyLicenses)
+	licenseReader := bytes.NewBufferString(crocsonLicense + thirdPartyLicenses)
 	currentLicense := ""
 	currentLibrary := CROC
 	scanner := bufio.NewScanner(licenseReader)
@@ -82,12 +82,12 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	crocHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s", GH, SCHOLLZ, CROC), nil)
 	crocHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/latest", HTTPS, GH, SCHOLLZ, CROC))
 
-	fromHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s v%s_%d", GH, FORKfrom, "crocgui", FORKfromVersion, FORKfromBuild), nil)
-	fromHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/tag/v%s", HTTPS, GH, FORKfrom, "crocgui", FORKfromVersion))
+	fromHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s v%s_%d", GH, FORKfrom, CROCGUI, FORKfromVersion, FORKfromBuild), nil)
+	fromHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/tag/v%s", HTTPS, GH, FORKfrom, CROCGUI, FORKfromVersion))
 
 	ve, bu, errVb := VersionBuild(a, fyneApp)
-	oldHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s v%s_%d", GH, FORKto, CG, ve, bu), nil)
-	oldHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/tag/v%s", HTTPS, GH, FORKto, CG, ve))
+	oldHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s v%s_%d", GH, FORKto, CS, ve, bu), nil)
+	oldHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/tag/v%s", HTTPS, GH, FORKto, CS, ve))
 	oldHyperlink.Hidden = errVb != nil
 
 	newHyperlink := widget.NewHyperlink("", nil)
@@ -112,7 +112,7 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	)
 	OnSelectedTab[ABOUTi] = func() {
 		go func() {
-			latestVersion, err := Latest(FORKto, CG)
+			latestVersion, err := Latest(FORKto, CS)
 			currentVersion := fmt.Sprintf("v%s", ve)
 			log.Debugf("%s %s %v", currentVersion, latestVersion, err)
 
@@ -120,7 +120,7 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 				return
 			}
 			url := fmt.Sprintf("%s/%s/%s/releases/tag/%s",
-				GH, FORKto, CG, latestVersion)
+				GH, FORKto, CS, latestVersion)
 
 			fyne.Do(func() {
 				newHyperlink.SetText(url)

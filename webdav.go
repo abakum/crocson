@@ -499,7 +499,7 @@ func generateTLSConfig(addrs ...string) (*tls.Config, error) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{CG},
+			Organization: []string{CS},
 			CommonName:   sorted[0], // Детерминированный CN — первый из отсортированных
 		},
 		NotBefore:             notBefore,
