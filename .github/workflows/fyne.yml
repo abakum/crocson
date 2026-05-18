@@ -65,7 +65,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       - name: Checkout tools dependency
@@ -197,7 +197,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Linux dependencies required by Fyne (OpenGL, X11, etc.)
@@ -302,7 +302,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Fyne CLI
@@ -392,7 +392,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 5: Install Fyne CLI
@@ -509,7 +509,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
       # Step 6.1: Checkout Fyne CLI repository directly into workspace/tools
