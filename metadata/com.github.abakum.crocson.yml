@@ -101,7 +101,6 @@ Builds:
     ndk: r26d
 
 
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
+UpdateCheckMode: Static
 CurrentVersion: 1.11.59
 CurrentVersionCode: 1940
