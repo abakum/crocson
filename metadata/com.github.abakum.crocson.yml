@@ -38,7 +38,7 @@ Builds:
     prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1937"/' AndroidManifest.xml
     sudo:
-        - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -57,7 +57,7 @@ Builds:
     prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1938"/' AndroidManifest.xml
     sudo:
-        - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -76,7 +76,7 @@ Builds:
     prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1939"/' AndroidManifest.xml
     sudo:
-        - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -95,7 +95,7 @@ Builds:
     prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1940"/' AndroidManifest.xml
     sudo:
-        - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
