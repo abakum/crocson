@@ -118,13 +118,15 @@ jobs:
           git push
 
       - name: Create Merge Request to fdroiddata
-        if: ${{ secrets.GITLAB_TOKEN != '' }}
+        if: env.GITLAB_TOKEN != ''
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           VERSION="${{ steps.info.outputs.version }}"
           BUILD="${{ steps.info.outputs.build }}"
           APP_ID="com.github.abakum.crocson"
           BRANCH="crocson-v${VERSION}"
-          GL_TOKEN="${{ secrets.GITLAB_TOKEN }}"
+          GL_TOKEN="${{ env.GITLAB_TOKEN }}"
 
           # Ensure fork exists (idempotent — returns existing fork if already forked)
           curl -sf -X POST "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/fork" \
