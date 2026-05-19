@@ -995,7 +995,7 @@ jobs:
           with open(YML, 'r') as f:
               content = f.read()
 
-          content = re.sub(r'Builds:.*?(?=UpdateCheckMode:)', new_builds, content, flags=re.DOTALL)
+          content = re.sub(r'Builds:.*?(?=UpdateCheckMode:)', new_builds + "AutoUpdateMode: None\n", content, flags=re.DOTALL)
           content = re.sub(r'CurrentVersion: .*', f'CurrentVersion: {VERSION}', content)
           content = re.sub(r'CurrentVersionCode: .*', f'CurrentVersionCode: {BUILD + 3}', content)
 
