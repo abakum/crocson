@@ -164,10 +164,14 @@ jobs:
             cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/${APP_ID}/en-US/changelogs/${VC}.txt"
           done
 
+          # Create localized summary (required by make-summary-translatable.py)
+          mkdir -p "metadata/${APP_ID}/en-US"
+          echo "Easily and securely send things from one computer to another" > "metadata/${APP_ID}/en-US/summary.txt"
+
           # Commit and push to fork
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/en-US/changelogs/"
+          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/en-US/"
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force

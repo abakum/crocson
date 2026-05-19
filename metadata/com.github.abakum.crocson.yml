@@ -8,7 +8,6 @@ IssueTracker: https://github.com/abakum/crocson/issues
 Changelog: https://github.com/abakum/crocson/releases
 
 AutoName: crocson
-Summary: Easily and securely send things from one computer to another
 Description: |-
     croc is a tool that allows any two computers to simply and securely transfer files.
 
