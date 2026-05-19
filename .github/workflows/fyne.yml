@@ -975,7 +975,6 @@ jobs:
                   f"  - versionName: {VERSION}\n"
                   f"    versionCode: {vc}\n"
                   f"    commit: v{VERSION}\n"
-                  f"    arch: {arch}\n"
                   f"    prebuild: sed -i 's/^Build = .*/Build = {vc}/' FyneApp.toml\n"
                   f"      && sed -i 's/android:versionCode=\".*\"/android:versionCode=\"{vc}\"/' AndroidManifest.xml\n"
                   f"    build: |\n"
@@ -987,6 +986,7 @@ jobs:
                   f"        cd $HOME/build/com.github.abakum.crocson\n"
                   f"        fyne package -os {os_name} --release\n"
                   f'        zip -d crocson.apk "META-INF/*" || true\n'
+                  f"    output: crocson.apk\n"
                   f"    ndk: r26d\n"
               )
 
