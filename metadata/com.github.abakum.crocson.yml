@@ -41,7 +41,11 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        if [ -d "$GOPATH/tools" ]; then
+          cd $GOPATH/tools && git pull
+        else
+          git clone https://github.com/abakum/tools.git $GOPATH/tools
+        fi
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
@@ -60,7 +64,11 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        if [ -d "$GOPATH/tools" ]; then
+          cd $GOPATH/tools && git pull
+        else
+          git clone https://github.com/abakum/tools.git $GOPATH/tools
+        fi
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
@@ -79,7 +87,11 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        if [ -d "$GOPATH/tools" ]; then
+          cd $GOPATH/tools && git pull
+        else
+          git clone https://github.com/abakum/tools.git $GOPATH/tools
+        fi
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
@@ -98,7 +110,11 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        if [ -d "$GOPATH/tools" ]; then
+          cd $GOPATH/tools && git pull
+        else
+          git clone https://github.com/abakum/tools.git $GOPATH/tools
+        fi
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
