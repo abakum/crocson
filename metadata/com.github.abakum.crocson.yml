@@ -41,6 +41,7 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -49,7 +50,7 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/arm64 --release
+        fyne package -os android/arm64 $FYNE_OPTS
         zip -d crocson.apk "META-INF/*" || true
     output: crocson.apk
     ndk: r26d
@@ -64,6 +65,7 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -72,7 +74,7 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/arm --release
+        fyne package -os android/arm $FYNE_OPTS
         zip -d crocson.apk "META-INF/*" || true
     output: crocson.apk
     ndk: r26d
@@ -87,6 +89,7 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -95,7 +98,7 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/amd64 --release
+        fyne package -os android/amd64 $FYNE_OPTS
         zip -d crocson.apk "META-INF/*" || true
     output: crocson.apk
     ndk: r26d
@@ -110,6 +113,7 @@ Builds:
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -118,7 +122,7 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/386 --release
+        fyne package -os android/386 $FYNE_OPTS
         zip -d crocson.apk "META-INF/*" || true
     output: crocson.apk
     ndk: r26d
