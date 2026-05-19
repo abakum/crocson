@@ -904,3 +904,172 @@ jobs:
         env:
           # Token required to create the release
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-fdroid:
+    needs: [create-release]
+    if: github.event.inputs.build_type != 'snapshot' && needs.create-release.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version info
+        id: info
+        run: |
+          VERSION=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          BUILD=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION, Build: $BUILD"
+
+      - name: Check changelog source exists
+        run: |
+          if [ ! -f "changelogs/${{ steps.info.outputs.version }}.txt" ]; then
+            echo "ERROR: changelogs/${{ steps.info.outputs.version }}.txt not found"
+            echo "Create it first with the changelog text for this version."
+            exit 1
+          fi
+          echo "Changelog source found:"
+          cat "changelogs/${{ steps.info.outputs.version }}.txt"
+
+      - name: Check version not already in recipe
+        run: |
+          YML="metadata/com.github.abakum.crocson.yml"
+          if grep -q "commit: v${{ steps.info.outputs.version }}" "$YML"; then
+            echo "ERROR: v${{ steps.info.outputs.version }} already exists in $YML"
+            echo "This version has already been processed. Bump Version/Build in FyneApp.toml first."
+            exit 1
+          fi
+          echo "Version ${{ steps.info.outputs.version }} not found in recipe, proceeding."
+
+      - name: Generate changelogs for all ABIs
+        run: |
+          BUILD=${{ steps.info.outputs.build }}
+          for i in 0 1 2 3; do
+            VC=$((BUILD + i))
+            mkdir -p "metadata/en-US/changelogs"
+            cp "changelogs/${{ steps.info.outputs.version }}.txt" "metadata/en-US/changelogs/${VC}.txt"
+            echo "Created metadata/en-US/changelogs/${VC}.txt"
+          done
+
+      - name: Update YAML recipe
+        run: |
+          python3 << 'PYEOF'
+          import re
+
+          VERSION = "${{ steps.info.outputs.version }}"
+          BUILD = int("${{ steps.info.outputs.build }}")
+          YML = "metadata/com.github.abakum.crocson.yml"
+
+          ABIS = [
+              ("arm64-v8a",   "android/arm64", 0),
+              ("armeabi-v7a", "android/arm",   1),
+              ("x86_64",      "android/amd64", 2),
+              ("x86",         "android/386",   3),
+          ]
+
+          builds_lines = ["Builds:"]
+          for arch, os_name, offset in ABIS:
+              vc = BUILD + offset
+              builds_lines.append(
+                  f"  - versionName: {VERSION}\n"
+                  f"    versionCode: {vc}\n"
+                  f"    commit: v{VERSION}\n"
+                  f"    arch: {arch}\n"
+                  f"    prebuild: sed -i 's/^Build = .*/Build = {vc}/' FyneApp.toml\n"
+                  f"      && sed -i 's/android:versionCode=\".*\"/android:versionCode=\"{vc}\"/' AndroidManifest.xml\n"
+                  f"    build: |\n"
+                  f"        export GOPATH=$HOME/go\n"
+                  f"        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH\n"
+                  f"        git clone https://github.com/abakum/tools.git $GOPATH/tools\n"
+                  f"        cd $GOPATH/tools/cmd/fyne\n"
+                  f"        go install\n"
+                  f"        cd $HOME/build/com.github.abakum.crocson\n"
+                  f"        fyne package -os {os_name} --release\n"
+                  f'        zip -d crocson.apk "META-INF/*" || true\n'
+                  f"    ndk: r26d\n"
+              )
+
+          new_builds = "\n".join(builds_lines) + "\n\n"
+
+          with open(YML, 'r') as f:
+              content = f.read()
+
+          content = re.sub(r'Builds:.*?(?=AutoUpdateMode:)', new_builds, content, flags=re.DOTALL)
+          content = re.sub(r'CurrentVersion: .*', f'CurrentVersion: {VERSION}', content)
+          content = re.sub(r'CurrentVersionCode: .*', f'CurrentVersionCode: {BUILD + 3}', content)
+
+          with open(YML, 'w') as f:
+              f.write(content)
+
+          print("YAML updated")
+          PYEOF
+
+          echo "=== Updated YAML ==="
+          cat "metadata/com.github.abakum.crocson.yml"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add metadata/ changelogs/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Update F-Droid metadata for v${{ steps.info.outputs.version }}"
+          git push
+
+      - name: Create Merge Request to fdroiddata
+        if: env.GITLAB_TOKEN != ''
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          VERSION="${{ steps.info.outputs.version }}"
+          BUILD="${{ steps.info.outputs.build }}"
+          APP_ID="com.github.abakum.crocson"
+          BRANCH="crocson-v${VERSION}"
+          GL_TOKEN="${{ env.GITLAB_TOKEN }}"
+
+          curl -sf -X POST "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/fork" \
+            -H "PRIVATE-TOKEN: ${GL_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{}' > /dev/null || echo "Fork already exists or created"
+
+          git clone --depth=1 "https://gitlab.com/fdroid/fdroiddata.git" /tmp/fdroiddata
+          cd /tmp/fdroiddata
+          git remote add fork "https://oauth2:${GL_TOKEN}@gitlab.com/abakum/fdroiddata.git"
+
+          git checkout -b "$BRANCH"
+
+          cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
+
+          mkdir -p "metadata/en-US/changelogs"
+          for i in 0 1 2 3; do
+            VC=$((BUILD + i))
+            cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/en-US/changelogs/${VC}.txt"
+          done
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "metadata/${APP_ID}.yml" "metadata/en-US/changelogs/"
+          git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
+          git commit -m "${APP_ID}: update to v${VERSION}"
+          git push fork "$BRANCH"
+
+          BODY=$(cat << JSONEOF
+          {
+            "source_branch": "${BRANCH}",
+            "target_branch": "master",
+            "target_project_id": "fdroid%2Ffdroiddata",
+            "title": "${APP_ID}: update to v${VERSION}",
+            "description": "Automated metadata update for ${APP_ID} v${VERSION}.\n\nGenerated by [crocson workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          }
+          JSONEOF
+          )
+
+          RESPONSE=$(curl -s -X POST \
+            "https://gitlab.com/api/v4/projects/abakum%2Ffdroiddata/merge_requests" \
+            -H "PRIVATE-TOKEN: ${GL_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+
+          MR_URL=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('web_url', d.get('message','ERROR')))" 2>/dev/null || echo "FAILED")
+          echo "Merge Request: $MR_URL"
