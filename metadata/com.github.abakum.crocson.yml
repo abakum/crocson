@@ -100,6 +100,7 @@ Builds:
     output: crocson.apk
     ndk: r26d
 
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 1.11.59
