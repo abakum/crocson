@@ -9,23 +9,23 @@ Changelog: https://github.com/abakum/crocson/releases
 
 AutoName: crocson
 Description: |-
-    croc is a tool that allows any two computers to simply and securely transfer files.
+  croc is a tool that allows any two computers to simply and securely transfer files.
 
-    Features:
-    - allows any two computers to transfer data (using a relay)
-    - provides end-to-end encryption (using PAKE)
-    - enables easy cross-platform transfers (Windows, Linux, macOS)
-    - allows multiple file transfers
-    - local server or port-forwarding not needed
-    - ipv6-first with ipv4 fallback
+  Features:
+  - allows any two computers to transfer data (using a relay)
+  - provides end-to-end encryption (using PAKE)
+  - enables easy cross-platform transfers (Windows, Linux, macOS)
+  - allows multiple file transfers
+  - local server or port-forwarding not needed
+  - ipv6-first with ipv4 fallback
 
-    This interface allows you to:
-    - use one-time passwords with a secret from the field or from the CROC_SECRET environment variable
-    - for Windows, Linux, and macOS, use drag-and-drop or the command line in addition to file or directory selection dialogs
-    - for Android, use the "Share" menu from file managers for one or multiple files or "Open with" in addition to file or directory selection dialogs
-    - for Android, send files without nested directories, and receive even nested directories, saving them into .zip files
-    - view the protocol in color, albeit not as fast as in the console
-    - for Android, view the protocol via adb logcat -s croc
+  This interface allows you to:
+  - use one-time passwords with a secret from the field or from the CROC_SECRET environment variable
+  - for Windows, Linux, and macOS, use drag-and-drop or the command line in addition to file or directory selection dialogs
+  - for Android, use the "Share" menu from file managers for one or multiple files or "Open with" in addition to file or directory selection dialogs
+  - for Android, send files without nested directories, and receive even nested directories, saving them into .zip files
+  - view the protocol in color, albeit not as fast as in the console
+  - for Android, view the protocol via adb logcat -s croc
 
 RepoType: git
 Repo: https://github.com/abakum/crocson
@@ -34,14 +34,13 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -50,22 +49,20 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/arm64 $FYNE_OPTS
+        fyne package -os android/arm64 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1938
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -74,22 +71,20 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/arm $FYNE_OPTS
+        fyne package -os android/arm --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1939
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -98,22 +93,20 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/amd64 $FYNE_OPTS
+        fyne package -os android/amd64 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1940
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-        export FYNE_OPTS="--release"
         if [ -d "$GOPATH/tools" ]; then
           cd $GOPATH/tools && git pull
         else
@@ -122,11 +115,9 @@ Builds:
         cd $GOPATH/tools/cmd/fyne
         go install
         cd $HOME/build/com.github.abakum.crocson
-        fyne package -os android/386 $FYNE_OPTS
+        fyne package -os android/386 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
-
 
 AutoUpdateMode: None
 UpdateCheckMode: Static
