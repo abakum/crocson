@@ -32,12 +32,12 @@ RepoType: git
 Repo: https://github.com/abakum/crocson
 
 Builds:
-  - versionName: 1.11.58
-    versionCode: 1933
-    commit: v1.11.58
+  - versionName: 1.11.59
+    versionCode: 1937
+    commit: v1.11.59
     arch: arm64-v8a
-    prebuild: sed -i 's/^Build = .*/Build = 1933/' FyneApp.toml
-      && sed -i 's/android:versionCode=".*"/android:versionCode="1933"/' AndroidManifest.xml
+    prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1937"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -49,12 +49,12 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.58
-    versionCode: 1934
-    commit: v1.11.58
+  - versionName: 1.11.59
+    versionCode: 1938
+    commit: v1.11.59
     arch: armeabi-v7a
-    prebuild: sed -i 's/^Build = .*/Build = 1934/' FyneApp.toml
-      && sed -i 's/android:versionCode=".*"/android:versionCode="1934"/' AndroidManifest.xml
+    prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1938"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -66,12 +66,12 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.58
-    versionCode: 1935
-    commit: v1.11.58
+  - versionName: 1.11.59
+    versionCode: 1939
+    commit: v1.11.59
     arch: x86_64
-    prebuild: sed -i 's/^Build = .*/Build = 1935/' FyneApp.toml
-      && sed -i 's/android:versionCode=".*"/android:versionCode="1935"/' AndroidManifest.xml
+    prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1939"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -83,12 +83,12 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.58
-    versionCode: 1936
-    commit: v1.11.58
+  - versionName: 1.11.59
+    versionCode: 1940
+    commit: v1.11.59
     arch: x86
-    prebuild: sed -i 's/^Build = .*/Build = 1936/' FyneApp.toml
-      && sed -i 's/android:versionCode=".*"/android:versionCode="1936"/' AndroidManifest.xml
+    prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1940"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -103,5 +103,5 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.11.58
-CurrentVersionCode: 1936
+CurrentVersion: 1.11.59
+CurrentVersionCode: 1940
