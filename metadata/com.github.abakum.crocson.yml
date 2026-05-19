@@ -32,9 +32,9 @@ RepoType: git
 Repo: https://github.com/abakum/crocson
 
 Builds:
-  - versionName: 1.11.56
+  - versionName: 1.11.57
     versionCode: 1932
-    commit: v1.11.56
+    commit: v1.11.57
     arch: arm64-v8a
     prebuild: sed -i 's/^Build = .*/Build = 1932/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1932"/' AndroidManifest.xml
@@ -49,9 +49,9 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.56
+  - versionName: 1.11.57
     versionCode: 1933
-    commit: v1.11.56
+    commit: v1.11.57
     arch: armeabi-v7a
     prebuild: sed -i 's/^Build = .*/Build = 1933/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1933"/' AndroidManifest.xml
@@ -66,9 +66,9 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.56
+  - versionName: 1.11.57
     versionCode: 1934
-    commit: v1.11.56
+    commit: v1.11.57
     arch: x86_64
     prebuild: sed -i 's/^Build = .*/Build = 1934/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1934"/' AndroidManifest.xml
@@ -83,9 +83,9 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.56
+  - versionName: 1.11.57
     versionCode: 1935
-    commit: v1.11.56
+    commit: v1.11.57
     arch: x86
     prebuild: sed -i 's/^Build = .*/Build = 1935/' FyneApp.toml
       && sed -i 's/android:versionCode=".*"/android:versionCode="1935"/' AndroidManifest.xml
@@ -100,7 +100,8 @@ Builds:
         zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.11.56
+CurrentVersion: 1.11.57
 CurrentVersionCode: 1935
