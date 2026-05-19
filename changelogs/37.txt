@@ -1,3 +1,0 @@
-setting to hide logo
-update to croc 10.0.12
-update to fyne 2.5.1

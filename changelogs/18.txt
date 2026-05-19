@@ -1,3 +1,0 @@
-- Send file list scrolling to allow for many files to be sent at once
-- Receive code can be entered with spaces in place of dashes
-- Update to croc 9.3.0

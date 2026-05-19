@@ -15,7 +15,7 @@ import (
 	log "github.com/schollz/logger"
 )
 
-//go:embed metadata
+//go:embed metadata/en-US/full_description.txt metadata/ja-JP/full_description.txt metadata/ru-RU/full_description.txt metadata/tr-TR/full_description.txt metadata/zh-CN/full_description.txt metadata/en-US/images/featureGraphic.png
 var metadata embed.FS
 
 //go:embed LICENSE

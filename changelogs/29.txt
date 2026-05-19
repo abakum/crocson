@@ -1,2 +1,0 @@
-- Added bold font for JP
-- Update to fyne 2.3.1

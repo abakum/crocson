@@ -1,4 +1,0 @@
-- Allow user to change theme
-- Update to show filename for content:// URI on android
-- Save defaults on start so settings tab also shows defaults
-- Add license info

@@ -1,2 +1,0 @@
-- Add zh-HK translation
-- Update to fyne 2.3.4

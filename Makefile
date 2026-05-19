@@ -75,10 +75,7 @@ tags:
 	fi
 	@echo "Reset build tags for gopls press Ctrl+Shift+P Go: Restart Language Server"
 
-all: android
-
-android: main.go send.go recv.go settings.go theme.go about.go AndroidManifest.xml fdroid-build.sh
-	ANDROID_HOME=~/android bash fdroid-build.sh test
+all: arm64
 
 clean:
 	go clean
@@ -156,17 +153,6 @@ cert:
 		-n "croc" \
 		-in cmd/cert/cert.exe \
 		-out cert.exe
-
-trust:
-	GOOS=windows go build -ldflags="-s -w" -o tmp_build.exe ./cmd/I_trust_the_signer_of_this/
-	rm ./cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe || true
-	osslsigncode sign \
-		-pkcs12 croc.p12 \
-		-pass "$(CERT_PASS)" \
-		-n "croc" \
-		-in tmp_build.exe \
-		-out ./cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
-	rm tmp_build.exe
 
 links:
 	adb shell pm get-app-links com.github.abakum.crocson

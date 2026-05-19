@@ -1,2 +1,0 @@
-- Update to croc 9.5.0
-- Upload speed throttle setting

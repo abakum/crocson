@@ -161,8 +161,6 @@ jobs:
           path: |
             ${{ github.workspace }}/workspace/crocson/crocson.exe
             ${{ github.workspace }}/workspace/crocson/crocson.appx
-            ${{ github.workspace }}/workspace/crocson/croc.cer
-            ${{ github.workspace }}/workspace/crocson/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
           retention-days: 7
           if-no-files-found: error
           
@@ -855,7 +853,6 @@ jobs:
           # Upload all files from the prepared release-assets directory
           files: |
             release-assets/*
-            workspace/crocson/cmd/I_trust_the_signer_of_this/I_trust_the_signer_of_this.exe
           # Body text for the release description
           body: |
             ## crocson ${{ steps.get_version.outputs.release_version && format('v{0}', steps.get_version.outputs.release_version) }}
@@ -864,7 +861,7 @@ jobs:
             App Version read from `FyneApp.toml`.
 
             ### Included Platforms & Files:
-            - **Windows (x86_64)**: `crocson.exe`, `crocson.appx`, `croc.cer`, `I_trust_the_signer_of_this.exe`
+            - **Windows (x86_64)**: `crocson.exe`, `crocson.appx`
             - **Linux (x86_64)**: `.tar.xz` archive and `.deb` package  
             - **macOS**: `.dmg` files for Apple Silicon (`crocson-arm64.dmg`) and Intel (`crocson-amd64.dmg`)
             - **Android**: APK files for ARM64, ARM, x86_64, x86 architectures
@@ -875,8 +872,7 @@ jobs:
             - **Linux**: run once `brew install abakum/tap/crocson` then `brew upgrade crocson`
             - **Linux**: run `sudo dpkg -i crocson_*_amd64.deb`
             - **Windows**: run once `scoop bucket add abakum https://github.com/abakum/homebrew-tap && scoop install crocson` then `scoop update crocson`
-            - **Windows**: run once as Administrator `certutil -addstore -f TrustedPeople croc.cer` then as user `crocson.appx`
-            - **Windows**: run once as user `I_trust_the_signer_of_this.exe` then `crocson.appx`
+            - **Windows**: run once as user [I_trust_the_signer_of_this.exe](https://github.com/abakum/I_trust_the_signer_of_this/releases) then `crocson.appx`
 
             ### Manual Installation:
 
@@ -904,7 +900,7 @@ jobs:
             - Homebrew installations on Linux require [Homebrew for Linux](https://docs.brew.sh/Homebrew-on-Linux)
             - After manual installation, you may need to log out and back in for desktop menu integration
             - Android APKs are developer-signed and can be directly sideloaded or installed via ADB
-            - Since `crocson.appx` is signed with a self-signed certificate, you must either manually install `croc.cer` into the **Trusted People** store for all users, or simply run `I_trust_the_signer_of_this.exe`, which will perform this action automatically. 
+            - Since `crocson.appx` is signed with a self-signed certificate, run [I_trust_the_signer_of_this.exe](https://github.com/abakum/I_trust_the_signer_of_this/releases) to install the certificate into the **Trusted People** store automatically.
         env:
           # Token required to create the release
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,106 @@
+Categories:
+  - Internet
+License: ISC
+AuthorName: Konstantin Abakumov
+AuthorEmail: koka.abakum@gmail.com
+SourceCode: https://github.com/abakum/crocson
+IssueTracker: https://github.com/abakum/crocson/issues
+Changelog: https://github.com/abakum/crocson/releases
+
+AutoName: crocson
+Summary: Easily and securely send things from one computer to another
+Description: |-
+    croc is a tool that allows any two computers to simply and securely transfer files.
+
+    Features:
+    - allows any two computers to transfer data (using a relay)
+    - provides end-to-end encryption (using PAKE)
+    - enables easy cross-platform transfers (Windows, Linux, macOS)
+    - allows multiple file transfers
+    - local server or port-forwarding not needed
+    - ipv6-first with ipv4 fallback
+
+    This interface allows you to:
+    - use one-time passwords with a secret from the field or from the CROC_SECRET environment variable
+    - for Windows, Linux, and macOS, use drag-and-drop or the command line in addition to file or directory selection dialogs
+    - for Android, use the "Share" menu from file managers for one or multiple files or "Open with" in addition to file or directory selection dialogs
+    - for Android, send files without nested directories, and receive even nested directories, saving them into .zip files
+    - view the protocol in color, albeit not as fast as in the console
+    - for Android, view the protocol via adb logcat -s croc
+
+RepoType: git
+Repo: https://github.com/abakum/crocson
+
+Builds:
+  - versionName: 1.11.57
+    versionCode: 1932
+    commit: v1.11.57
+    arch: arm64-v8a
+    prebuild: sed -i 's/^Build = .*/Build = 1932/' FyneApp.toml
+      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1932.txt
+    build: |
+        export GOPATH=$HOME/go
+        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        cd $GOPATH/tools/cmd/fyne
+        go install
+        cd $HOME/build/com.github.abakum.crocson
+        fyne package -os android/arm64 --release
+        zip -d crocson.apk "META-INF/*" || true
+    ndk: r26d
+
+  - versionName: 1.11.57
+    versionCode: 1933
+    commit: v1.11.57
+    arch: armeabi-v7a
+    prebuild: sed -i 's/^Build = .*/Build = 1933/' FyneApp.toml
+      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1933.txt
+    build: |
+        export GOPATH=$HOME/go
+        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        cd $GOPATH/tools/cmd/fyne
+        go install
+        cd $HOME/build/com.github.abakum.crocson
+        fyne package -os android/arm --release
+        zip -d crocson.apk "META-INF/*" || true
+    ndk: r26d
+
+  - versionName: 1.11.57
+    versionCode: 1934
+    commit: v1.11.57
+    arch: x86_64
+    prebuild: sed -i 's/^Build = .*/Build = 1934/' FyneApp.toml
+      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1934.txt
+    build: |
+        export GOPATH=$HOME/go
+        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        cd $GOPATH/tools/cmd/fyne
+        go install
+        cd $HOME/build/com.github.abakum.crocson
+        fyne package -os android/amd64 --release
+        zip -d crocson.apk "META-INF/*" || true
+    ndk: r26d
+
+  - versionName: 1.11.57
+    versionCode: 1935
+    commit: v1.11.57
+    arch: x86
+    prebuild: sed -i 's/^Build = .*/Build = 1935/' FyneApp.toml
+      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1935.txt
+    build: |
+        export GOPATH=$HOME/go
+        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+        git clone https://github.com/abakum/tools.git $GOPATH/tools
+        cd $GOPATH/tools/cmd/fyne
+        go install
+        cd $HOME/build/com.github.abakum.crocson
+        fyne package -os android/386 --release
+        zip -d crocson.apk "META-INF/*" || true
+    ndk: r26d
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.11.57
+CurrentVersionCode: 1935

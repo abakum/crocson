@@ -94,10 +94,9 @@ const (
 	LENi
 )
 
-//go:embed images/featureGraphic.png
-var textlogobytes []byte
+var textlogobytes, _ = metadata.ReadFile("metadata/en-US/images/featureGraphic.png")
 
-//go:embed images/icon.png
+//go:embed Icon.png
 var iconData []byte // 512x512 PNG иконка
 
 var (
