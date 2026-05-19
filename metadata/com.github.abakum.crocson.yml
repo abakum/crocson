@@ -37,7 +37,7 @@ Builds:
     commit: v1.11.57
     arch: arm64-v8a
     prebuild: sed -i 's/^Build = .*/Build = 1932/' FyneApp.toml
-      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1932.txt
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1932"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -54,7 +54,7 @@ Builds:
     commit: v1.11.57
     arch: armeabi-v7a
     prebuild: sed -i 's/^Build = .*/Build = 1933/' FyneApp.toml
-      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1933.txt
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1933"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -71,7 +71,7 @@ Builds:
     commit: v1.11.57
     arch: x86_64
     prebuild: sed -i 's/^Build = .*/Build = 1934/' FyneApp.toml
-      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1934.txt
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1934"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -88,7 +88,7 @@ Builds:
     commit: v1.11.57
     arch: x86
     prebuild: sed -i 's/^Build = .*/Build = 1935/' FyneApp.toml
-      && cp changelogs/1.11.57.txt metadata/en-US/changelogs/1935.txt
+      && sed -i 's/android:versionCode=".*"/android:versionCode="1935"/' AndroidManifest.xml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
