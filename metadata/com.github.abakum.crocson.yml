@@ -34,10 +34,10 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -51,16 +51,15 @@ Builds:
         cd $HOME/build/com.github.abakum.crocson
         fyne package -os android/arm64 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1938
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -74,16 +73,15 @@ Builds:
         cd $HOME/build/com.github.abakum.crocson
         fyne package -os android/arm --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1939
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -97,16 +95,15 @@ Builds:
         cd $HOME/build/com.github.abakum.crocson
         fyne package -os android/amd64 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1940
     commit: v1.11.59
-    prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
+    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    output: crocson.apk
     forcevercode: true
-    sudo:
-      - "curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local"
+    prebuild: sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
     build: |
         export GOPATH=$HOME/go
         export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
@@ -120,9 +117,7 @@ Builds:
         cd $HOME/build/com.github.abakum.crocson
         fyne package -os android/386 --release
         zip -d crocson.apk "META-INF/*" || true
-    output: crocson.apk
     ndk: r26d
-
 
 AutoUpdateMode: None
 UpdateCheckMode: Static

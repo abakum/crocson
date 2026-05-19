@@ -85,10 +85,10 @@ jobs:
                   f"  - versionName: {VERSION}\n"
                   f"    versionCode: {vc}\n"
                   f"    commit: v{VERSION}\n"
-                  f"    prebuild: sed -i 's/^Build = .*/Build = {vc}/' FyneApp.toml\n"
+                  f"    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local\n"
+                  f"    output: crocson.apk\n"
                   f"    forcevercode: true\n"
-                  f"    sudo:\n"
-                  f"      - \"curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local\"\n"
+                  f"    prebuild: sed -i 's/^Build = .*/Build = {vc}/' FyneApp.toml\n"
                   f"    build: |\n"
                   f"        export GOPATH=$HOME/go\n"
                   f"        export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH\n"
@@ -102,7 +102,6 @@ jobs:
                   f"        cd $HOME/build/com.github.abakum.crocson\n"
                   f"        fyne package -os {os_name} --release\n"
                   f'        zip -d crocson.apk "META-INF/*" || true\n'
-                  f"    output: crocson.apk\n"
                   f"    ndk: r26d\n"
               )
 
