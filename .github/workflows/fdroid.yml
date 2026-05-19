@@ -2,6 +2,15 @@ name: Update F-Droid Metadata
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force re-upload to GitLab even if version already in recipe'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: write
@@ -33,6 +42,7 @@ jobs:
           cat "changelogs/${{ steps.info.outputs.version }}.txt"
 
       - name: Check version not already in recipe
+        if: github.event.inputs.force != 'true'
         run: |
           YML="metadata/com.github.abakum.crocson.yml"
           if grep -q "commit: v${{ steps.info.outputs.version }}" "$YML"; then
@@ -139,8 +149,8 @@ jobs:
           cd /tmp/fdroiddata
           git remote add fork "https://oauth2:${GL_TOKEN}@gitlab.com/abakum/fdroiddata.git"
 
-          # Create and checkout new branch
-          git checkout -b "$BRANCH"
+          # Create and checkout new branch (or reset if exists)
+          git checkout -b "$BRANCH" || git checkout "$BRANCH"
 
           # Copy recipe
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
@@ -158,9 +168,15 @@ jobs:
           git add "metadata/${APP_ID}.yml" "metadata/en-US/changelogs/"
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
-          git push fork "$BRANCH"
+          git push fork "$BRANCH" --force
 
-          # Create MR from fork to upstream via GitLab API
+          # Create MR from fork to upstream via GitLab API (skip in force mode — MR already exists)
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "Force mode: skipping MR creation (branch force-pushed to existing MR)"
+            echo "MR: https://gitlab.com/fdroid/fdroiddata/-/merge_requests?search=${APP_ID}+${VERSION}"
+            exit 0
+          fi
+
           BODY=$(cat << JSONEOF
           {
             "source_branch": "${BRANCH}",
