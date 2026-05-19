@@ -1041,15 +1041,15 @@ jobs:
 
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
 
-          mkdir -p "metadata/en-US/changelogs"
+          mkdir -p "metadata/${APP_ID}/en-US/changelogs"
           for i in 0 1 2 3; do
             VC=$((BUILD + i))
-            cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/en-US/changelogs/${VC}.txt"
+            cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/${APP_ID}/en-US/changelogs/${VC}.txt"
           done
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "metadata/${APP_ID}.yml" "metadata/en-US/changelogs/"
+          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/en-US/changelogs/"
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH"
