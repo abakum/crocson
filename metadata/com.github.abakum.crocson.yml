@@ -28,6 +28,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -50,6 +51,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -72,6 +74,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -94,6 +97,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
       - go install .
       - cd -
       - rm -rf /tmp/tools
