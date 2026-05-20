@@ -89,6 +89,7 @@ jobs:
               f"      - export PATH=$GOPATH/bin:$PATH\n"
               f"      - git clone https://github.com/abakum/tools /tmp/tools\n"
               f"      - cd /tmp/tools/cmd/fyne\n"
+              f"      - git checkout 95e3874065474636a130efaea55a13dc45907713\n"
               f"      - go install .\n"
               f"      - cd -\n"
               f"      - rm -rf /tmp/tools\n"
