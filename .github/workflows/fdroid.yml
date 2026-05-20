@@ -138,6 +138,7 @@ jobs:
           # Clone upstream (always fresh master), add fork as push remote
           git clone --depth=1 "https://gitlab.com/fdroid/fdroiddata.git" /tmp/fdroiddata
           cd /tmp/fdroiddata
+          git fetch --unshallow
           git remote add fork "https://oauth2:${GL_TOKEN}@gitlab.com/abakum/fdroiddata.git"
 
           # Create and checkout new branch (or reset if exists)
