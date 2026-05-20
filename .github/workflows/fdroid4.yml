@@ -104,7 +104,7 @@ jobs:
                   f"    ndk: r26d\n"
               )
 
-          new_builds = "\n".join(builds_lines) + "\n\n"
+          new_builds = "\n".join(builds_lines) + "\n"
 
           with open(YML, 'r') as f:
               content = f.read()
