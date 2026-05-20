@@ -17,7 +17,6 @@ Builds:
     versionCode: 1937
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
     output: crocson.apk
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
       - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="1937"/' AndroidManifest.xml
@@ -33,70 +32,7 @@ Builds:
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-  - versionName: 1.11.59
-    versionCode: 1938
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get update && apt-get install -y golang-go
-    output: crocson.apk
-    forcevercode: true
-    prebuild:
-      - sed -i 's/^Build = .*/Build = 1938/' FyneApp.toml
-      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="1938"/' AndroidManifest.xml
-      - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
-    build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
-      - cd $GOPATH/tools/cmd/fyne
-      - go install
-      - cd $HOME/build/com.github.abakum.crocson
-      - fyne package -os android/arm --release
-      - zip -d crocson.apk "META-INF/*" || true
-    ndk: r26d
-
-  - versionName: 1.11.59
-    versionCode: 1939
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get update && apt-get install -y golang-go
-    output: crocson.apk
-    forcevercode: true
-    prebuild:
-      - sed -i 's/^Build = .*/Build = 1939/' FyneApp.toml
-      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="1939"/' AndroidManifest.xml
-      - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
-    build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
-      - cd $GOPATH/tools/cmd/fyne
-      - go install
-      - cd $HOME/build/com.github.abakum.crocson
-      - fyne package -os android/amd64 --release
-      - zip -d crocson.apk "META-INF/*" || true
-    ndk: r26d
-
-  - versionName: 1.11.59
-    versionCode: 1940
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get update && apt-get install -y golang-go
-    output: crocson.apk
-    forcevercode: true
-    prebuild:
-      - sed -i 's/^Build = .*/Build = 1940/' FyneApp.toml
-      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="1940"/' AndroidManifest.xml
-      - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
-    build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
-      - cd $GOPATH/tools/cmd/fyne
-      - go install
-      - cd $HOME/build/com.github.abakum.crocson
-      - fyne package -os android/386 --release
-      - zip -d crocson.apk "META-INF/*" || true
-    ndk: r26d
-
 AutoUpdateMode: None
 UpdateCheckMode: Static
 CurrentVersion: 1.11.59
-CurrentVersionCode: 1940
+CurrentVersionCode: 1937
