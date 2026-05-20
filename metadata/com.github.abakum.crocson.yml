@@ -16,7 +16,6 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
     output: crocson.apk
     forcevercode: true
     prebuild:
@@ -25,7 +24,7 @@ Builds:
       - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+      - export PATH=$GOPATH/bin:$PATH
       - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
       - cd $GOPATH/tools/cmd/fyne
       - go install
@@ -37,7 +36,7 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1938
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    sudo: apt-get update && apt-get install -y golang-go
     output: crocson.apk
     forcevercode: true
     prebuild:
@@ -46,7 +45,7 @@ Builds:
       - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+      - export PATH=$GOPATH/bin:$PATH
       - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
       - cd $GOPATH/tools/cmd/fyne
       - go install
@@ -58,7 +57,7 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1939
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    sudo: apt-get update && apt-get install -y golang-go
     output: crocson.apk
     forcevercode: true
     prebuild:
@@ -67,7 +66,7 @@ Builds:
       - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+      - export PATH=$GOPATH/bin:$PATH
       - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
       - cd $GOPATH/tools/cmd/fyne
       - go install
@@ -79,7 +78,7 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1940
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+    sudo: apt-get update && apt-get install -y golang-go
     output: crocson.apk
     forcevercode: true
     prebuild:
@@ -88,7 +87,7 @@ Builds:
       - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+      - export PATH=$GOPATH/bin:$PATH
       - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
       - cd $GOPATH/tools/cmd/fyne
       - go install
