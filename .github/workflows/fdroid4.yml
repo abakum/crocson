@@ -129,7 +129,7 @@ jobs:
           with open(YML, 'r') as f:
               content = f.read()
 
-          content = re.sub(r'Builds:.*', new_builds + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n", content, flags=re.DOTALL)
+          content = re.sub(r'Builds:.*', lambda m: new_builds + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n", content, flags=re.DOTALL)
 
           with open(YML, 'w') as f:
               f.write(content)
