@@ -16,7 +16,7 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get update && apt-get install -y golang-go
+    sudo: apt-get install -y golang-go
     output: crocson.apk
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
@@ -26,7 +26,9 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
-      - (cd /tmp/tools/cmd/fyne && go install .)
+      - cd /tmp/tools/cmd/fyne
+      - go install .
+      - cd -
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
