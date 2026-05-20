@@ -26,10 +26,11 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
+      - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
       - go install .
       - cd -
+      - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
@@ -47,10 +48,11 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
+      - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
       - go install .
       - cd -
+      - rm -rf /tmp/tools
       - fyne package -os android/arm --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
@@ -68,10 +70,11 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
+      - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
       - go install .
       - cd -
+      - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
@@ -89,10 +92,11 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
+      - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
       - go install .
       - cd -
+      - rm -rf /tmp/tools
       - fyne package -os android/386 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
