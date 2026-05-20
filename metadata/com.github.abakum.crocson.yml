@@ -25,7 +25,12 @@ Builds:
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - go run tools/cmd/fyne/. package -os android/arm64 --release
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - cd tools/cmd/fyne
+      - go install .
+      - cd -
+      - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -41,7 +46,12 @@ Builds:
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - go run tools/cmd/fyne/. package -os android/arm --release
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - cd tools/cmd/fyne
+      - go install .
+      - cd -
+      - fyne package -os android/arm --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -57,7 +67,12 @@ Builds:
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - go run tools/cmd/fyne/. package -os android/amd64 --release
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - cd tools/cmd/fyne
+      - go install .
+      - cd -
+      - fyne package -os android/amd64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -73,7 +88,12 @@ Builds:
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - go run tools/cmd/fyne/. package -os android/386 --release
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - cd tools/cmd/fyne
+      - go install .
+      - cd -
+      - fyne package -os android/386 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
