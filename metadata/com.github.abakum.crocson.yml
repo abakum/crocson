@@ -16,6 +16,7 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+    sudo: apt-get update && apt-get install -y golang-go
     output: crocson.apk
     prebuild:
       - sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml

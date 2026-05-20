@@ -78,6 +78,7 @@ jobs:
               f"  - versionName: {VERSION}\n"
               f"    versionCode: {BUILD}\n"
               f"    commit: {COMMIT_SHA}\n"
+              f"    sudo: apt-get update && apt-get install -y golang-go\n"
               f"    output: crocson.apk\n"
               f"    prebuild:\n"
               f"      - sed -i 's/^Build = .*/Build = {BUILD}/' FyneApp.toml\n"
