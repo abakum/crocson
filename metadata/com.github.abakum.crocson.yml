@@ -19,9 +19,9 @@ Builds:
     sudo: apt-get update && apt-get install -y golang-go
     output: crocson.apk
     prebuild:
-      - sed -i 's/^Build = .*/Build = 1937/' FyneApp.toml
-      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="1937"/' AndroidManifest.xml
-      - sed -i 's/android:versionName="[^"]*"/android:versionName="1.11.59"/' AndroidManifest.xml
+      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i 's/android:versionName="[^"]*"/android:versionName="$$VERSION$$"/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
