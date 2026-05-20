@@ -46,8 +46,7 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
-      - cd /tmp/tools/cmd/fyne
+      - cd tools/cmd/fyne
       - go install .
       - cd -
       - fyne package -os android/arm --release
@@ -67,8 +66,7 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
-      - cd /tmp/tools/cmd/fyne
+      - cd tools/cmd/fyne
       - go install .
       - cd -
       - fyne package -os android/amd64 --release
@@ -88,8 +86,7 @@ Builds:
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
-      - cd /tmp/tools/cmd/fyne
+      - cd tools/cmd/fyne
       - go install .
       - cd -
       - fyne package -os android/386 --release
