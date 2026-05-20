@@ -79,7 +79,9 @@ jobs:
               f"    versionCode: {BUILD}\n"
               f"    commit: {COMMIT_SHA}\n"
               f"    sudo: apt-get install -y golang-go\n"
-              f"    output: crocson.apk\n"
+              f"    output: crocson-arm64.apk\n"
+              f"    forceversion: true\n"
+              f"    forcevercode: true\n"
               f"    prebuild:\n"
               f"      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml\n"
               f"      - sed -i '/versionCode/s/=\"[0-9]*\"/=\"$$VERCODE$$\"/' AndroidManifest.xml\n"
@@ -95,16 +97,23 @@ jobs:
               f"      - rm -rf /tmp/tools\n"
               f"      - fyne package -os android/arm64 --release\n"
               f'      - zip -d crocson.apk "META-INF/*" || true\n'
+              f"      - mv crocson.apk crocson-arm64.apk\n"
               f"    ndk: r26d\n"
               f"\n"
+          )
+
+          tail = (
+              "AutoUpdateMode: Version\n"
+              "UpdateCheckMode: Tags ^v[\\d.]+$\n"
+              "VercodeOperation:\n"
+              "  - '%c'\n"
+              "UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*\"([^\"]+)\"\n"
           )
 
           with open(YML, 'r') as f:
               content = f.read()
 
-          content = re.sub(r'Builds:.*?(?=UpdateCheckMode:)', build_entry + "AutoUpdateMode: None\n", content, flags=re.DOTALL)
-          content = re.sub(r'CurrentVersion: .*', f'CurrentVersion: {VERSION}', content)
-          content = re.sub(r'CurrentVersionCode: .*', f'CurrentVersionCode: {BUILD}', content)
+          content = re.sub(r'Builds:.*', build_entry + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD}\n", content, flags=re.DOTALL)
 
           with open(YML, 'w') as f:
               f.write(content)

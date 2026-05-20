@@ -77,21 +77,22 @@ jobs:
           YML = "metadata/com.github.abakum.crocson.yml"
 
           ABIS = [
-              ("android/arm64", 0),
-              ("android/arm",   1),
-              ("android/amd64", 2),
-              ("android/386",   3),
+              ("android/arm",   "arm",   0),
+              ("android/arm64", "arm64", 1),
+              ("android/386",   "386",   2),
+              ("android/amd64", "amd64", 3),
           ]
 
           builds_lines = ["Builds:"]
-          for os_name, offset in ABIS:
+          for os_name, abi, offset in ABIS:
               vc = BUILD + offset
               builds_lines.append(
                   f"  - versionName: {VERSION}\n"
                   f"    versionCode: {vc}\n"
                   f"    commit: {COMMIT_SHA}\n"
                   f"    sudo: apt-get install -y golang-go\n"
-                  f"    output: crocson.apk\n"
+                  f"    output: crocson-{abi}.apk\n"
+                  f"    forceversion: true\n"
                   f"    forcevercode: true\n"
                   f"    prebuild:\n"
                   f"      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml\n"
@@ -108,17 +109,27 @@ jobs:
                   f"      - rm -rf /tmp/tools\n"
                   f"      - fyne package -os {os_name} --release\n"
                   f'      - zip -d crocson.apk "META-INF/*" || true\n'
+                  f"      - mv crocson.apk crocson-{abi}.apk\n"
                   f"    ndk: r26d\n"
               )
+
+          tail = (
+              "AutoUpdateMode: Version\n"
+              "UpdateCheckMode: Tags ^v[\\d.]+$\n"
+              "VercodeOperation:\n"
+              "  - '%c'\n"
+              "  - '%c + 1'\n"
+              "  - '%c + 2'\n"
+              "  - '%c + 3'\n"
+              "UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*\"([^\"]+)\"\n"
+          )
 
           new_builds = "\n".join(builds_lines) + "\n"
 
           with open(YML, 'r') as f:
               content = f.read()
 
-          content = re.sub(r'Builds:.*?(?=UpdateCheckMode:)', new_builds + "AutoUpdateMode: None\n", content, flags=re.DOTALL)
-          content = re.sub(r'CurrentVersion: .*', f'CurrentVersion: {VERSION}', content)
-          content = re.sub(r'CurrentVersionCode: .*', f'CurrentVersionCode: {BUILD + 3}', content)
+          content = re.sub(r'Builds:.*', new_builds + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n", content, flags=re.DOTALL)
 
           with open(YML, 'w') as f:
               f.write(content)
