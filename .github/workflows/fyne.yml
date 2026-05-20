@@ -48,7 +48,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: workspace/crocson
-          submodules: recursive
 
       - name: Checkout croc dependency
         if: false # temporarily disabled: using make repo instead
@@ -72,11 +71,18 @@ jobs:
           go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
       - name: Install Fyne CLI
         if: github.event.inputs.build_type != 'snapshot'
         run: |
-          cd "${{ github.workspace }}\workspace\crocson\tools\cmd\fyne"
-          go install .
+          cd "${{ github.workspace }}\workspace\tools\cmd\fyne"
+          go install
 
       - name: Decode and place P12 Certificate
         if: github.event.inputs.build_type != 'snapshot'
@@ -169,7 +175,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: workspace/crocson
-          submodules: recursive
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -202,11 +207,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libxkbcommon-dev
 
-      # Step 6: Install Fyne CLI
+      # Step 6.1: Checkout tools dependency
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      # Step 6.2: Install Fyne CLI
       - name: Install Fyne CLI
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocson/tools/cmd/fyne
-          go install .
+          cd $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
+          go install
 
       # Step 7: Build the application using fyne package for Linux
       - name: Build with fyne for Linux
@@ -276,7 +289,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: workspace/crocson
-          submodules: recursive
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -367,7 +379,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: workspace/crocson
-          submodules: recursive
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -467,7 +478,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: workspace/crocson
-          submodules: recursive
 
       # Step 2: Checkout the croc dependency repository directly into workspace/croc
       - name: Checkout croc dependency
@@ -512,11 +522,19 @@ jobs:
           go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
           cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
 
-      # Step 6: Install Fyne CLI
+      # Step 6.1: Checkout Fyne CLI repository directly into workspace/tools
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      # Step 6.2: Install Fyne CLI
       - name: Install Fyne CLI
         run: |
-          cd $GITHUB_WORKSPACE/workspace/crocson/tools/cmd/fyne
-          go install .
+          cd  $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
+          go install
 
       # Step 6.3: Set up JDK 17
       - name: Set up JDK 17
