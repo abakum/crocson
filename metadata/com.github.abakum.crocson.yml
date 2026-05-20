@@ -20,13 +20,13 @@ Builds:
     output: crocson.apk
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
-      - sed -i 's/android:versionCode="[0-9]*"/android:versionCode="$$VERCODE$$"/' AndroidManifest.xml
-      - sed -i 's/android:versionName="[^"]*"/android:versionName="$$VERSION$$"/' AndroidManifest.xml
+      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
-      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
-      - cd $GOPATH/tools/cmd/fyne && go install . && cd -
+      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools
+      - cd /tmp/tools/cmd/fyne && go install .
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
