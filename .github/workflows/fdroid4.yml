@@ -94,16 +94,12 @@ jobs:
                   f"    output: crocson.apk\n"
                   f"    forcevercode: true\n"
                   f"    prebuild:\n"
+                  f"      - git submodule update --init --recursive\n"
                   f"      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml\n"
                   f"      - sed -i '/versionCode/s/=\"[0-9]*\"/=\"$$VERCODE$$\"/' AndroidManifest.xml\n"
                   f"      - sed -i '/versionName/s/=\"[^\"]*/=\"$$VERSION$$/' AndroidManifest.xml\n"
                   f"    build:\n"
-                  f"      - export GOPATH=$HOME/go\n"
-                  f"      - export PATH=$GOPATH/bin:$PATH\n"
-                  f"      - cd tools/cmd/fyne\n"
-                  f"      - go install .\n"
-                  f"      - cd -\n"
-                  f"      - fyne package -os {os_name} --release\n"
+                  f"      - go run tools/cmd/fyne/. package -os {os_name} --release\n"
                   f'      - zip -d crocson.apk "META-INF/*" || true\n'
                   f"    ndk: r26d\n"
               )

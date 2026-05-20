@@ -20,16 +20,12 @@ Builds:
     output: crocson.apk
     forcevercode: true
     prebuild:
+      - git submodule update --init --recursive
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - cd tools/cmd/fyne
-      - go install .
-      - cd -
-      - fyne package -os android/arm64 --release
+      - go run tools/cmd/fyne/. package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -40,16 +36,12 @@ Builds:
     output: crocson.apk
     forcevercode: true
     prebuild:
+      - git submodule update --init --recursive
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - cd tools/cmd/fyne
-      - go install .
-      - cd -
-      - fyne package -os android/arm --release
+      - go run tools/cmd/fyne/. package -os android/arm --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -60,16 +52,12 @@ Builds:
     output: crocson.apk
     forcevercode: true
     prebuild:
+      - git submodule update --init --recursive
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - cd tools/cmd/fyne
-      - go install .
-      - cd -
-      - fyne package -os android/amd64 --release
+      - go run tools/cmd/fyne/. package -os android/amd64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
@@ -80,16 +68,12 @@ Builds:
     output: crocson.apk
     forcevercode: true
     prebuild:
+      - git submodule update --init --recursive
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
       - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
       - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
-      - export GOPATH=$HOME/go
-      - export PATH=$GOPATH/bin:$PATH
-      - cd tools/cmd/fyne
-      - go install .
-      - cd -
-      - fyne package -os android/386 --release
+      - go run tools/cmd/fyne/. package -os android/386 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
