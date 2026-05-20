@@ -95,7 +95,7 @@ jobs:
                   f"    build:\n"
                   f"      - export GOPATH=$HOME/go\n"
                   f"      - export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH\n"
-                  f"      - git clone https://github.com/abakum/tools.git $GOPATH/tools\n"
+                  f"      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools\n"
                   f"      - cd $GOPATH/tools/cmd/fyne\n"
                   f"      - go install\n"
                   f"      - cd $HOME/build/com.github.abakum.crocson\n"
