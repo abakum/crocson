@@ -115,7 +115,6 @@ Builds:
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d
 
-
 AutoUpdateMode: None
 UpdateCheckMode: Static
 CurrentVersion: 1.11.59
