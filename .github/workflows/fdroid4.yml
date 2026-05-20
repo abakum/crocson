@@ -21,15 +21,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read version info
         id: info
         run: |
           VERSION=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
           BUILD=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          COMMIT_SHA=$(git rev-list -n 1 "v${VERSION}")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD" >> "$GITHUB_OUTPUT"
-          echo "Version: $VERSION, Build: $BUILD"
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION, Build: $BUILD, Commit: $COMMIT_SHA"
 
       - name: Check changelog source exists
         run: |
@@ -45,8 +49,8 @@ jobs:
         if: github.event.inputs.force != 'true'
         run: |
           YML="metadata/com.github.abakum.crocson.yml"
-          if grep -q "commit: v${{ steps.info.outputs.version }}" "$YML"; then
-            echo "ERROR: v${{ steps.info.outputs.version }} already exists in $YML"
+          if grep -q "versionName: ${{ steps.info.outputs.version }}" "$YML"; then
+            echo "ERROR: ${{ steps.info.outputs.version }} already exists in $YML"
             echo "This version has already been processed. Bump Version/Build in FyneApp.toml first."
             exit 1
           fi
@@ -69,6 +73,7 @@ jobs:
 
           VERSION = "${{ steps.info.outputs.version }}"
           BUILD = int("${{ steps.info.outputs.build }}")
+          COMMIT_SHA = "${{ steps.info.outputs.commit_sha }}"
           YML = "metadata/com.github.abakum.crocson.yml"
 
           ABIS = [
@@ -84,7 +89,7 @@ jobs:
               builds_lines.append(
                   f"  - versionName: {VERSION}\n"
                   f"    versionCode: {vc}\n"
-                  f"    commit: v{VERSION}\n"
+                  f"    commit: {COMMIT_SHA}\n"
                   f"    sudo: curl -sL https://go.dev/dl/go1.25.0.linux-amd64.tar.gz | tar -xz -C /usr/local\n"
                   f"    output: crocson.apk\n"
                   f"    forcevercode: true\n"
@@ -166,10 +171,6 @@ jobs:
             VC=$((BUILD + i))
             cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/${APP_ID}/en-US/changelogs/${VC}.txt"
           done
-
-          # Create localized summary (required by make-summary-translatable.py)
-          mkdir -p "metadata/${APP_ID}/en-US"
-          echo "Easily and securely send things from one computer to another" > "metadata/${APP_ID}/en-US/summary.txt"
 
           # Commit and push to fork
           git config user.name "github-actions[bot]"
