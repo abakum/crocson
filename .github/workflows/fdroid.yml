@@ -88,7 +88,7 @@ jobs:
               f"      - export GOPATH=$HOME/go\n"
               f"      - export PATH=$GOPATH/bin:$PATH\n"
               f"      - test -d /tmp/tools||git clone https://github.com/abakum/tools /tmp/tools\n"
-              f"      - cd /tmp/tools/cmd/fyne && go install .\n"
+              f"      - (cd /tmp/tools/cmd/fyne && go install .)\n"
               f"      - fyne package -os android/arm64 --release\n"
               f'      - zip -d crocson.apk "META-INF/*" || true\n'
               f"    ndk: r26d\n"
