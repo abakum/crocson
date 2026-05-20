@@ -26,9 +26,7 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools
-      - cd $GOPATH/tools/cmd/fyne
-      - go install
-      - cd $HOME/build/com.github.abakum.crocson
+      - cd $GOPATH/tools/cmd/fyne && go install . && cd -
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" || true
     ndk: r26d

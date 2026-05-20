@@ -101,9 +101,7 @@ jobs:
                   f"      - export GOPATH=$HOME/go\n"
                   f"      - export PATH=$GOPATH/bin:$PATH\n"
                   f"      - test -d $GOPATH/tools || git clone https://github.com/abakum/tools.git $GOPATH/tools\n"
-                  f"      - cd $GOPATH/tools/cmd/fyne\n"
-                  f"      - go install\n"
-                  f"      - cd $HOME/build/com.github.abakum.crocson\n"
+                  f"      - cd $GOPATH/tools/cmd/fyne && go install . && cd -\n"
                   f"      - fyne package -os {os_name} --release\n"
                   f'      - zip -d crocson.apk "META-INF/*" || true\n'
                   f"    ndk: r26d\n"
