@@ -136,7 +136,8 @@ jobs:
           cd "${{ github.workspace }}\workspace\crocson"
           $env:CGO_ENABLED = "1"
           $env:GOARCH = "amd64"
-          cd cmd/syso; go run . ..; cd ..
+          $root = Get-Location
+          cd cmd/syso; go run . $root; cd $root
           go build -ldflags=-s -o crocson.exe .
           Write-Host "Built crocson.exe (console mode, with icon)"
           if (-not (Test-Path "crocson.exe")) {
