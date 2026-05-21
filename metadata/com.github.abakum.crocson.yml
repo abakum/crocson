@@ -109,6 +109,8 @@ Builds:
       - mv crocson.apk crocson-amd64.apk
     ndk: r27d
 
+AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\d.]+$
 VercodeOperation:
