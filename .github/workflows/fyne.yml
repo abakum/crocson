@@ -943,21 +943,7 @@ jobs:
           fi
 
       - name: Create symlinks for all ABIs and locales
-        run: |
-          BUILD=${{ steps.info.outputs.build }}
-          VERSION=${{ steps.info.outputs.version }}
-          for LOCALE_DIR in metadata/*/changelogs; do
-            ORIGINAL="${LOCALE_DIR}/${VERSION}.txt"
-            if [ ! -f "$ORIGINAL" ]; then
-              continue
-            fi
-            for i in 0 1 2 3; do
-              VC=$((BUILD + i))
-              LINK="${LOCALE_DIR}/${VC}.txt"
-              ln -sf "${VERSION}.txt" "$LINK"
-              echo "Linked: ${LINK} -> ${VERSION}.txt"
-            done
-          done
+        run: bash metadata/create_changelogs.sh "${{ steps.info.outputs.build }}" "${{ steps.info.outputs.version }}"
 
       - name: Commit and push changelogs
         run: |

@@ -78,26 +78,12 @@ jobs:
 
       - name: Create symlinks for all ABIs and locales
         if: github.event.inputs.first == 'true' || (github.event.inputs.first != 'true' && github.event.inputs.load != 'true') || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
-        run: |
-          BUILD=${{ steps.info.outputs.build }}
-          VERSION=${{ steps.info.outputs.version }}
-          for LOCALE_DIR in metadata/*/changelogs; do
-            ORIGINAL="${LOCALE_DIR}/${VERSION}.txt"
-            if [ ! -f "$ORIGINAL" ]; then
-              continue
-            fi
-            for i in 0 1 2 3; do
-              VC=$((BUILD + i))
-              LINK="${LOCALE_DIR}/${VC}.txt"
-              ln -sf "${VERSION}.txt" "$LINK"
-              echo "Linked: ${LINK} -> ${VERSION}.txt"
-            done
-          done
+        run: bash metadata/create_changelogs.sh "${{ steps.info.outputs.build }}" "${{ steps.info.outputs.version }}"
 
       - name: Generate recipe from FyneApp.toml
         if: github.event.inputs.first == 'true' || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
         run: |
-          bash generate_recipe.sh \
+           bash metadata/generate_recipe.sh \
             "${{ steps.info.outputs.version }}" \
             "${{ steps.info.outputs.build }}" \
             "${{ steps.info.outputs.commit_sha }}" \
