@@ -153,12 +153,32 @@ jobs:
               "UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*\"([^\"]+)\"\n"
           )
 
-          new_builds = "\n".join(builds_lines) + "\n"
+           new_builds = "\n".join(builds_lines) + "\n"
 
-          with open(YML, 'r') as f:
-              content = f.read()
-
-          content = re.sub(r'Builds:.*', lambda m: new_builds + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n", content, flags=re.DOTALL)
+           import os
+           if os.path.exists(YML):
+               with open(YML, 'r') as f:
+                   content = f.read()
+               content = re.sub(r'Builds:.*', lambda m: new_builds + tail + f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n", content, flags=re.DOTALL)
+           else:
+               content = (
+                   "Categories:\n"
+                   "  - Internet\n"
+                   "License: ISC\n"
+                   "AuthorName: Konstantin Abakumov\n"
+                   "AuthorEmail: koka.abakum@gmail.com\n"
+                   "SourceCode: https://github.com/abakum/crocson\n"
+                   "IssueTracker: https://github.com/abakum/crocson/issues\n"
+                   "Changelog: https://github.com/abakum/crocson/releases\n"
+                   "\n"
+                   "AutoName: crocson\n"
+                   "\n"
+                   "RepoType: git\n"
+                   "Repo: https://github.com/abakum/crocson\n"
+                   "\n"
+                   + new_builds + tail +
+                   f"CurrentVersion: {VERSION}\nCurrentVersionCode: {BUILD + 3}\n"
+               )
 
           with open(YML, 'w') as f:
               f.write(content)
