@@ -35,15 +35,21 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION, Build: $BUILD, Commit: $COMMIT_SHA"
 
-      - name: Check changelog source exists
+      - name: Check changelog originals exist
         run: |
-          if [ ! -f "changelogs/${{ steps.info.outputs.version }}.txt" ]; then
-            echo "ERROR: changelogs/${{ steps.info.outputs.version }}.txt not found"
-            echo "Create it first with the changelog text for this version."
+          VERSION="${{ steps.info.outputs.version }}"
+          FOUND=false
+          for LOCALE_DIR in metadata/*/changelogs; do
+            if [ -f "${LOCALE_DIR}/${VERSION}.txt" ]; then
+              echo "Changelog found: ${LOCALE_DIR}/${VERSION}.txt"
+              FOUND=true
+            fi
+          done
+          if [ "$FOUND" = false ]; then
+            echo "ERROR: No changelog originals found for ${VERSION}"
+            echo "Create metadata/en-US/changelogs/${VERSION}.txt (and other locales) first."
             exit 1
           fi
-          echo "Changelog source found:"
-          cat "changelogs/${{ steps.info.outputs.version }}.txt"
 
       - name: Check version not already in recipe
         if: github.event.inputs.force != 'true'
@@ -56,14 +62,21 @@ jobs:
           fi
           echo "Version ${{ steps.info.outputs.version }} not found in recipe, proceeding."
 
-      - name: Generate changelogs for all ABIs
+      - name: Create symlinks for all ABIs and locales
         run: |
           BUILD=${{ steps.info.outputs.build }}
-          for i in 0 1 2 3; do
-            VC=$((BUILD + i))
-            mkdir -p "metadata/en-US/changelogs"
-            cp "changelogs/${{ steps.info.outputs.version }}.txt" "metadata/en-US/changelogs/${VC}.txt"
-            echo "Created metadata/en-US/changelogs/${VC}.txt"
+          VERSION=${{ steps.info.outputs.version }}
+          for LOCALE_DIR in metadata/*/changelogs; do
+            ORIGINAL="${LOCALE_DIR}/${VERSION}.txt"
+            if [ ! -f "$ORIGINAL" ]; then
+              continue
+            fi
+            for i in 0 1 2 3; do
+              VC=$((BUILD + i))
+              LINK="${LOCALE_DIR}/${VC}.txt"
+              ln -sf "${VERSION}.txt" "$LINK"
+              echo "Linked: ${LINK} -> ${VERSION}.txt"
+            done
           done
 
       - name: Update YAML recipe
@@ -144,7 +157,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add metadata/ changelogs/
+          git add metadata/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "Update F-Droid metadata (4 ABI) for v${{ steps.info.outputs.version }}"
           git push
@@ -178,17 +191,23 @@ jobs:
           # Copy recipe
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
 
-          # Copy changelogs for all ABIs
-          mkdir -p "metadata/${APP_ID}/en-US/changelogs"
-          for i in 0 1 2 3; do
-            VC=$((BUILD + i))
-            cp "${{ github.workspace }}/metadata/en-US/changelogs/${VC}.txt" "metadata/${APP_ID}/en-US/changelogs/${VC}.txt"
+          # Copy changelogs for all ABIs and locales
+          for LOCALE_DIR in "${{ github.workspace }}/metadata/"*/changelogs; do
+            LOCALE=$(basename "$(dirname "$LOCALE_DIR")")
+            mkdir -p "metadata/${APP_ID}/${LOCALE}/changelogs"
+            for i in 0 1 2 3; do
+              VC=$((BUILD + i))
+              SRC="${LOCALE_DIR}/${VC}.txt"
+              if [ -f "$SRC" ]; then
+                cp -L "$SRC" "metadata/${APP_ID}/${LOCALE}/changelogs/${VC}.txt"
+              fi
+            done
           done
 
           # Commit and push to fork
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/en-US/"
+          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/"
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force

@@ -926,31 +926,44 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION, Build: $BUILD, Commit: $COMMIT_SHA"
 
-      - name: Check changelog source exists
+      - name: Check changelog originals exist
         run: |
-          if [ ! -f "changelogs/${{ steps.info.outputs.version }}.txt" ]; then
-            echo "ERROR: changelogs/${{ steps.info.outputs.version }}.txt not found"
-            echo "Create it first with the changelog text for this version."
+          VERSION="${{ steps.info.outputs.version }}"
+          FOUND=false
+          for LOCALE_DIR in metadata/*/changelogs; do
+            if [ -f "${LOCALE_DIR}/${VERSION}.txt" ]; then
+              echo "Changelog found: ${LOCALE_DIR}/${VERSION}.txt"
+              FOUND=true
+            fi
+          done
+          if [ "$FOUND" = false ]; then
+            echo "ERROR: No changelog originals found for ${VERSION}"
+            echo "Create metadata/en-US/changelogs/${VERSION}.txt (and other locales) first."
             exit 1
           fi
-          echo "Changelog source found:"
-          cat "changelogs/${{ steps.info.outputs.version }}.txt"
 
-      - name: Generate changelogs for all ABIs
+      - name: Create symlinks for all ABIs and locales
         run: |
           BUILD=${{ steps.info.outputs.build }}
-          for i in 0 1 2 3; do
-            VC=$((BUILD + i))
-            mkdir -p "metadata/en-US/changelogs"
-            cp "changelogs/${{ steps.info.outputs.version }}.txt" "metadata/en-US/changelogs/${VC}.txt"
-            echo "Created metadata/en-US/changelogs/${VC}.txt"
+          VERSION=${{ steps.info.outputs.version }}
+          for LOCALE_DIR in metadata/*/changelogs; do
+            ORIGINAL="${LOCALE_DIR}/${VERSION}.txt"
+            if [ ! -f "$ORIGINAL" ]; then
+              continue
+            fi
+            for i in 0 1 2 3; do
+              VC=$((BUILD + i))
+              LINK="${LOCALE_DIR}/${VC}.txt"
+              ln -sf "${VERSION}.txt" "$LINK"
+              echo "Linked: ${LINK} -> ${VERSION}.txt"
+            done
           done
 
       - name: Commit and push changelogs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add metadata/en-US/changelogs/
+          git add metadata/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "Update F-Droid changelogs for v${{ steps.info.outputs.version }}"
           git push
