@@ -1,10 +1,18 @@
-name: Update F-Droid Metadata (4 ABI)
+name: F-Droid Metadata (4 ABI)
 
 on:
   workflow_dispatch:
     inputs:
-      force:
-        description: 'Force re-upload to GitLab even if version already in recipe'
+      first:
+        description: 'Initial registration: generate recipe from FyneApp.toml'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      load:
+        description: 'Load current recipe from fdroiddata GitLab'
         required: false
         default: 'false'
         type: choice
@@ -14,6 +22,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  APP_ID: com.github.abakum.crocson
 
 jobs:
   update:
@@ -36,6 +47,7 @@ jobs:
           echo "Version: $VERSION, Build: $BUILD, Commit: $COMMIT_SHA"
 
       - name: Check changelog originals exist
+        if: github.event.inputs.first == 'true'
         run: |
           VERSION="${{ steps.info.outputs.version }}"
           FOUND=false
@@ -51,18 +63,19 @@ jobs:
             exit 1
           fi
 
-      - name: Check version not already in recipe
-        if: github.event.inputs.force != 'true'
+      - name: Load recipe from fdroiddata
+        if: github.event.inputs.load == 'true'
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          YML="metadata/com.github.abakum.crocson.yml"
-          if grep -q "versionName: ${{ steps.info.outputs.version }}" "$YML"; then
-            echo "ERROR: ${{ steps.info.outputs.version }} already exists in $YML"
-            echo "This version has already been processed. Bump Version/Build in FyneApp.toml first."
-            exit 1
-          fi
-          echo "Version ${{ steps.info.outputs.version }} not found in recipe, proceeding."
+          curl -sf --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+            "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/repository/files/metadata%2F${APP_ID}.yml/raw?ref=master" \
+            -o "metadata/${APP_ID}.yml"
+          echo "=== Loaded recipe ==="
+          cat "metadata/${APP_ID}.yml"
 
       - name: Create symlinks for all ABIs and locales
+        if: github.event.inputs.first == 'true' || (github.event.inputs.first != 'true' && github.event.inputs.load != 'true')
         run: |
           BUILD=${{ steps.info.outputs.build }}
           VERSION=${{ steps.info.outputs.version }}
@@ -79,7 +92,8 @@ jobs:
             done
           done
 
-      - name: Update YAML recipe
+      - name: Generate recipe from FyneApp.toml
+        if: github.event.inputs.first == 'true'
         run: |
           python3 << 'PYEOF'
           import re
@@ -150,26 +164,35 @@ jobs:
           print("YAML updated")
           PYEOF
 
-          echo "=== Updated YAML ==="
+          echo "=== Generated recipe ==="
           cat "metadata/com.github.abakum.crocson.yml"
 
-      - name: Commit and push
+      - name: Verify recipe exists
+        if: github.event.inputs.first != 'true' && github.event.inputs.load != 'true'
+        run: |
+          if [ ! -f "metadata/${APP_ID}.yml" ]; then
+            echo "ERROR: metadata/${APP_ID}.yml not found"
+            echo "Run with first=true to generate, or load=true to download from fdroiddata."
+            exit 1
+          fi
+          echo "Recipe found: metadata/${APP_ID}.yml"
+
+      - name: Commit and push to GitHub
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add metadata/
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "Update F-Droid metadata (4 ABI) for v${{ steps.info.outputs.version }}"
+          git commit -m "Update F-Droid metadata for v${{ steps.info.outputs.version }}"
           git push
 
       - name: Create Merge Request to fdroiddata
-        if: env.GITLAB_TOKEN != ''
+        if: github.event.inputs.load != 'true' && env.GITLAB_TOKEN != ''
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           VERSION="${{ steps.info.outputs.version }}"
           BUILD="${{ steps.info.outputs.build }}"
-          APP_ID="com.github.abakum.crocson"
           BRANCH="crocson-v${VERSION}"
           GL_TOKEN="${{ env.GITLAB_TOKEN }}"
 
@@ -191,7 +214,7 @@ jobs:
           # Copy recipe
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
 
-          # Copy changelogs for all ABIs and locales
+          # Copy changelogs for all ABIs and locales (follow symlinks)
           for LOCALE_DIR in "${{ github.workspace }}/metadata/"*/changelogs; do
             LOCALE=$(basename "$(dirname "$LOCALE_DIR")")
             mkdir -p "metadata/${APP_ID}/${LOCALE}/changelogs"
@@ -212,9 +235,10 @@ jobs:
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force
 
-          # Create MR from fork to upstream via GitLab API (skip in force mode — MR already exists)
-          if [ "${{ github.event.inputs.force }}" = "true" ]; then
-            echo "Force mode: skipping MR creation (branch force-pushed to existing MR)"
+          # Create MR from fork to upstream via GitLab API
+          # Skip if first=true — branch was force-pushed to existing MR
+          if [ "${{ github.event.inputs.first }}" = "true" ]; then
+            echo "First mode: skipping MR creation (branch force-pushed to existing MR)"
             echo "MR: https://gitlab.com/fdroid/fdroiddata/-/merge_requests?search=${APP_ID}+${VERSION}"
             exit 0
           fi
