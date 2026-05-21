@@ -65,6 +65,8 @@ jobs:
 
       - name: Load recipe from fdroiddata
         if: github.event.inputs.load == 'true'
+        id: load
+        continue-on-error: true
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
@@ -75,7 +77,7 @@ jobs:
           cat "metadata/${APP_ID}.yml"
 
       - name: Create symlinks for all ABIs and locales
-        if: github.event.inputs.first == 'true' || (github.event.inputs.first != 'true' && github.event.inputs.load != 'true')
+        if: github.event.inputs.first == 'true' || (github.event.inputs.first != 'true' && github.event.inputs.load != 'true') || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
         run: |
           BUILD=${{ steps.info.outputs.build }}
           VERSION=${{ steps.info.outputs.version }}
@@ -93,7 +95,7 @@ jobs:
           done
 
       - name: Generate recipe from FyneApp.toml
-        if: github.event.inputs.first == 'true'
+        if: github.event.inputs.first == 'true' || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
         run: |
           python3 << 'PYEOF'
           import re
