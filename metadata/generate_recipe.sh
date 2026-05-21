@@ -31,16 +31,15 @@ UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*
 
 generate_builds() {
   echo "Builds:"
-  for entry in "android/arm arm 0" "android/arm64 arm64 1" "android/386 386 2" "android/amd64 amd64 3"; do
-    OS=$(echo "$entry" | cut -d' ' -f1)
-    ABI=$(echo "$entry" | cut -d' ' -f2)
-    OFF=$(echo "$entry" | cut -d' ' -f3)
+  OFF=0
+  for ABI in arm arm64 386 amd64; do
     VC=$((BUILD + OFF))
+    OFF=$((OFF + 1))
     cat << BEOF
   - versionName: ${VERSION}
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
-    sudo: apt-get install -y golang-go
+    sudo: apt-get install -y golang-go zip
     output: crocson-${ABI}.apk
     forceversion: true
     forcevercode: true
@@ -57,9 +56,8 @@ generate_builds() {
       - go install .
       - cd -
       - rm -rf /tmp/tools
-      - fyne package -os ${OS} --release
-      - zip -d crocson.apk "META-INF/*" || true
-      - mv crocson.apk crocson-${ABI}.apk
+      - fyne package -os android/${ABI} --release
+      - zip -d crocson.apk "META-INF/*" --out crocson-${ABI}.apk
     ndk: r26d
 BEOF
   done
