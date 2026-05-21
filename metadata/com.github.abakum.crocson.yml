@@ -7,7 +7,6 @@ SourceCode: https://github.com/abakum/crocson
 IssueTracker: https://github.com/abakum/crocson/issues
 Changelog: https://github.com/abakum/crocson/releases
 
-AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
 AutoName: crocson
 
 RepoType: git
@@ -36,7 +35,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
       - mv crocson.apk crocson-arm.apk
-    ndk: r26d
+    ndk: r27d
 
   - versionName: 1.11.59
     versionCode: 1938
@@ -60,7 +59,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
       - mv crocson.apk crocson-arm64.apk
-    ndk: r26d
+    ndk: r27d
 
   - versionName: 1.11.59
     versionCode: 1939
@@ -84,7 +83,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
       - mv crocson.apk crocson-386.apk
-    ndk: r26d
+    ndk: r27d
 
   - versionName: 1.11.59
     versionCode: 1940
@@ -108,7 +107,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
       - mv crocson.apk crocson-amd64.apk
-    ndk: r26d
+    ndk: r27d
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\d.]+$

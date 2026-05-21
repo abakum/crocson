@@ -15,13 +15,14 @@ SourceCode: https://github.com/abakum/crocson
 IssueTracker: https://github.com/abakum/crocson/issues
 Changelog: https://github.com/abakum/crocson/releases
 
-AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
 AutoName: crocson
 
 RepoType: git
 Repo: https://github.com/abakum/crocson"
 
-TAIL="AutoUpdateMode: Version
+TAIL="AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
+
+AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\\d.]+\$
 VercodeOperation:
   - '%c'
@@ -59,7 +60,7 @@ generate_builds() {
       - rm -rf /tmp/tools
       - fyne package -os android/${ABI} --release
       - mv crocson.apk crocson-${ABI}.apk
-    ndk: r26d
+    ndk: r27d
 
 BEOF
   done
