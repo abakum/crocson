@@ -7,6 +7,8 @@ SourceCode: https://github.com/abakum/crocson
 IssueTracker: https://github.com/abakum/crocson/issues
 Changelog: https://github.com/abakum/crocson/releases
 
+AllowedAPKSigningKeys: 15:EA:33:2B:2B:0F:96:A2:FC:F1:CF:CB:77:D4:35:2C:F2:AE:5A:F6:4E:86:9E:9F:C5:16:27:AD:57:88:AD:5C
+
 AutoName: crocson
 
 RepoType: git
