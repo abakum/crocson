@@ -16,7 +16,8 @@ Builds:
   - versionName: 1.11.59
     versionCode: 1937
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     output: crocson-arm.apk
     forceversion: true
     forcevercode: true
@@ -34,13 +35,14 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
-      - zip -d crocson.apk "META-INF/*" --out crocson-arm.apk
+      - mv crocson.apk crocson-arm.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1938
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     output: crocson-arm64.apk
     forceversion: true
     forcevercode: true
@@ -58,13 +60,14 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
-      - zip -d crocson.apk "META-INF/*" --out crocson-arm64.apk
+      - mv crocson.apk crocson-arm64.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1939
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     output: crocson-386.apk
     forceversion: true
     forcevercode: true
@@ -82,13 +85,14 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
-      - zip -d crocson.apk "META-INF/*" --out crocson-386.apk
+      - mv crocson.apk crocson-386.apk
     ndk: r26d
 
   - versionName: 1.11.59
     versionCode: 1940
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     output: crocson-amd64.apk
     forceversion: true
     forcevercode: true
@@ -106,7 +110,7 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
-      - zip -d crocson.apk "META-INF/*" --out crocson-amd64.apk
+      - mv crocson.apk crocson-amd64.apk
     ndk: r26d
 
 AutoUpdateMode: Version

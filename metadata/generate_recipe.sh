@@ -39,7 +39,8 @@ generate_builds() {
   - versionName: ${VERSION}
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     output: crocson-${ABI}.apk
     forceversion: true
     forcevercode: true
@@ -57,7 +58,7 @@ generate_builds() {
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/${ABI} --release
-      - zip -d crocson.apk "META-INF/*" --out crocson-${ABI}.apk
+      - mv crocson.apk crocson-${ABI}.apk
     ndk: r26d
 
 BEOF
