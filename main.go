@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/schollz/croc/v10/src/cli"
 	"github.com/schollz/croc/v10/src/croc"
 	"github.com/schollz/croc/v10/src/tcp"
 	"github.com/schollz/croc/v10/src/utils"
@@ -186,7 +187,32 @@ var (
 	cleanups     = []func(){}
 )
 
+func isCLIMode() bool {
+	if len(os.Args) <= 1 {
+		return false
+	}
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "-") {
+			return true
+		}
+		if _, err := os.Stat(arg); err != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
+	if isCLIMode() {
+		if err := cli.Run(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	hideConsole()
+
 	a := app.NewWithID(ID)
 
 	wd, _ = os.Getwd()

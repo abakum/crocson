@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"os/exec"
 	"sync/atomic"
+	"unsafe"
 
 	"fyne.io/fyne/v2"
 	log "github.com/schollz/logger"
@@ -30,6 +31,8 @@ import (
 var (
 	kernel32                = windows.NewLazySystemDLL("kernel32.dll")
 	setThreadExecutionState = kernel32.NewProc("SetThreadExecutionState")
+	procGetConsoleProcessList = kernel32.NewProc("GetConsoleProcessList")
+	procFreeConsole          = kernel32.NewProc("FreeConsole")
 )
 
 const (
@@ -122,4 +125,15 @@ func netUse(u *url.URL, del bool) error {
 	}
 	log.Debug(cmd)
 	return cmd.Start()
+}
+
+func hideConsole() {
+	var buf [2]uint32
+	count, _, _ := procGetConsoleProcessList.Call(
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(len(buf)),
+	)
+	if count == 1 {
+		procFreeConsole.Call()
+	}
 }

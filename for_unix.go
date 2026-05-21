@@ -97,6 +97,8 @@ func CanCreateSymlinks() bool {
 	return true
 }
 
+func hideConsole() {}
+
 func registered(scheme string) bool {
 	// xdg-mime query default x-scheme-handler/dav
 	out, err := exec.Command("xdg-mime", "query", "default", "x-scheme-handler/"+scheme).Output()

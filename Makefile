@@ -5,7 +5,7 @@ VERSION_NAME := $(shell grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*V
 BUILD_NUMBER := $(shell grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
 DEB_FILE := crocson_$(VERSION_NAME)_amd64.deb
 
-.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui ver deb debi debr useri userr repo local relay
+.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui ver deb debi debr useri userr repo local relay syso
 
 ver: AndroidManifest.xml
 	@echo "Reading version and build number from FyneApp.toml..."
@@ -293,3 +293,7 @@ ideb:
 		libxinerama-dev \
 		libxi-dev
 	@echo "Debian/Ubuntu done"
+
+syso:
+	@echo "Generating Windows resource .syso from FyneApp.toml..."
+	@cd cmd/syso && go run . $(CURDIR)

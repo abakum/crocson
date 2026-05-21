@@ -27,6 +27,8 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	fyne.io/systray v1.12.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/chzyer/readline v1.5.1 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1 // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
@@ -54,8 +56,10 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.5.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/rymdport/portal v0.4.2 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
+	github.com/schollz/cli/v2 v2.2.1 // indirect
 	github.com/schollz/peerdiscovery v1.7.6 // indirect
 	github.com/schollz/progressbar/v3 v3.19.0 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect

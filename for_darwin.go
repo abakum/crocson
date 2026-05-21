@@ -85,3 +85,5 @@ func registered(scheme string) bool {
 func CanCreateSymlinks() bool {
 	return true
 }
+
+func hideConsole() {}

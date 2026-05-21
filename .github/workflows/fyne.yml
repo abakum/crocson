@@ -102,19 +102,6 @@ jobs:
               exit 1
           }
 
-      - name: Build Windows console exe (snapshot)
-        if: github.event.inputs.build_type == 'snapshot'
-        shell: pwsh
-        run: |
-          cd "${{ github.workspace }}\workspace\crocson"
-          $env:CGO_ENABLED = "1"
-          $env:GOARCH = "amd64"
-          go build -o crocson.exe .
-          Write-Host "Built crocson.exe (console mode, no -H windowsgui)"
-          if (-not (Test-Path "crocson.exe")) {
-            throw "ERROR: crocson.exe was not created!"
-          }
-
       - name: Build Windows AppX package
         if: github.event.inputs.build_type != 'snapshot'
         shell: pwsh
@@ -143,18 +130,20 @@ jobs:
             throw "ERROR: crocson.appx was not created!"
           }
 
-      - name: Upload windows artifact (snapshot)
-        if: github.event.inputs.build_type == 'snapshot'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: |
-            ${{ github.workspace }}/workspace/crocson/crocson.exe
-          retention-days: 7
-          if-no-files-found: error
+      - name: Build Windows console exe
+        shell: pwsh
+        run: |
+          cd "${{ github.workspace }}\workspace\crocson"
+          $env:CGO_ENABLED = "1"
+          $env:GOARCH = "amd64"
+          cd cmd/syso; go run . ..; cd ..
+          go build -ldflags=-s -o crocson.exe .
+          Write-Host "Built crocson.exe (console mode, with icon)"
+          if (-not (Test-Path "crocson.exe")) {
+            throw "ERROR: crocson.exe was not created!"
+          }
 
-      - name: Upload windows artifact (release)
-        if: github.event.inputs.build_type != 'snapshot'
+      - name: Upload windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
@@ -162,7 +151,7 @@ jobs:
             ${{ github.workspace }}/workspace/crocson/crocson.exe
             ${{ github.workspace }}/workspace/crocson/crocson.appx
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
           
   # Job to build the application for Linux target
   build-linux:
