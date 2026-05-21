@@ -36,6 +36,7 @@ Builds:
       - fyne package -os android/arm --release
       - zip -d crocson.apk "META-INF/*" --out crocson-arm.apk
     ndk: r26d
+
   - versionName: 1.11.59
     versionCode: 1938
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
@@ -59,6 +60,7 @@ Builds:
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk "META-INF/*" --out crocson-arm64.apk
     ndk: r26d
+
   - versionName: 1.11.59
     versionCode: 1939
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
@@ -82,6 +84,7 @@ Builds:
       - fyne package -os android/386 --release
       - zip -d crocson.apk "META-INF/*" --out crocson-386.apk
     ndk: r26d
+
   - versionName: 1.11.59
     versionCode: 1940
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
