@@ -19,7 +19,6 @@ Builds:
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     forceversion: true
     forcevercode: true
     prebuild:
@@ -44,7 +43,6 @@ Builds:
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     forceversion: true
     forcevercode: true
     prebuild:
@@ -69,7 +67,6 @@ Builds:
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     forceversion: true
     forcevercode: true
     prebuild:
@@ -94,7 +91,6 @@ Builds:
     commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     forceversion: true
     forcevercode: true
     prebuild:

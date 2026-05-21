@@ -543,6 +543,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # Step 6.4: Print NDK version
+      - name: Print NDK version
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          if [ -n "$ANDROID_NDK_HOME" ] && [ -f "$ANDROID_NDK_HOME/source.properties" ]; then
+            cat "$ANDROID_NDK_HOME/source.properties"
+          else
+            echo "ANDROID_NDK_HOME not set, searching..."
+            find /usr/local/lib/android/sdk/ndk -name "source.properties" 2>/dev/null | while read f; do echo "=== $f ==="; cat "$f"; done
+          fi
       # Step 7: Build the application using fyne package for Android targets
       - name: Build with fyne package for Android targets
         run: |

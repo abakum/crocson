@@ -42,7 +42,6 @@ generate_builds() {
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
     output: crocson-${ABI}.apk
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     forceversion: true
     forcevercode: true
     prebuild:
