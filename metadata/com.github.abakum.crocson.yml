@@ -1,0 +1,125 @@
+Categories:
+  - Internet
+License: ISC
+AuthorName: Konstantin Abakumov
+AuthorEmail: koka.abakum@gmail.com
+SourceCode: https://github.com/abakum/crocson
+IssueTracker: https://github.com/abakum/crocson/issues
+Changelog: https://github.com/abakum/crocson/releases
+
+AutoName: crocson
+
+RepoType: git
+Repo: https://github.com/abakum/crocson
+
+Builds:
+  - versionName: 1.11.59
+    versionCode: 1937
+    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+    sudo: apt-get install -y golang-go
+    output: crocson-arm.apk
+    forceversion: true
+    forcevercode: true
+    prebuild:
+      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
+    build:
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - git clone https://github.com/abakum/tools /tmp/tools
+      - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
+      - go install .
+      - cd -
+      - rm -rf /tmp/tools
+      - fyne package -os android/arm --release
+      - zip -d crocson.apk "META-INF/*" || true
+      - mv crocson.apk crocson-arm.apk
+    ndk: r26d
+
+  - versionName: 1.11.59
+    versionCode: 1938
+    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+    sudo: apt-get install -y golang-go
+    output: crocson-arm64.apk
+    forceversion: true
+    forcevercode: true
+    prebuild:
+      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
+    build:
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - git clone https://github.com/abakum/tools /tmp/tools
+      - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
+      - go install .
+      - cd -
+      - rm -rf /tmp/tools
+      - fyne package -os android/arm64 --release
+      - zip -d crocson.apk "META-INF/*" || true
+      - mv crocson.apk crocson-arm64.apk
+    ndk: r26d
+
+  - versionName: 1.11.59
+    versionCode: 1939
+    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+    sudo: apt-get install -y golang-go
+    output: crocson-386.apk
+    forceversion: true
+    forcevercode: true
+    prebuild:
+      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
+    build:
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - git clone https://github.com/abakum/tools /tmp/tools
+      - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
+      - go install .
+      - cd -
+      - rm -rf /tmp/tools
+      - fyne package -os android/386 --release
+      - zip -d crocson.apk "META-INF/*" || true
+      - mv crocson.apk crocson-386.apk
+    ndk: r26d
+
+  - versionName: 1.11.59
+    versionCode: 1940
+    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+    sudo: apt-get install -y golang-go
+    output: crocson-amd64.apk
+    forceversion: true
+    forcevercode: true
+    prebuild:
+      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
+      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
+    build:
+      - export GOPATH=$HOME/go
+      - export PATH=$GOPATH/bin:$PATH
+      - git clone https://github.com/abakum/tools /tmp/tools
+      - cd /tmp/tools/cmd/fyne
+      - git checkout 95e3874065474636a130efaea55a13dc45907713
+      - go install .
+      - cd -
+      - rm -rf /tmp/tools
+      - fyne package -os android/amd64 --release
+      - zip -d crocson.apk "META-INF/*" || true
+      - mv crocson.apk crocson-amd64.apk
+    ndk: r26d
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[\d.]+$
+VercodeOperation:
+  - '%c'
+  - '%c + 1'
+  - '%c + 2'
+  - '%c + 3'
+UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
+CurrentVersion: 1.11.59
+CurrentVersionCode: 1940
