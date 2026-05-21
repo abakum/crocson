@@ -15,6 +15,7 @@ SourceCode: https://github.com/abakum/crocson
 IssueTracker: https://github.com/abakum/crocson/issues
 Changelog: https://github.com/abakum/crocson/releases
 
+AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
 AutoName: crocson
 
 RepoType: git
@@ -40,8 +41,8 @@ generate_builds() {
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     output: crocson-${ABI}.apk
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     forceversion: true
     forcevercode: true
     prebuild:
