@@ -23,9 +23,7 @@ AutoName: crocson
 RepoType: git
 Repo: https://github.com/abakum/crocson"
 
-TAIL="AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
-
-AutoUpdateMode: Version
+TAIL="AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\\d.]+\$
 VercodeOperation:
   - '%c'
@@ -57,7 +55,7 @@ generate_builds() {
       - export PATH=\$GOPATH/bin:\$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 95e3874065474636a130efaea55a13dc45907713
+      - git checkout ec3e9d6382e9fba5b792385cacdba07483a19ae0
       - go install .
       - cd -
       - rm -rf /tmp/tools

@@ -1,17 +1,40 @@
-croc, herhangi iki bilgisayarın dosyaları basit ve güvenli bir şekilde aktarmasını sağlayan bir araçtır.
+crocson — Android, Windows, Linux, macOS için croc.
 
-Özellik
-- izin verir herhangi iki bilgisayar veri aktarmak için bu (Relay kullanarak)
-- uçtan uca şifreleme sağlar (PAKE kullanarak)
-- kolay platformlar arası aktarımlara olanak tanır (Windows, Linux, macOS)
-- birden çok dosya aktarımına izin verir
-- yerel sunucu veya bağlantı noktası iletme gerekli değil
-- ipv6-ilk ipv4 geri dönüş ile
+Gönderenden alıcıya dosya aktarımı
+- Port yönlendirme olmadan relay üzerinden
+- Masaüstü: sürükle-bırak, komut satırı, stdin pipe, kuyrukta yalnızca dosya ve dizin referansları
+- Android: dosya yöneticilerinden "Paylaş" ve "Bununla Aç"
 
-Bu arayüz şunları yapmanıza olanak tanır
-- alandan veya CROC_SECRET ortam değişkeninden alınan gizli anahtarla tek kullanımlık şifreler kullanın
-- Windows, Linux ve macOS için, dosya veya dizin seçim iletişim kutularına ek olarak sürükle-bırak veya komut satırını kullanın
-- Android için, dosya veya dizin seçim iletişim kutularına ek olarak dosya yöneticilerinden "Paylaş" menüsünü veya bir veya birden fazla dosya için "Bununla Aç" seçeneğini kullanın
-- Android için, iç içe dizinler olmadan dosya gönderin ve iç içe dizinleri bile alıp bunları .zip dosyalarına kaydedin
-- konsoldaki kadar hızlı olmasa da protokolü renkli olarak görüntüleyin
-- Android için, protokolü `adb logcat -s croc` komutuyla görüntüleyin
+WebDAV — çift yönlü dosya aktarımı
+- Dahili HTTP/HTTPS sunucusu
+- Tarayıcı üzerinden dosya gezintisi, ses/video akışı
+- Şifrelenmiş tünelden yönlendirme
+
+Sohbet
+- Oturum geçmişli web sohbeti
+- Görüntülü aramalar, video mesajları, masaüstü ekran paylaşımı
+- Web kamerası/mikrofon/ekran görüntüsünün sunucu tarafı kaydı (WebM/MP4/PNG), sohbete yayınlama
+
+Güvenlik
+- Uçtan uca şifreleme (PAKE), tek kullanımlık parolalar (TOTP)
+- Giriş alanından veya CROC_SECRET'ten gizli anahtar
+- Eliptik eğri seçimi, relay parolası karşı tarafa açıklanmaz
+
+QR kodu ve Deep Links
+- QR kodu oluşturma/tarama, Android tarayıcı desteği
+- Ayarlar ve WebDAV için Deep Links
+
+Relay profilleri
+- Geçiş, GUI veya CLI'dan yerel yönetim
+- Vekil sunucu: SOCKS5 (Tor), HTTP
+
+Aktarım ayarları
+- .gitignore, dosya üzerine yazma, sıkıştırma, WebDAV bağlantısıyla silinmeye karşı koruma
+- Çoğullama, klasör ZIP'i, hız sınırı
+
+Arayüz
+- Temalar: system/light/grey/dark/black
+- Yazı tipi seçimi, 5 dil
+
+CLI modu
+- Pipe'lar, metin gönderme, aktarım sürdürme, sessiz mod

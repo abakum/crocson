@@ -1,17 +1,40 @@
-croc is a tool that allows any two computers to simply and securely transfer files.
+crocson — croc for Android, Windows, Linux, macOS.
 
-Features
-- allows any two computers to transfer data (using a relay)
-- provides end-to-end encryption (using PAKE)
-- enables easy cross-platform transfers (Windows, Linux, macOS)
-- allows multiple file transfers
-- local server or port-forwarding not needed
-- ipv6-first with ipv4 fallback
+File transfer from sender to receiver
+- Via relay without port forwarding
+- Desktop: drag-and-drop, command line, stdin pipe, queue holds only file and directory references
+- Android: "Share" and "Open with" from file managers
 
-This interface allows you to
-- use one-time passwords with a secret from the field or from the CROC_SECRET environment variable
-- for Windows, Linux, and macOS, use drag-and-drop or the command line in addition to file or directory selection dialogs
-- for Android, use the "Share" menu from file managers for one or multiple files or "Open with" in addition to file or directory selection dialogs
-- for Android, send files without nested directories, and receive even nested directories, saving them into .zip files
-- view the protocol in color, albeit not as fast as in the console
-- for Android, view the protocol via `adb logcat -s croc`
+WebDAV — two-way file transfer
+- Built-in HTTP/HTTPS server
+- File browsing via browser, streaming audio/video
+- Tunneling through encrypted tunnel
+
+Chat
+- Web chat with session history
+- Video calls, video messages, desktop screen sharing
+- Server-side recording of webcam/microphone/screenshots (WebM/MP4/PNG) with chat publishing
+
+Security
+- End-to-end encryption (PAKE), one-time passwords (TOTP)
+- Secret from input field or CROC_SECRET
+- Choice of elliptic curve, relay password not disclosed to the other party
+
+QR code and Deep Links
+- QR code generation/scanning, support for Android scanners
+- Deep Links for settings and WebDAV
+
+Relay profiles
+- Switching, local management from GUI or CLI
+- Proxy: SOCKS5 (Tor), HTTP
+
+Transfer settings
+- .gitignore, file overwrite, compression, protection from deletion via WebDAV link
+- Multiplexing, folder ZIP, speed limit
+
+Interface
+- Themes: system/light/grey/dark/black
+- Font selection, 5 languages
+
+CLI mode
+- Pipes, text sending, transfer resuming, quiet mode
