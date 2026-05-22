@@ -20,6 +20,8 @@ func detectMimeType(fileName string) string {
 	return MIME_TYPE_OCTET_STREAM
 }
 
+func hideConsole() {}
+
 func CanCreateSymlinks() bool {
 	return false
 }

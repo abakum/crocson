@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
@@ -187,16 +188,23 @@ var (
 	cleanups     = []func(){}
 )
 
-func isCLIMode() bool {
-	if len(os.Args) <= 1 {
+func isPiped() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
 		return false
 	}
-	for _, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "-") {
-			return true
-		}
-		if _, err := os.Stat(arg); err != nil {
-			return true
+	return fi.Mode()&os.ModeCharDevice == 0
+}
+
+func isCLIMode() bool {
+	if isPiped() {
+		return true
+	}
+	if len(os.Args) > 1 {
+		for _, arg := range os.Args[1:] {
+			if _, err := os.Stat(arg); err != nil {
+				return true
+			}
 		}
 	}
 	return false
@@ -204,11 +212,24 @@ func isCLIMode() bool {
 
 func main() {
 	if isCLIMode() {
-		if err := cli.Run(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		exitCode := 0
+		done := make(chan struct{})
+		go func() {
+			if err := cli.Run(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				exitCode = 1
+			}
+			close(done)
+		}()
+		select {
+		case <-sigs:
+			exitCode = 1
+		case <-done:
 		}
-		os.Exit(0)
+		utils.RemoveMarkedFiles()
+		os.Exit(exitCode)
 	}
 
 	hideConsole()

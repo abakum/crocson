@@ -12,5 +12,5 @@ Repo = "https://github.com/abakum/crocson"
 
 [LinuxAndBSD]
 GenericName = "GUI for croc"
-Categories = ["FileTransfer"]
+Categories = ["Network", "FileTransfer", "Telephony", "Security"]
 Comment = "A simple GUI for croc"

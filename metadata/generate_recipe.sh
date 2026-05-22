@@ -8,6 +8,9 @@ YML="$4"
 
 HEADER_DEFAULT="Categories:
   - Internet
+  - Connectivity
+  - Multimedia
+  - Security
 License: ISC
 AuthorName: Konstantin Abakumov
 AuthorEmail: koka.abakum@gmail.com
