@@ -197,7 +197,7 @@ func isPiped() bool {
 }
 
 func isCLIMode() bool {
-	if isPiped() {
+	if runtime.GOOS != "android" && runtime.GOOS != "ios" && isPiped() {
 		return true
 	}
 	if len(os.Args) > 1 {
