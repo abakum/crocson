@@ -313,6 +313,7 @@ func main() {
 
 	log.Info(tempDir)
 	w := a.NewWindow(CS)
+	w.SetIcon(fyne.NewStaticResource("Icon.png", iconData))
 
 	w.SetCloseIntercept(func() {
 		log.Debug("CloseIntercept")
