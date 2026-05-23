@@ -559,17 +559,17 @@ jobs:
           
           # Update AndroidManifest.xml with the extracted values
           echo "Updating AndroidManifest.xml with versionName=$VERSION_NAME and versionCode=$BUILD_NUMBER"
-          sed -i.bak "s/android:versionName=\"[^\"]*\"/android:versionName=\"$VERSION_NAME\"/g" AndroidManifest.xml
-          sed -i.bak "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"$BUILD_NUMBER\"/g" AndroidManifest.xml
           
           echo "Building for Android targets: android/arm, android/arm64, android/386, android/amd64"
           
-          # Define the targets as a bash array
+          # Define the targets as a bash array with versionCode offset
           TARGETS=("android/arm" "android/arm64" "android/386" "android/amd64")
           
           # Loop through each target
-          for target in "${TARGETS[@]}"; do
-            echo "Building for target: $target"
+          for i in "${!TARGETS[@]}"; do
+            target="${TARGETS[$i]}"
+            VC=$((BUILD_NUMBER + i))
+            echo "Building for target: $target (versionCode=$VC)"
             
             # Extract OS and ARCH from target (format: os/arch)
             GOOS=${target%/*}
@@ -580,7 +580,10 @@ jobs:
             export GOOS=$GOOS
             export GOARCH=$GOARCH
             
-            echo "Environment: GOOS=$GOOS, GOARCH=$GOARCH"
+            # Update FyneApp.toml Build for this ABI's versionCode
+            sed -i "s/^Build = .*/Build = $VC/" FyneApp.toml
+            
+            echo "Environment: GOOS=$GOOS, GOARCH=$GOARCH, versionCode=$VC"
             
             # Use fyne package to build the Android APK for the target
             fyne package -os $target --release

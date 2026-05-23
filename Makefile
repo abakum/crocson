@@ -5,22 +5,26 @@ VERSION_NAME := $(shell grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*V
 BUILD_NUMBER := $(shell grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
 DEB_FILE := crocson_$(VERSION_NAME)_amd64.deb
 
-.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui ver deb debi debr useri userr repo local relay syso
+.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui deb debi debr debp useri userr repo local relay syso apk aapt apksigner align
 
-ver: AndroidManifest.xml
-	@echo "Reading version and build number from FyneApp.toml..."
-	@if [ -z "$(VERSION_NAME)" ] || [ -z "$(BUILD_NUMBER)" ]; then \
-		echo "ERROR: Could not extract Version or Build number from FyneApp.toml."; \
-		cat FyneApp.toml; \
-		exit 1; \
-	fi
-	@echo "Extracted Version Name: $(VERSION_NAME)"
-	@echo "Extracted Build Number: $(BUILD_NUMBER)"
-	@echo "Updating AndroidManifest.xml with versionName=$(VERSION_NAME) and versionCode=$(BUILD_NUMBER)"
-	@sed -i.bak "s/android:versionName=\"[^\"]*\"/android:versionName=\"$(VERSION_NAME)\"/g" AndroidManifest.xml
-	@sed -i.bak "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"$(BUILD_NUMBER)\"/g" AndroidManifest.xml
-	@echo "Updated AndroidManifest.xml:"
-	@grep -E 'android:versionName|android:versionCode' AndroidManifest.xml
+all: arm64
+
+clean:
+	go clean
+	rm -f crocson.apk crocson.exe crocson_*.deb crocson*.xy
+	rm -rf crocson.app
+
+arm:
+	fyne package -os android/arm --release
+
+arm64:
+	fyne package -os android/arm64 --release
+
+386:
+	fyne package -os android/386 --release
+
+amd64:
+	fyne package -os android/amd64 --release
 
 CROC_FORK := github.com/abakCroc/croc/v10
 PEER_FORK := github.com/abakum/peerdiscovery
@@ -55,7 +59,7 @@ atags:
 	fi
 	@echo "Enabling Android build tags for gopls press Ctrl+Shift+P Go: Restart Language Server"
 
-wtags:	
+wtags:
 	@mkdir -p $(VSCODE_DIR)
 	@if [ -f $(SETTINGS_FILE) ]; then \
 		jq '.gopls["build.buildFlags"] = ["-tags=android"]' $(SETTINGS_FILE) > $(SETTINGS_FILE).tmp && \
@@ -74,25 +78,6 @@ tags:
 		echo '{}' > $(SETTINGS_FILE); \
 	fi
 	@echo "Reset build tags for gopls press Ctrl+Shift+P Go: Restart Language Server"
-
-all: arm64
-
-clean:
-	go clean
-	rm -f crocson.apk crocson.exe crocson_*.deb crocson*.xy
-	rm -rf crocson.app
-
-arm: ver
-	fyne package -os android/arm --release
-
-arm64: ver
-	fyne package -os android/arm64 --release
-
-386: ver
-	fyne package -os android/386 --release
-
-amd64: ver
-	fyne package -os android/amd64 --release
 
 emulator:
 	emulator -avd Medium_Phone_API_36.1
@@ -215,7 +200,7 @@ deb: crocson.tar.xz build-deb.sh DEBIAN/control DEBIAN/postinst DEBIAN/prerm DEB
 	@chmod +x build-deb.sh
 	@./build-deb.sh
 
-debi: ver $(DEB_FILE)
+debi: $(DEB_FILE)
 	@echo "Installing $(DEB_FILE)..."
 	@sudo dpkg -i "$(DEB_FILE)"
 
@@ -225,11 +210,11 @@ $(DEB_FILE):
 		exit 1; \
 	fi
 
-debr: ver
+debr:
 	@echo "Removing crocson package..."
 	@sudo dpkg -r crocson
 
-debp: ver
+debp:
 	@echo "Purging crocson package..."
 	@sudo dpkg -P crocson
 

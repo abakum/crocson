@@ -21,18 +21,14 @@ Builds:
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
-    forceversion: true
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
-      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
-      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 0860061ad745d97fa9a8c07ac9d8be75ef7277ca
+      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -45,18 +41,14 @@ Builds:
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
-    forceversion: true
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
-      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
-      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 0860061ad745d97fa9a8c07ac9d8be75ef7277ca
+      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -69,18 +61,14 @@ Builds:
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
-    forceversion: true
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
-      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
-      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 0860061ad745d97fa9a8c07ac9d8be75ef7277ca
+      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -93,18 +81,14 @@ Builds:
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
-    forceversion: true
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
-      - sed -i '/versionCode/s/="[0-9]*"/="$$VERCODE$$"/' AndroidManifest.xml
-      - sed -i '/versionName/s/="[^"]*/="$$VERSION$$/' AndroidManifest.xml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 0860061ad745d97fa9a8c07ac9d8be75ef7277ca
+      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
       - go install .
       - cd -
       - rm -rf /tmp/tools

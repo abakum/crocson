@@ -66,12 +66,8 @@ generate_builds() {
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
     output: crocson-${ABI}.apk
-    forceversion: true
-    forcevercode: true
     prebuild:
       - sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
-      - sed -i '/versionCode/s/="[0-9]*"/="\$\$VERCODE\$\$"/' AndroidManifest.xml
-      - sed -i '/versionName/s/="[^"]*/="\$\$VERSION\$\$/' AndroidManifest.xml
     build:
       - export GOPATH=\$HOME/go
       - export PATH=\$GOPATH/bin:\$PATH
