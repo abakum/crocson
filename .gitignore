@@ -47,3 +47,4 @@ debug
 /*.idsig
 *.p12
 cmd/syso/syso
+cmd/syso/syso.exe
