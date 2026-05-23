@@ -1,10 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="$1"
-BUILD="$2"
-COMMIT_SHA="$3"
-YML="$4"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FYNEAPP="$SCRIPT_DIR/../FyneApp.toml"
+YML="$SCRIPT_DIR/com.github.abakum.crocson.yml"
+
+VERSION="${1:-$(grep -E '^\s*Version\s*=' "$FYNEAPP" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')}"
+BUILD="${2:-$(grep -E '^\s*Build\s*=' "$FYNEAPP" | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')}"
+COMMIT_SHA="${3:-$(git rev-list -n 1 "v${VERSION}" 2>/dev/null || git rev-parse HEAD)}"
+YML="${4:-$YML}"
+
+if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
+    echo "ERROR: Could not extract Version or Build from $FYNEAPP"
+    exit 1
+fi
+
+TOOLS_SHA="${TOOLS_SHA:-$(git ls-remote https://github.com/abakum/tools refs/heads/main | awk '{print $1}')}"
+
+if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
+    echo "ERROR: Could not extract Version or Build from $FYNEAPP"
+    exit 1
+fi
+
+echo "Version: $VERSION"
+echo "Build: $BUILD"
+echo "Commit: $COMMIT_SHA"
+echo "Tools SHA: $TOOLS_SHA"
+echo "Output: $YML"
 
 HEADER_DEFAULT="Categories:
   - Internet
@@ -55,7 +77,7 @@ generate_builds() {
       - export PATH=\$GOPATH/bin:\$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout ec3e9d6382e9fba5b792385cacdba07483a19ae0
+      - git checkout ${TOOLS_SHA}
       - go install .
       - cd -
       - rm -rf /tmp/tools

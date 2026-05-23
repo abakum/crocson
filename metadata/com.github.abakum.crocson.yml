@@ -16,9 +16,9 @@ RepoType: git
 Repo: https://github.com/abakum/crocson
 
 Builds:
-  - versionName: 1.11.59
-    versionCode: 1937
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+  - versionName: 1.11.60
+    versionCode: 1938
+    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
     forceversion: true
@@ -40,9 +40,9 @@ Builds:
       - mv crocson.apk crocson-arm.apk
     ndk: r27d
 
-  - versionName: 1.11.59
-    versionCode: 1938
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+  - versionName: 1.11.60
+    versionCode: 1939
+    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
     forceversion: true
@@ -64,9 +64,9 @@ Builds:
       - mv crocson.apk crocson-arm64.apk
     ndk: r27d
 
-  - versionName: 1.11.59
-    versionCode: 1939
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+  - versionName: 1.11.60
+    versionCode: 1940
+    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
     forceversion: true
@@ -88,9 +88,9 @@ Builds:
       - mv crocson.apk crocson-386.apk
     ndk: r27d
 
-  - versionName: 1.11.59
-    versionCode: 1940
-    commit: 65697efb055053e0caa8b3edeb7b1288ce9b965c
+  - versionName: 1.11.60
+    versionCode: 1941
+    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
     forceversion: true
@@ -120,5 +120,5 @@ VercodeOperation:
   - '%c + 2'
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
-CurrentVersion: 1.11.59
-CurrentVersionCode: 1940
+CurrentVersion: 1.11.60
+CurrentVersionCode: 1941
