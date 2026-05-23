@@ -46,3 +46,4 @@ debug
 *.jks
 /*.idsig
 *.p12
+*.syso
