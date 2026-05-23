@@ -1,0 +1,4 @@
+CLI mode: transparent argument passthrough to croc (pipe, signal handling)
+Windows: application icon embedded in .exe, console hidden in GUI mode
+Application icon displayed in window title bar
+Updated app descriptions and screenshots for all languages

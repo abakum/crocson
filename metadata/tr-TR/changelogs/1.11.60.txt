@@ -1,0 +1,4 @@
+CLI modu: croc'a argüman şeffah geçişi (boru, sinyal işleme)
+Windows: uygulama simgesi .exe'ye gömülü, GUI modunda konsol gizli
+Pencere başlık çubuğunda uygulama simgesi gösteriliyor
+Tüm diller için uygulama açıklamaları ve ekran görüntüleri güncellendi
