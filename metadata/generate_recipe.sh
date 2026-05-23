@@ -73,6 +73,11 @@ generate_builds() {
     build:
       - export GOPATH=\$HOME/go
       - export PATH=\$GOPATH/bin:\$PATH
+      - go install golang.org/dl/go1.25.0@latest
+      - go1.25.0 download
+      - export GOROOT=\$HOME/sdk/go1.25.0
+      - export PATH=\$GOROOT/bin:\$PATH
+      - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
       - git checkout ${TOOLS_SHA}
