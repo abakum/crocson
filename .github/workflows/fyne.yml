@@ -526,23 +526,18 @@ jobs:
           cd  $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
           go install
 
-      # Step 6.3: Set up JDK 17
-      - name: Set up JDK 17
+      # Step 6.3: Set up JDK 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
-      # Step 6.4: Print NDK version
-      - name: Print NDK version
-        run: |
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
-          if [ -n "$ANDROID_NDK_HOME" ] && [ -f "$ANDROID_NDK_HOME/source.properties" ]; then
-            cat "$ANDROID_NDK_HOME/source.properties"
-          else
-            echo "ANDROID_NDK_HOME not set, searching..."
-            find /usr/local/lib/android/sdk/ndk -name "source.properties" 2>/dev/null | while read f; do echo "=== $f ==="; cat "$f"; done
-          fi
+      # Step 6.4: Install and pin NDK r27d
+      - name: Setup NDK r27d
+        uses: AmniKor/setup-android-ndk@v1
+        with:
+          ndk-version: r27d
       # Step 7: Build the application using fyne package for Android targets
       - name: Build with fyne package for Android targets
         run: |
