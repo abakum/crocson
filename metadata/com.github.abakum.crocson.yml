@@ -17,7 +17,7 @@ Repo: https://github.com/abakum/crocson
 
 Builds:
   - versionName: 1.11.60
-    versionCode: 1938
+    versionCode: 1939
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
@@ -28,7 +28,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
+      - git checkout 52d93069c3628533ac10768a335b1f71d9075c9c
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -37,7 +37,7 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1939
+    versionCode: 1940
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
@@ -48,7 +48,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
+      - git checkout 52d93069c3628533ac10768a335b1f71d9075c9c
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -57,7 +57,7 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1940
+    versionCode: 1941
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
@@ -68,7 +68,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
+      - git checkout 52d93069c3628533ac10768a335b1f71d9075c9c
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -77,7 +77,7 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1941
+    versionCode: 1942
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
@@ -88,7 +88,7 @@ Builds:
       - export PATH=$GOPATH/bin:$PATH
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 69ee73aee44b6aa88aa30979e1551fff9f5d9d5a
+      - git checkout 52d93069c3628533ac10768a335b1f71d9075c9c
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -105,4 +105,4 @@ VercodeOperation:
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
 CurrentVersion: 1.11.60
-CurrentVersionCode: 1941
+CurrentVersionCode: 1942
