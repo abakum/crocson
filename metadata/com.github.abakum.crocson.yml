@@ -17,12 +17,11 @@ Repo: https://github.com/abakum/crocson
 
 Builds:
   - versionName: 1.11.60
-    versionCode: 1939
+    versionCode: 1938
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
-    prebuild:
-      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+    prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
@@ -37,12 +36,11 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1940
+    versionCode: 1939
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
-    prebuild:
-      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+    prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
@@ -57,12 +55,11 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1941
+    versionCode: 1940
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
-    prebuild:
-      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+    prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
@@ -77,12 +74,11 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.60
-    versionCode: 1942
+    versionCode: 1941
     commit: e72691948517e1162f575856df031d0309f8355e
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
-    prebuild:
-      - sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
+    prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
       - export PATH=$GOPATH/bin:$PATH
@@ -105,4 +101,4 @@ VercodeOperation:
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
 CurrentVersion: 1.11.60
-CurrentVersionCode: 1942
+CurrentVersionCode: 1941
