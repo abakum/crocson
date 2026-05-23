@@ -712,33 +712,33 @@ jobs:
           echo "Patched APKs:"
           ls -la crocson-*.apk
 
-      # Step 8: Sign Android APKs
-      - name: Sign and rename APK for Android
-        id: sign_apk
-        uses: ilharp/sign-android-release@v2
-        with:
-          releaseDir: ${{ github.workspace }}/workspace/crocson
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: "36.0.0"
-
-      # Step 9: Remove '-signed' suffix from APK filenames
-      - name: Clean signed APK filenames
+      # Step 8: Sign Android APKs without v3 scheme (v1+v2 only)
+      - name: Sign APK without v3 scheme
         run: |
           cd ${{ github.workspace }}/workspace/crocson
 
-          rm -f *-temp.apk
+          echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
-          if ! compgen -G "*-signed.apk" > /dev/null; then
-            echo "::error file=,title=Missing Signed APKs::No *-signed.apk files found. The signing step may have failed or produced no output."
-            exit 1
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          if [ ! -f "$BUILD_TOOLS/apksigner" ]; then
+            echo "Installing Android build tools 36.0.0..."
+            yes | sdkmanager "build-tools;36.0.0"
           fi
 
-          for f in *-signed.apk; do
-            mv "$f" "${f%-signed.apk}.apk"
+          for apk in crocson-*.apk; do
+            echo "Signing $apk without v3 scheme..."
+            "$BUILD_TOOLS/apksigner" sign \
+              --v3-signing-enabled false \
+              --ks /tmp/keystore.jks \
+              --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+              --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+              --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
+              "$apk"
+            echo "Verifying $apk..."
+            "$BUILD_TOOLS/apksigner" verify -v "$apk"
           done
+
+          rm -f /tmp/keystore.jks
 
       # Step 10: Upload the signed APK files as artifacts
       - name: Upload Android artifacts
