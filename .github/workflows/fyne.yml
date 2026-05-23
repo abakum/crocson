@@ -535,7 +535,7 @@ jobs:
 
       # Step 6.4: Install and pin NDK r27d
       - name: Setup NDK r27d
-        uses: AmniKor/setup-android-ndk@v1
+        uses: nttld/setup-ndk@v1
         with:
           ndk-version: r27d
       # Step 7: Build the application using fyne package for Android targets
