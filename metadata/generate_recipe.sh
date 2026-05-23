@@ -45,7 +45,9 @@ AutoName: crocson
 RepoType: git
 Repo: https://github.com/abakum/crocson"
 
-TAIL="AutoUpdateMode: Version
+TAIL="AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
+
+AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\\d.]+\$
 VercodeOperation:
   - '%c'
@@ -65,6 +67,7 @@ generate_builds() {
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     output: crocson-${ABI}.apk
     prebuild: sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
     build:
