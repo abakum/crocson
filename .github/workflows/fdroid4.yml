@@ -118,19 +118,26 @@ jobs:
           BRANCH="crocson-v${VERSION}"
           GL_TOKEN="${{ env.GITLAB_TOKEN }}"
 
-          # Ensure fork exists (idempotent — returns existing fork if already forked)
+          EXISTING_MR=$(curl -sf "https://gitlab.com/api/v4/projects/36528/merge_requests?state=opened&search=${APP_ID}" \
+            -H "PRIVATE-TOKEN: ${GL_TOKEN}" \
+            | grep -o "\"source_branch\":\"[^\"]*\"" \
+            | head -1 \
+            | sed 's/"source_branch":"//;s/"//')
+          if [ -n "$EXISTING_MR" ]; then
+            echo "Found open MR, reusing branch: $EXISTING_MR"
+            BRANCH="$EXISTING_MR"
+          fi
+
           curl -sf -X POST "https://gitlab.com/api/v4/projects/fdroid%2Ffdroiddata/fork" \
             -H "PRIVATE-TOKEN: ${GL_TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{}' > /dev/null || echo "Fork already exists or created"
 
-          # Clone upstream (always fresh master), add fork as push remote
           git clone --depth=1 "https://gitlab.com/fdroid/fdroiddata.git" /tmp/fdroiddata
           cd /tmp/fdroiddata
           git fetch --unshallow
           git remote add fork "https://oauth2:${GL_TOKEN}@gitlab.com/abakum/fdroiddata.git"
 
-          # Create and checkout new branch (or reset if exists)
           git checkout -b "$BRANCH" || git checkout "$BRANCH"
 
           # Copy recipe
@@ -156,14 +163,6 @@ jobs:
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force
-
-          # Create MR from fork to upstream via GitLab API
-          # Skip if first=true — branch was force-pushed to existing MR
-          if [ "${{ github.event.inputs.first }}" = "true" ]; then
-            echo "First mode: skipping MR creation (branch force-pushed to existing MR)"
-            echo "MR: https://gitlab.com/fdroid/fdroiddata/-/merge_requests?search=${APP_ID}+${VERSION}"
-            exit 0
-          fi
 
           BODY=$(cat << JSONEOF
           {
