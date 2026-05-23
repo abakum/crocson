@@ -18,7 +18,7 @@ Repo: https://github.com/abakum/crocson
 Builds:
   - versionName: 1.11.60
     versionCode: 1938
-    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
+    commit: 654de1b71a00cce8365b8788e771f0179375c979
     sudo: apt-get install -y golang-go
     output: crocson-arm.apk
     forceversion: true
@@ -42,7 +42,7 @@ Builds:
 
   - versionName: 1.11.60
     versionCode: 1939
-    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
+    commit: 654de1b71a00cce8365b8788e771f0179375c979
     sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
     forceversion: true
@@ -66,7 +66,7 @@ Builds:
 
   - versionName: 1.11.60
     versionCode: 1940
-    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
+    commit: 654de1b71a00cce8365b8788e771f0179375c979
     sudo: apt-get install -y golang-go
     output: crocson-386.apk
     forceversion: true
@@ -90,7 +90,7 @@ Builds:
 
   - versionName: 1.11.60
     versionCode: 1941
-    commit: a93978ca149e7988d37ad5dd6657e113e12d795e
+    commit: 654de1b71a00cce8365b8788e771f0179375c979
     sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
     forceversion: true
