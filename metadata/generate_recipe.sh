@@ -67,8 +67,8 @@ generate_builds() {
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
-    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     output: crocson-${ABI}.apk
+    binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     prebuild: sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
     build:
       - export GOPATH=\$HOME/go
