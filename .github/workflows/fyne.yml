@@ -587,10 +587,9 @@ jobs:
             
             # Use fyne package to build the Android APK for the target
             fyne package -os $target --release
-            APK_NAME="crocson.apk"
-            if [ -f "$APK_NAME" ]; then
-                mv "$APK_NAME" "crocson-${GOARCH}.apk"
-                echo "Renamed APK to: crocson-${GOARCH}.apk"
+            if [ -f crocson.apk ]; then
+                zip -d crocson.apk "META-INF/*" --out "crocson-${GOARCH}.apk"
+                echo "Created APK: crocson-${GOARCH}.apk"
             else
                 echo "ERROR: fyne package did not create crocson.apk for $target"
                 exit 1
@@ -712,8 +711,8 @@ jobs:
           echo "Patched APKs:"
           ls -la crocson-*.apk
 
-      # Step 8: Sign Android APKs without v3 scheme (v1+v2 only)
-      - name: Sign APK without v3 scheme
+      # Step 8: Sign Android APKs with CROC key
+      - name: Sign APK
         run: |
           cd ${{ github.workspace }}/workspace/crocson
 
@@ -726,9 +725,8 @@ jobs:
           fi
 
           for apk in crocson-*.apk; do
-            echo "Signing $apk without v3 scheme..."
+            echo "Signing $apk..."
             "$BUILD_TOOLS/apksigner" sign \
-              --v3-signing-enabled false \
               --ks /tmp/keystore.jks \
               --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
               --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
