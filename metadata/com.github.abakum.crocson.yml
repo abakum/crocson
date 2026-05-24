@@ -33,7 +33,7 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 29d57d221a293d3e9b30b10d310d5629c0eeb257
+      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -58,7 +58,7 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 29d57d221a293d3e9b30b10d310d5629c0eeb257
+      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -83,7 +83,7 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 29d57d221a293d3e9b30b10d310d5629c0eeb257
+      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
       - go install .
       - cd -
       - rm -rf /tmp/tools
@@ -108,7 +108,7 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 29d57d221a293d3e9b30b10d310d5629c0eeb257
+      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
       - go install .
       - cd -
       - rm -rf /tmp/tools
