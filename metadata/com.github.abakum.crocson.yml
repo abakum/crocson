@@ -22,8 +22,6 @@ Builds:
     sudo: apt-get install -y golang-go zip
     output: crocson-arm.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
-    srclibs:
-      - reproducible-apk-tools@v0.3.0
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
@@ -40,9 +38,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
-      - zip -d crocson.apk 'META-INF/*'
-      - $$reproducible-apk-tools$$/zipalign.py --page-size 16 crocson.apk crocson-arm.apk
-      - ls $$SDK$$/build-tools/
+      - zip -d crocson.apk 'META-INF/*' --out crocson-arm.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-arm.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-arm.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -51,8 +49,6 @@ Builds:
     sudo: apt-get install -y golang-go zip
     output: crocson-arm64.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
-    srclibs:
-      - reproducible-apk-tools@v0.3.0
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
@@ -69,9 +65,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
-      - zip -d crocson.apk 'META-INF/*'
-      - $$reproducible-apk-tools$$/zipalign.py --page-size 16 crocson.apk crocson-arm64.apk
-      - ls $$SDK$$/build-tools/
+      - zip -d crocson.apk 'META-INF/*' --out crocson-arm64.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-arm64.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-arm64.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -80,8 +76,6 @@ Builds:
     sudo: apt-get install -y golang-go zip
     output: crocson-386.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
-    srclibs:
-      - reproducible-apk-tools@v0.3.0
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
@@ -98,9 +92,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
-      - zip -d crocson.apk 'META-INF/*'
-      - $$reproducible-apk-tools$$/zipalign.py --page-size 16 crocson.apk crocson-386.apk
-      - ls $$SDK$$/build-tools/
+      - zip -d crocson.apk 'META-INF/*' --out crocson-386.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-386.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-386.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -109,8 +103,6 @@ Builds:
     sudo: apt-get install -y golang-go zip
     output: crocson-amd64.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
-    srclibs:
-      - reproducible-apk-tools@v0.3.0
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - export GOPATH=$HOME/go
@@ -127,9 +119,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
-      - zip -d crocson.apk 'META-INF/*'
-      - $$reproducible-apk-tools$$/zipalign.py --page-size 16 crocson.apk crocson-amd64.apk
-      - ls $$SDK$$/build-tools/
+      - zip -d crocson.apk 'META-INF/*' --out crocson-amd64.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-amd64.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-amd64.apk
     ndk: r27d
 
 AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
