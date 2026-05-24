@@ -719,9 +719,9 @@ jobs:
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
           BUILD_TOOLS="$ANDROID_HOME/build-tools/31.0.0"
-          if [ ! -f "$BUILD_TOOLS/apksigner" ]; then
+          if [ ! -d "$BUILD_TOOLS" ]; then
             echo "Installing Android build tools 31.0.0..."
-            yes | sdkmanager "build-tools;31.0.0"
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;31.0.0"
           fi
 
           for apk in crocson-*.apk; do
