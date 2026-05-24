@@ -38,7 +38,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
-      - mv crocson.apk crocson-arm.apk
+      - zip -d crocson.apk 'META-INF/*'
+      - $$SDK$$/build-tools/34.0.0/zipalign -f -P 16384 4 crocson.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-arm.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -63,7 +65,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
-      - mv crocson.apk crocson-arm64.apk
+      - zip -d crocson.apk 'META-INF/*'
+      - $$SDK$$/build-tools/34.0.0/zipalign -f -P 16384 4 crocson.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-arm64.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -88,7 +92,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
-      - mv crocson.apk crocson-386.apk
+      - zip -d crocson.apk 'META-INF/*'
+      - $$SDK$$/build-tools/34.0.0/zipalign -f -P 16384 4 crocson.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-386.apk
     ndk: r27d
 
   - versionName: 1.11.60
@@ -113,7 +119,9 @@ Builds:
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
-      - mv crocson.apk crocson-amd64.apk
+      - zip -d crocson.apk 'META-INF/*'
+      - $$SDK$$/build-tools/34.0.0/zipalign -f -P 16384 4 crocson.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-amd64.apk
     ndk: r27d
 
 AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c

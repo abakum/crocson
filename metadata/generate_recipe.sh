@@ -85,7 +85,9 @@ generate_builds() {
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/${ABI} --release
-      - mv crocson.apk crocson-${ABI}.apk
+      - zip -d crocson.apk 'META-INF/*'
+      - \$\$SDK\$\$/build-tools/34.0.0/zipalign -f -P 16384 4 crocson.apk crocson-aligned.apk
+      - mv crocson-aligned.apk crocson-${ABI}.apk
     ndk: r27d
 
 BEOF
