@@ -39,7 +39,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
       - zip -d crocson.apk 'META-INF/*' --out crocson-arm.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-arm.apk crocson-aligned.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -p 4 crocson-arm.apk crocson-aligned.apk
       - mv crocson-aligned.apk crocson-arm.apk
     ndk: r27d
 
@@ -66,7 +66,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
       - zip -d crocson.apk 'META-INF/*' --out crocson-arm64.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-arm64.apk crocson-aligned.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -p 4 crocson-arm64.apk crocson-aligned.apk
       - mv crocson-aligned.apk crocson-arm64.apk
     ndk: r27d
 
@@ -93,7 +93,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
       - zip -d crocson.apk 'META-INF/*' --out crocson-386.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-386.apk crocson-aligned.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -p 4 crocson-386.apk crocson-aligned.apk
       - mv crocson-aligned.apk crocson-386.apk
     ndk: r27d
 
@@ -120,7 +120,7 @@ Builds:
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
       - zip -d crocson.apk 'META-INF/*' --out crocson-amd64.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -P 16384 4 crocson-amd64.apk crocson-aligned.apk
+      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign -f -p 4 crocson-amd64.apk crocson-aligned.apk
       - mv crocson-aligned.apk crocson-amd64.apk
     ndk: r27d
 
