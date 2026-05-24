@@ -87,7 +87,7 @@ generate_builds() {
       - fyne package -os android/${ABI} --release
       - zip -d crocson.apk 'META-INF/*' --out crocson-${ABI}.apk
       - cd cmd/fix-cd-extra
-      - go run . crocson-${ABI}.apk
+      - go run . ../../crocson-${ABI}.apk
       - cd -
     ndk: r27d
 
