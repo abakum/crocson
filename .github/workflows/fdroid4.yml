@@ -151,19 +151,6 @@ jobs:
           # Copy recipe
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
 
-          # Copy changelogs for all ABIs and locales (follow symlinks)
-          for LOCALE_DIR in "${{ github.workspace }}/metadata/"*/changelogs; do
-            LOCALE=$(basename "$(dirname "$LOCALE_DIR")")
-            mkdir -p "metadata/${APP_ID}/${LOCALE}/changelogs"
-            for i in 0 1 2 3; do
-              VC=$((BUILD + i))
-              SRC="${LOCALE_DIR}/${VC}.txt"
-              if [ -f "$SRC" ]; then
-                cp -L "$SRC" "metadata/${APP_ID}/${LOCALE}/changelogs/${VC}.txt"
-              fi
-            done
-          done
-
           # Copy srclib definitions
           if [ "${{ github.event.inputs.srclibs }}" = "true" ]; then
             mkdir -p srclibs
@@ -173,7 +160,7 @@ jobs:
           # Commit and push to fork
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/" srclibs/
+          git add "metadata/${APP_ID}.yml" srclibs/
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force
