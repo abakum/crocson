@@ -15,16 +15,16 @@ clean:
 	rm -rf crocson.app
 
 arm:
-	fyne package -os android/arm --release
+	fyne package -os android/arm --release --sign
 
 arm64:
-	fyne package -os android/arm64 --release
+	fyne package -os android/arm64 --release --sign
 
 386:
-	fyne package -os android/386 --release
+	fyne package -os android/386 --release --sign
 
 amd64:
-	fyne package -os android/amd64 --release
+	fyne package -os android/amd64 --release --sign
 
 CROC_FORK := github.com/abakCroc/croc/v10
 PEER_FORK := github.com/abakum/peerdiscovery

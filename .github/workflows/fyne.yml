@@ -588,7 +588,7 @@ jobs:
             # Use fyne package to build the Android APK for the target
             fyne package -os $target --release
             if [ -f crocson.apk ]; then
-                zip -d crocson.apk "META-INF/*" --out "crocson-${GOARCH}.apk"
+                mv crocson.apk "crocson-${GOARCH}.apk"
                 echo "Created APK: crocson-${GOARCH}.apk"
             else
                 echo "ERROR: fyne package did not create crocson.apk for $target"
@@ -725,8 +725,6 @@ jobs:
           fi
 
           for apk in crocson-*.apk; do
-            echo "Aligning $apk..."
-            "$BUILD_TOOLS/zipalign" -f -p 4 "$apk" "${apk}.aligned" && mv "${apk}.aligned" "$apk"
             echo "Signing $apk..."
             "$BUILD_TOOLS/apksigner" sign \
               --ks /tmp/keystore.jks \

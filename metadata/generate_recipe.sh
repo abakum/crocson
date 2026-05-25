@@ -66,7 +66,7 @@ generate_builds() {
   - versionName: ${VERSION}
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
     output: crocson-${ABI}.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     prebuild: sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
@@ -85,10 +85,7 @@ generate_builds() {
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/${ABI} --release
-      - zip -d crocson.apk 'META-INF/*' --out crocson-${ABI}.apk
-      - \$\$SDK\$\$/build-tools/\$(ls \$\$SDK\$\$/build-tools/ | sort -V | tail -1)/zipalign 
-        -f -p 4 crocson-${ABI}.apk crocson-aligned.apk
-      - mv crocson-aligned.apk crocson-${ABI}.apk
+      - mv crocson.apk crocson-${ABI}.apk
     ndk: r27d
 
 BEOF

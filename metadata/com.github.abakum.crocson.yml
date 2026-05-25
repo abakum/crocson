@@ -19,7 +19,7 @@ Builds:
   - versionName: 1.11.60
     versionCode: 1938
     commit: e41646dee55eb67d3697b94993b8b36d11a7aaa9
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
     output: crocson-arm.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
@@ -33,21 +33,18 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
+      - git checkout 9381ef18667a2178b0dd975a7ce2b80c026431e6
       - go install .
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm --release
-      - zip -d crocson.apk 'META-INF/*' --out crocson-arm.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign 
-        -f -p 4 crocson-arm.apk crocson-aligned.apk
-      - mv crocson-aligned.apk crocson-arm.apk
+      - mv crocson.apk crocson-arm.apk
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1939
     commit: e41646dee55eb67d3697b94993b8b36d11a7aaa9
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
     output: crocson-arm64.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
@@ -61,21 +58,18 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
+      - git checkout 9381ef18667a2178b0dd975a7ce2b80c026431e6
       - go install .
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/arm64 --release
-      - zip -d crocson.apk 'META-INF/*' --out crocson-arm64.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign 
-        -f -p 4 crocson-arm64.apk crocson-aligned.apk
-      - mv crocson-aligned.apk crocson-arm64.apk
+      - mv crocson.apk crocson-arm64.apk
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1940
     commit: e41646dee55eb67d3697b94993b8b36d11a7aaa9
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
     output: crocson-386.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
@@ -89,21 +83,18 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
+      - git checkout 9381ef18667a2178b0dd975a7ce2b80c026431e6
       - go install .
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/386 --release
-      - zip -d crocson.apk 'META-INF/*' --out crocson-386.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign 
-        -f -p 4 crocson-386.apk crocson-aligned.apk
-      - mv crocson-aligned.apk crocson-386.apk
+      - mv crocson.apk crocson-386.apk
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1941
     commit: e41646dee55eb67d3697b94993b8b36d11a7aaa9
-    sudo: apt-get install -y golang-go zip
+    sudo: apt-get install -y golang-go
     output: crocson-amd64.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
@@ -117,15 +108,12 @@ Builds:
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
-      - git checkout 5b064736c14c1deae4009cce6b103678f1c4b936
+      - git checkout 9381ef18667a2178b0dd975a7ce2b80c026431e6
       - go install .
       - cd -
       - rm -rf /tmp/tools
       - fyne package -os android/amd64 --release
-      - zip -d crocson.apk 'META-INF/*' --out crocson-amd64.apk
-      - $$SDK$$/build-tools/$(ls $$SDK$$/build-tools/ | sort -V | tail -1)/zipalign 
-        -f -p 4 crocson-amd64.apk crocson-aligned.apk
-      - mv crocson-aligned.apk crocson-amd64.apk
+      - mv crocson.apk crocson-amd64.apk
     ndk: r27d
 
 AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51627ad5788ad5c
