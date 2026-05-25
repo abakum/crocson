@@ -1,6 +1,6 @@
 # crocson
 
-[howeyc/crocgui v1.11.5](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) のフォーク — [croc](https://github.com/schollz/croc) のGUIフロントエンド。Windows、Linux、macOS、Androidに対応。
+[howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) のフォーク — [croc](https://github.com/schollz/croc) をベースに、Android、Windows、Linux、macOS向けに設計。
 
 <p align="center">
   <img src="images/phoneScreenshots/1.png?raw=true" width="200">

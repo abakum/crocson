@@ -1,6 +1,6 @@
 # crocson
 
-Форк [howeyc/crocgui v1.11.5](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) — графический интерфейс для [croc](https://github.com/schollz/croc), ориентированный на Windows, Linux, macOS и Android.
+Форк [howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) — и [schollz/croc](https://github.com/schollz/croc) ориентированный на Android, Windows, Linux и macOS.
 
 <p align="center">
   <img src="images/phoneScreenshots/1.png?raw=true" width="200">

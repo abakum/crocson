@@ -1,6 +1,6 @@
 # crocson
 
-基于 [howeyc/crocgui v1.11.5](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) 的分支 — [croc](https://github.com/schollz/croc) 的图形界面，支持 Windows、Linux、macOS 和 Android。
+基于 [howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) 的分支 — [croc](https://github.com/schollz/croc) 的面向 Android、Windows、Linux 和 macOS 的设计。
 
 <p align="center">
   <img src="images/phoneScreenshots/1.png?raw=true" width="200">

@@ -1,6 +1,6 @@
 # crocson
 
-[howeyc/crocgui v1.11.5](https://github.com/howeyc/crocgui/releases/tag/v1.11.5)'in bir çatallaması (fork) olup, Windows, Linux, macOS ve Android için tasarlanmış [croc](https://github.com/schollz/croc) arayüzüdür.
+[howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.5)'in bir çatallaması (fork) olup, Android, Windows, Linux ve macOS için tasarlanmış [croc](https://github.com/schollz/croc) tabanlıdır.
 
 <p align="center">
   <img src="images/phoneScreenshots/1.png?raw=true" width="200">

@@ -1,6 +1,6 @@
 # crocson
 
-A fork of [howeyc/crocgui v1.11.5](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) — a GUI for [croc](https://github.com/schollz/croc), designed for Windows, Linux, macOS and Android.
+A fork of [howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.5) — a [schollz/croc](https://github.com/schollz/croc) designed for Android, Windows, Linux and macOS.
 
 See the full feature list with category rankings:
 
