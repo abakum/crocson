@@ -16,16 +16,14 @@ if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
 fi
 
 TOOLS_SHA="${TOOLS_SHA:-$(git ls-remote https://github.com/abakum/tools refs/heads/main | awk '{print $1}')}"
-
-if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
-    echo "ERROR: Could not extract Version or Build from $FYNEAPP"
-    exit 1
-fi
+GO_MOD="$SCRIPT_DIR/../go.mod"
+GO_VERSION="${GO_VERSION:-$(grep -E '^go ' "$GO_MOD" | sed -E 's/^go ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')}"
 
 echo "Version: $VERSION"
 echo "Build: $BUILD"
 echo "Commit: $COMMIT_SHA"
 echo "Tools SHA: $TOOLS_SHA"
+echo "Go version: $GO_VERSION"
 echo "Output: $YML"
 
 HEADER_DEFAULT="Categories:
@@ -69,14 +67,16 @@ generate_builds() {
     sudo: apt-get install -y golang-go
     output: crocson-${ABI}.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
+    srclibs:
+      - go@go${GO_VERSION}
     prebuild: sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
     build:
+      - pushd \$\$go\$\$/src
+      - ./make.bash
+      - popd
+      - export GOROOT=\$\$go\$\$
       - export GOPATH=\$HOME/go
-      - export PATH=\$GOPATH/bin:\$PATH
-      - go install golang.org/dl/go1.25.0@latest
-      - go1.25.0 download
-      - export GOROOT=\$HOME/sdk/go1.25.0
-      - export PATH=\$GOROOT/bin:\$PATH
+      - export PATH=\$GOROOT/bin:\$GOPATH/bin:\$PATH
       - go version
       - git clone https://github.com/abakum/tools /tmp/tools
       - cd /tmp/tools/cmd/fyne
