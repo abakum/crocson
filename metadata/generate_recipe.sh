@@ -16,6 +16,7 @@ if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
 fi
 
 TOOLS_SHA="${TOOLS_SHA:-$(git ls-remote https://github.com/abakum/tools refs/heads/main | awk '{print $1}')}"
+TOOLS_SRCLIB="${TOOLS_SRCLIB:-abakum-fyne-tools}"
 GO_MOD="$SCRIPT_DIR/../go.mod"
 GO_VERSION="${GO_VERSION:-$(grep -E '^go ' "$GO_MOD" | sed -E 's/^go ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')}"
 
@@ -23,6 +24,7 @@ echo "Version: $VERSION"
 echo "Build: $BUILD"
 echo "Commit: $COMMIT_SHA"
 echo "Tools SHA: $TOOLS_SHA"
+echo "Tools srclib: $TOOLS_SRCLIB"
 echo "Go version: $GO_VERSION"
 echo "Output: $YML"
 
@@ -65,10 +67,11 @@ generate_builds() {
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
     sudo: apt-get install -y golang-go
-    output: crocson-${ABI}.apk
+    output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     srclibs:
       - go@go${GO_VERSION}
+      - ${TOOLS_SRCLIB}@${TOOLS_SHA}
     prebuild: sed -i 's/^Build = .*/Build = \$\$VERCODE\$\$/' FyneApp.toml
     build:
       - pushd \$\$go\$\$/src
@@ -78,14 +81,10 @@ generate_builds() {
       - export GOPATH=\$HOME/go
       - export PATH=\$GOROOT/bin:\$GOPATH/bin:\$PATH
       - go version
-      - git clone https://github.com/abakum/tools /tmp/tools
-      - cd /tmp/tools/cmd/fyne
-      - git checkout ${TOOLS_SHA}
+      - cd \$\$${TOOLS_SRCLIB}\$\$/cmd/fyne
       - go install .
       - cd -
-      - rm -rf /tmp/tools
       - fyne package -os android/${ABI} --release
-      - mv crocson.apk crocson-${ABI}.apk
     ndk: r27d
 
 BEOF
