@@ -66,7 +66,9 @@ generate_builds() {
   - versionName: ${VERSION}
     versionCode: ${VC}
     commit: ${COMMIT_SHA}
-    sudo: apt-get install -y golang-go
+    sudo:
+      - apt-get update
+      - apt-get install -y golang-go
     output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-${ABI}.apk
     srclibs:
@@ -81,9 +83,9 @@ generate_builds() {
       - export GOPATH=\$HOME/go
       - export PATH=\$GOROOT/bin:\$GOPATH/bin:\$PATH
       - go version
-      - cd \$\$${TOOLS_SRCLIB}\$\$/cmd/fyne
+      - pushd \$\$${TOOLS_SRCLIB}\$\$/cmd/fyne
       - go install .
-      - cd -
+      - popd
       - fyne package -os android/${ABI} --release
     ndk: r27d
 

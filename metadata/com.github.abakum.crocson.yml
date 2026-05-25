@@ -19,7 +19,9 @@ Builds:
   - versionName: 1.11.60
     versionCode: 1938
     commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
-    sudo: apt-get install -y golang-go
+    sudo:
+      - apt-get update
+      - apt-get install -y golang-go
     output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     srclibs:
@@ -34,16 +36,18 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
       - go version
-      - cd $$abakum-fyne-tools$$/cmd/fyne
+      - pushd $$abakum-fyne-tools$$/cmd/fyne
       - go install .
-      - cd -
+      - popd
       - fyne package -os android/arm --release
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1939
     commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
-    sudo: apt-get install -y golang-go
+    sudo:
+      - apt-get update
+      - apt-get install -y golang-go
     output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     srclibs:
@@ -58,16 +62,18 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
       - go version
-      - cd $$abakum-fyne-tools$$/cmd/fyne
+      - pushd $$abakum-fyne-tools$$/cmd/fyne
       - go install .
-      - cd -
+      - popd
       - fyne package -os android/arm64 --release
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1940
     commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
-    sudo: apt-get install -y golang-go
+    sudo:
+      - apt-get update
+      - apt-get install -y golang-go
     output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     srclibs:
@@ -82,16 +88,18 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
       - go version
-      - cd $$abakum-fyne-tools$$/cmd/fyne
+      - pushd $$abakum-fyne-tools$$/cmd/fyne
       - go install .
-      - cd -
+      - popd
       - fyne package -os android/386 --release
     ndk: r27d
 
   - versionName: 1.11.60
     versionCode: 1941
     commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
-    sudo: apt-get install -y golang-go
+    sudo:
+      - apt-get update
+      - apt-get install -y golang-go
     output: crocson.apk
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     srclibs:
@@ -106,9 +114,9 @@ Builds:
       - export GOPATH=$HOME/go
       - export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
       - go version
-      - cd $$abakum-fyne-tools$$/cmd/fyne
+      - pushd $$abakum-fyne-tools$$/cmd/fyne
       - go install .
-      - cd -
+      - popd
       - fyne package -os android/amd64 --release
     ndk: r27d
 
