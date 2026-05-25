@@ -19,6 +19,14 @@ on:
         options:
           - 'false'
           - 'true'
+      srclibs:
+        description: 'Include srclib definitions in MR'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   contents: write
@@ -156,10 +164,16 @@ jobs:
             done
           done
 
+          # Copy srclib definitions
+          if [ "${{ github.event.inputs.srclibs }}" = "true" ]; then
+            mkdir -p srclibs
+            cp "${{ github.workspace }}/metadata/srclibs/"*.yml "srclibs/"
+          fi
+
           # Commit and push to fork
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/"
+          git add "metadata/${APP_ID}.yml" "metadata/${APP_ID}/" srclibs/
           git diff --cached --quiet && echo "No changes to push to fdroiddata" && exit 0
           git commit -m "${APP_ID}: update to v${VERSION}"
           git push fork "$BRANCH" --force
