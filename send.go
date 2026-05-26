@@ -39,6 +39,8 @@ import (
 	"github.com/schollz/croc/v10/src/croc"
 	"github.com/schollz/croc/v10/src/message"
 	"github.com/schollz/croc/v10/src/utils"
+	"github.com/schollz/mnemonicode"
+	"golang.org/x/crypto/scrypt"
 )
 
 const (
@@ -905,9 +907,13 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 			secret := entry.Text
 			if totpCheck.Checked {
-				secret = totp(entry.Text)
-				totpLabel.SetText(secret)
-				secret = TOTP + secret
+				totpLabel.SetText(totp(entry.Text))
+				var err error
+				secret, err = totpSecret(entry.Text)
+				if err != nil {
+					log.Error(err)
+					return
+				}
 			}
 
 			opt := croc.Options{
@@ -2002,6 +2008,18 @@ func totp(secret string) string {
 	return fmt.Sprintf("%06d", otp)
 }
 
+func totpSecret(userSecret string) (string, error) {
+	otp := totp(userSecret)
+	derived, err := scrypt.Key([]byte(userSecret), []byte(otp), 1<<15, 8, 1, 4)
+	if err != nil {
+		return "", err
+	}
+	var words []string
+	words = mnemonicode.EncodeWordList(words, derived)
+	pin := fmt.Sprintf("%d%d%d%d", derived[0]%10, derived[1]%10, derived[2]%10, derived[3]%10)
+	return pin + "-" + strings.Join(words, "-"), nil
+}
+
 const H2F = 16
 
 func hashToFilename(data string) string {
@@ -2146,7 +2164,7 @@ func setupTOTP(a fyne.App, entry *widget.Entry, totpCheck *widget.Check, totpLab
 			}
 
 			if b {
-				if strings.HasPrefix(entry.Text, TOTP) {
+				if *entryText != "" {
 					entry.SetText(*entryText)
 				}
 				totpProg.Show()
@@ -2171,7 +2189,10 @@ func setupTOTP(a fyne.App, entry *widget.Entry, totpCheck *widget.Check, totpLab
 				totpLabel.SetText(TOTP)
 				totpProg.Hide()
 				*entryText = entry.Text
-				entry.SetText(TOTP + totp(entry.Text))
+				secret, err := totpSecret(entry.Text)
+				if err == nil {
+					entry.SetText(secret)
+				}
 			}
 		})
 	}

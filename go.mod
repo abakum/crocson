@@ -14,9 +14,11 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/schollz/croc/v10 v10.0.0-00010101000000-000000000000
 	github.com/schollz/logger v1.2.0
+	github.com/schollz/mnemonicode v1.0.1
 	github.com/schollz/pake/v3 v3.1.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/ulikunitz/xz v0.5.12
+	golang.org/x/crypto v0.50.0
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/sys v0.43.0
@@ -68,7 +70,6 @@ require (
 	github.com/tscholl2/siec v0.0.0-20240310163802-c2c6f6198406 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/image v0.24.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect

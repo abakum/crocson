@@ -625,9 +625,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		secret := entry.Text
 		if totpCheck.Checked {
-			secret = totp(entry.Text)
-			totpLabel.SetText(secret)
-			secret = TOTP + secret
+			totpLabel.SetText(totp(entry.Text))
+			var err error
+			secret, err = totpSecret(entry.Text)
+			if err != nil {
+				log.Error(err)
+				return
+			}
 		}
 
 		opt := croc.Options{
