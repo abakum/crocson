@@ -4,6 +4,8 @@ go 1.25.0
 
 replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260516175057-ad797732d729
 
+replace github.com/psanford/wormhole-william => ../wormhole-william
+
 replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20251222054903-bda39395085f
 
 require (
@@ -12,6 +14,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8
 	github.com/gorilla/websocket v1.5.3
+	github.com/psanford/wormhole-william v0.0.0-00010101000000-000000000000
 	github.com/schollz/croc/v10 v10.0.0-00010101000000-000000000000
 	github.com/schollz/logger v1.2.0
 	github.com/schollz/mnemonicode v1.0.1
@@ -49,6 +52,7 @@ require (
 	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kalafut/imohash v1.1.1 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b // indirect
 	github.com/mattn/go-runewidth v0.0.17 // indirect
@@ -75,4 +79,6 @@ require (
 	golang.org/x/time v0.15.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	nhooyr.io/websocket v1.8.17 // indirect
+	salsa.debian.org/vasudev/gospake2 v0.0.0-20210510093858-d91629950ad1 // indirect
 )

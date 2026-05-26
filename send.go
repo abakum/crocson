@@ -794,6 +794,62 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			})
 			return
 		}
+
+		relayAddr := a.Preferences().String("relay-address")
+		if isWormholeRelay(relayAddr) {
+			secret := entry.Text
+			if totpCheck.Checked {
+				totpLabel.SetText(totp(secret))
+				var err error
+				secret, err = totpSecret(secret)
+				if err != nil {
+					log.Error(err)
+					return
+				}
+			}
+			transitAddr := transitFromMailbox(relayAddr)
+			webdavAddr := davServer.addr
+			showCancel()
+			fyne.Do(func() {
+				allEnabled(false, cosED...)
+				if treeButton.Icon == theme.VisibilityOffIcon() {
+					allEnabled(true, cosDAV...)
+				}
+				if totpCheck.Checked {
+					totpProg.Hide()
+				}
+				topline.SetText(lp("Have them press the Download now"))
+			})
+			go func() {
+				wt, err := startWormholeSender(appCtx, secret, relayAddr, transitAddr, webdavAddr)
+				if err != nil {
+					log.Errorf("wormhole sender: %v", err)
+					fyne.Do(func() {
+						topline.SetText(err.Error())
+						hideCancel()
+					})
+					return
+				}
+				defer wt.Close()
+				fyne.Do(func() {
+					NewToast(w, lp("Have them press the Download now")).Show()
+				})
+				select {
+				case <-appCtx.Done():
+				case <-cancelChan:
+				case <-wt.ctx.Done():
+				}
+				fyne.Do(func() {
+					hideCancel()
+					allShow(false, cosSH...)
+					allEnabled(true, cosED...)
+					reload()
+					showPage()
+				})
+			}()
+			return
+		}
+
 		filepaths := []string{}
 		allowed := []string{}
 		if treeButton.Icon == theme.VisibilityIcon() {

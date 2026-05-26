@@ -634,6 +634,53 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 		}
 
+		relayAddr := a.Preferences().String("relay-address")
+		if isWormholeRelay(relayAddr) {
+			transitAddr := transitFromMailbox(relayAddr)
+			webdavAddr := davServer.addr
+			showCancel()
+			allEnabled(false, cosED...)
+			if davServer.IsActive() {
+				allEnabled(true, cosDAV...)
+			}
+			if totpCheck.Checked {
+				totpProg.Hide()
+			}
+			davServer.Stop()
+			go func() {
+				wt, err := startWormholeReceiver(appCtx, secret, relayAddr, transitAddr, webdavAddr)
+				if err != nil {
+					log.Errorf("wormhole receiver: %v", err)
+					fyne.Do(func() {
+						topline.SetText(err.Error())
+						hideCancel()
+					})
+					return
+				}
+				defer wt.Close()
+				defer func() {
+					davServer.Start(webdavAddr, join(), false)
+				}()
+				fyne.Do(func() {
+					topline.SetText(lp("Connected via wormhole"))
+					davServer.SetLocal(true)
+				})
+				select {
+				case <-appCtx.Done():
+				case <-cancelChan:
+				case <-wt.ctx.Done():
+				}
+				fyne.Do(func() {
+					hideCancel()
+					allShow(false, cosSH...)
+					allEnabled(true, cosED...)
+					reload()
+					showPage()
+				})
+			}()
+			return
+		}
+
 		opt := croc.Options{
 			SharedSecret: secret,
 			Debug:        debugBool(a),
