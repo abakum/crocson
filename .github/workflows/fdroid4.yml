@@ -19,14 +19,6 @@ on:
         options:
           - 'false'
           - 'true'
-      srclibs:
-        description: 'Include srclib definitions in MR'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 permissions:
   contents: write
@@ -54,23 +46,6 @@ jobs:
           echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION, Build: $BUILD, Commit: $COMMIT_SHA"
 
-      - name: Check changelog originals exist
-        if: github.event.inputs.first == 'true'
-        run: |
-          VERSION="${{ steps.info.outputs.version }}"
-          FOUND=false
-          for LOCALE_DIR in metadata/*/changelogs; do
-            if [ -f "${LOCALE_DIR}/${VERSION}.txt" ]; then
-              echo "Changelog found: ${LOCALE_DIR}/${VERSION}.txt"
-              FOUND=true
-            fi
-          done
-          if [ "$FOUND" = false ]; then
-            echo "ERROR: No changelog originals found for ${VERSION}"
-            echo "Create metadata/en-US/changelogs/${VERSION}.txt (and other locales) first."
-            exit 1
-          fi
-
       - name: Load recipe from fdroiddata
         if: github.event.inputs.load == 'true'
         id: load
@@ -83,10 +58,6 @@ jobs:
             -o "metadata/${APP_ID}.yml"
           echo "=== Loaded recipe ==="
           cat "metadata/${APP_ID}.yml"
-
-      - name: Create symlinks for all ABIs and locales
-        if: github.event.inputs.first == 'true' || (github.event.inputs.first != 'true' && github.event.inputs.load != 'true') || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
-        run: bash metadata/create_changelogs.sh "${{ steps.info.outputs.build }}" "${{ steps.info.outputs.version }}"
 
       - name: Generate recipe from FyneApp.toml
         if: github.event.inputs.first == 'true' || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
@@ -151,8 +122,8 @@ jobs:
           # Copy recipe
           cp "${{ github.workspace }}/metadata/${APP_ID}.yml" "metadata/${APP_ID}.yml"
 
-          # Copy srclib definitions
-          if [ "${{ github.event.inputs.srclibs }}" = "true" ]; then
+          # Copy srclib definitions (only on initial registration)
+          if [ "${{ github.event.inputs.first }}" = "true" ]; then
             mkdir -p srclibs
             cp "${{ github.workspace }}/metadata/srclibs/"*.yml "srclibs/"
           fi
