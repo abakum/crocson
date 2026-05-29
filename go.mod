@@ -4,7 +4,7 @@ go 1.25.0
 
 replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260516175057-ad797732d729
 
-replace github.com/psanford/wormhole-william => ../wormhole-william
+replace github.com/psanford/wormhole-william => github.com/abakum/wormhole-william v0.0.0-20260529143159-9bf18529ffde
 
 replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20251222054903-bda39395085f
 
@@ -82,3 +82,9 @@ require (
 	nhooyr.io/websocket v1.8.17 // indirect
 	salsa.debian.org/vasudev/gospake2 v0.0.0-20210510093858-d91629950ad1 // indirect
 )
+
+replace github.com/abakCroc/croc/v10 => ../croc
+
+replace github.com/abakum/peerdiscovery => ../peerdiscovery
+
+replace github.com/abakum/wormhole-william => ../wormhole-william

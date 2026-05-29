@@ -27,25 +27,30 @@ amd64:
 	fyne package -os android/amd64 --release --sign
 
 CROC_FORK := github.com/abakCroc/croc/v10
+CROC_VERSION := $(shell go list -m -f '{{.Version}}' $(CROC_FORK)@main 2>/dev/null)
 PEER_FORK := github.com/abakum/peerdiscovery
-CROC_VERSION := $(shell go list -m -f '{{.Version}}' $(CROC_FORK)@latest 2>/dev/null)
-PEER_VERSION := $(shell go list -m -f '{{.Version}}' $(PEER_FORK)@latest 2>/dev/null)
+PEER_VERSION := $(shell go list -m -f '{{.Version}}' $(PEER_FORK)@main 2>/dev/null)
+WH_FORK := github.com/abakum/wormhole-william
+WH_VERSION := $(shell go list -m -f '{{.Version}}' $(WH_FORK)@master 2>/dev/null)
 
 repo:
-	@if [ -z "$(CROC_VERSION)" ]; then echo "ERROR: Cannot resolve $(CROC_FORK)@latest"; exit 1; fi
-	@if [ -z "$(PEER_VERSION)" ]; then echo "ERROR: Cannot resolve $(PEER_FORK)@latest"; exit 1; fi
-	@echo "Updating replace directives in go.mod:"
+	@if [ -z "$(CROC_VERSION)" ]; then echo "ERROR: Cannot resolve $(CROC_FORK)@main"; exit 1; fi
 	@echo "  $(CROC_FORK) $(CROC_VERSION)"
-	@echo "  $(PEER_FORK) $(PEER_VERSION)"
 	@go mod edit -replace=github.com/schollz/croc/v10=$(CROC_FORK)@$(CROC_VERSION)
+	@if [ -z "$(PEER_VERSION)" ]; then echo "ERROR: Cannot resolve $(PEER_FORK)@main"; exit 1; fi
+	@echo "  $(PEER_FORK) $(PEER_VERSION)"
 	@go mod edit -replace=github.com/schollz/peerdiscovery=$(PEER_FORK)@$(PEER_VERSION)
+	@if [ -z "$(WH_VERSION)" ]; then echo "ERROR: Cannot resolve $(PEER_FORK)@master"; exit 1; fi
+	@echo "  $(WH_FORK) $(WH_VERSION)"
+	@go mod edit -replace=github.com/psanford/wormhole-william=$(WH_FORK)@$(WH_VERSION)
 	@go mod tidy
 	@echo "Done."
 
 local:
 	@echo "Switching replace directives to local paths in go.mod:"
-	@go mod edit -replace=github.com/schollz/croc/v10=../croc
+	@go mod edit -replace=github.com/schollz/croc/v10=../abakCroc/croc
 	@go mod edit -replace=github.com/schollz/peerdiscovery=../peerdiscovery
+	@go mod edit -replace=github.com/psanford/wormhole-william=../wormhole-william
 	@go mod tidy
 	@echo "Done."
 

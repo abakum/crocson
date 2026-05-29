@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	WebDAVTimeout = 3 * time.Second
+	WebDAVTimeout = 5 * time.Second
 )
 
 // insecureHTTPClient — HTTP-клиент с InsecureSkipVerify для работы

@@ -54,9 +54,15 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		ShowFilesSave func()
 		filesSave     func(lu fyne.ListableURI, err error)
 	)
-	var cancelButton *widget.Button
-	cancelChan := make(chan struct{}, 1)
+	var (
+		cancelButton   *widget.Button
+		cancelChan     = make(chan struct{}, 1)
+		wormholeCancel context.CancelFunc
+	)
 	hideCancel := func() {
+		if wormholeCancel != nil {
+			wormholeCancel()
+		}
 		fyne.Do(func() {
 			cancelButton.Hide()
 			mainButton.Show()
@@ -636,7 +642,12 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 		relayAddr := a.Preferences().String("relay-address")
 		if isWormholeRelay(relayAddr) {
-			transitAddr := transitFromMailbox(relayAddr)
+			mailboxURL := ""
+			transitAddr := ""
+			if relayAddr != "ws:" {
+				mailboxURL = resolveMailboxURL(relayAddr)
+				transitAddr = resolveTransitAddr(mailboxURL)
+			}
 			webdavAddr := davServer.addr
 			showCancel()
 			allEnabled(false, cosED...)
@@ -648,12 +659,45 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 			davServer.Stop()
 			go func() {
-				wt, err := startWormholeReceiver(appCtx, secret, relayAddr, transitAddr, webdavAddr)
+				var wormholeCtx context.Context
+				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
+
+				defer func() {
+					wormholeCancel = nil
+					select {
+					case <-cancelChan:
+					default:
+						close(cancelChan)
+					}
+					cdLock.Store(0)
+					davServer.NotifyProxyState(false)
+					davServer.DisableTCPForwarding()
+					caffeinate(-1)
+					fyne.Do(func() {
+						cancelButton.Hide()
+						mainButton.Show()
+						allShow(false, cosSH...)
+						allEnabled(true, cosED...)
+						if totpCheck.Checked {
+							totpProg.Show()
+						}
+						reload()
+						showPage()
+						log.Warnf("NumGoroutine %d", runtime.NumGoroutine())
+					})
+				}()
+
+				caffeinate(1)
+
+				wt, err := startWormholeReceiver(wormholeCtx, secret, mailboxURL, transitAddr, webdavAddr)
 				if err != nil {
 					log.Errorf("wormhole receiver: %v", err)
 					fyne.Do(func() {
-						topline.SetText(err.Error())
-						hideCancel()
+						if wormholeCtx.Err() != nil {
+							topline.SetText(lp("Receive cancelled."))
+						} else {
+							topline.SetText(err.Error())
+						}
 					})
 					return
 				}
@@ -665,18 +709,12 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					topline.SetText(lp("Connected via wormhole"))
 					davServer.SetLocal(true)
 				})
+				davServer.NotifyProxyState(true)
 				select {
 				case <-appCtx.Done():
 				case <-cancelChan:
 				case <-wt.ctx.Done():
 				}
-				fyne.Do(func() {
-					hideCancel()
-					allShow(false, cosSH...)
-					allEnabled(true, cosED...)
-					reload()
-					showPage()
-				})
 			}()
 			return
 		}

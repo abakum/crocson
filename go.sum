@@ -11,6 +11,8 @@ github.com/abakCroc/croc/v10 v10.0.0-20260516175057-ad797732d729 h1:yX4jKjFLT026
 github.com/abakCroc/croc/v10 v10.0.0-20260516175057-ad797732d729/go.mod h1:mAUh0yELRiQbHLWWq/5RcpJ3m5znp1AuzIn/XyHsLiE=
 github.com/abakum/peerdiscovery v0.0.0-20251222054903-bda39395085f h1:BMdwa0KaK3qtk2D9kpdDI5DbBvb6n/MFNgY5RCqfbPw=
 github.com/abakum/peerdiscovery v0.0.0-20251222054903-bda39395085f/go.mod h1:iTa0MWSPy49jJ2HcXL5oSSnFsd6olEUorAFljxbnj2I=
+github.com/abakum/wormhole-william v0.0.0-20260529143159-9bf18529ffde h1:N3wLngqkVVtkYJ9XeVHQdjU0JFDWmLZb2KDoUBTtHrs=
+github.com/abakum/wormhole-william v0.0.0-20260529143159-9bf18529ffde/go.mod h1:vMkLY+1bamCEnxfzruo06QqtY1fbrL3PibfQbyv4RgI=
 github.com/adrg/xdg v0.5.3 h1:xRnxJXne7+oWDatRhR1JLnvuccuIeCoBu2rtuLqQB78=
 github.com/adrg/xdg v0.5.3/go.mod h1:nlTsY+NNiCBGCK2tpm09vRqfVzrc2fLmXGpBLF0zlTQ=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

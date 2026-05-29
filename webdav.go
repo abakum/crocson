@@ -579,6 +579,16 @@ func (s *WebDAVServer) IsLocal() bool {
 	return s.local
 }
 
+func (s *WebDAVServer) NotifyProxyState(enabled bool) {
+	s.mu.Lock()
+	s.remote = enabled
+	cb := s.onProxyStateChanged
+	s.mu.Unlock()
+	if cb != nil {
+		cb(enabled)
+	}
+}
+
 // SetLocal
 func (s *WebDAVServer) SetLocal(ok bool) {
 	if !s.IsActive() {
