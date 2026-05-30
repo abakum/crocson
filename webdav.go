@@ -248,6 +248,11 @@ func (s *WebDAVServer) createLocalHandler(root string) http.Handler {
 				log.Errorf("WebDAV request %s %s: %v", r.Method, r.URL.Path, err)
 			} else {
 				log.Infof("WebDAV request %s %s", r.Method, r.URL.Path)
+				if r.Method == "PUT" || r.Method == "DELETE" || r.Method == "MKCOL" || r.Method == "MOVE" {
+					if onFileTreeRefresh != nil {
+						onFileTreeRefresh()
+					}
+				}
 			}
 			// Для MOVE и COPY запросов логируем заголовок Destination
 			if r.Method == "MOVE" || r.Method == "COPY" {
@@ -280,6 +285,10 @@ func (s *WebDAVServer) handlerRouter(w http.ResponseWriter, r *http.Request) {
 			handleSendMessage(w, r)
 			return
 		}
+	}
+	if r.URL.Path == "/api/messages/wait" {
+		handleWaitForMessages(w, r)
+		return
 	}
 
 	// Обработка API видеозвонков
@@ -531,6 +540,9 @@ func generateTLSConfig(addrs ...string) (*tls.Config, error) {
 
 // Stop останавливает сервер и прокси если есть
 func (s *WebDAVServer) Stop() error {
+	broadcastClose()
+	broadcastCloseCalls()
+	time.Sleep(100 * time.Millisecond)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -542,8 +554,8 @@ func (s *WebDAVServer) stopLocked() error {
 	if !s.active {
 		return nil
 	}
-	s.active = false // Сразу гасим флаг
-	caffeinate(-1)   // Уменьшаем счетчик только здесь
+	s.active = false
+	caffeinate(-1)
 
 	if s.server == nil {
 		return nil

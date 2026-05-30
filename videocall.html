@@ -3227,6 +3227,7 @@
                         // JSON settings от пира
                         try {
                             var msg = JSON.parse(event.data);
+                            if (msg.cmd === 'close') { window.close(); return; }
                             if (msg.cmd === 'settings') {
                                 diagLog('PEER settings: role=' + msg.role + ' a=' + msg.audio + ' v=' + msg.video + ' wa=' + msg.wantAudio + ' wv=' + msg.wantVideo);
                                 if (echo && msg.role === 'guest') {

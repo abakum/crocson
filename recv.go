@@ -43,6 +43,12 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		prog        = widget.NewProgressBar()
 		fileentries sync.Map
 	)
+	recvRefresh := func() {
+		de.Bounce(func() {
+			boxholder.Refresh()
+			broadcastRefresh()
+		})
+	}
 	var (
 		addEntry func(dst string, f func(d *widget.Button, p *widget.ProgressBar,
 			s *widget.Button,
@@ -214,7 +220,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			fileentries.Delete(key)
 			fyne.Do(func() {
 				boxholder.Remove(fe)
-				de.Bounce(boxholder.Refresh)
+				recvRefresh()
 			})
 		}
 		if del {
@@ -245,7 +251,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 									boxholder.Remove(fe)
 								}
 							})
-							de.Bounce(boxholder.Refresh)
+							recvRefresh()
 						})
 						return
 					}
@@ -367,7 +373,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					labelFile)
 			}
 			boxholder.Add(newentry)
-			de.Bounce(boxholder.Refresh)
+			recvRefresh()
 		})
 		return
 	} //addEntry
@@ -593,6 +599,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 			removeEntry(path, fe, true)
 		})
+		broadcastRefresh()
 	}
 	OnSelectedTab[RECVi] = reload
 	mainButton = widget.NewButtonWithIcon(lp("Download"), theme.DownloadIcon(), func() {

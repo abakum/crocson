@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -83,6 +84,48 @@ func broadcastChatMessage(msg Message) {
 		if err := client.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 			log.Debugf("chat WS broadcast error: %v", err)
 		}
+		client.mu.Unlock()
+	}
+}
+
+func broadcastRefresh() {
+	chatWSClients.mu.RLock()
+	n := len(chatWSClients.clients)
+	chatWSClients.mu.RUnlock()
+	if n == 0 {
+		return
+	}
+	log.Debugf("broadcastRefresh clients=%d", n)
+	data, err := json.Marshal(map[string]string{"cmd": "refresh"})
+	if err != nil {
+		return
+	}
+	chatWSClients.mu.RLock()
+	defer chatWSClients.mu.RUnlock()
+	for client := range chatWSClients.clients {
+		client.mu.Lock()
+		client.conn.WriteMessage(websocket.TextMessage, data)
+		client.mu.Unlock()
+	}
+}
+
+func broadcastClose() {
+	chatWSClients.mu.RLock()
+	n := len(chatWSClients.clients)
+	chatWSClients.mu.RUnlock()
+	log.Debugf("broadcastClose clients=%d", n)
+	if n == 0 {
+		return
+	}
+	data, err := json.Marshal(map[string]string{"cmd": "close"})
+	if err != nil {
+		return
+	}
+	chatWSClients.mu.RLock()
+	defer chatWSClients.mu.RUnlock()
+	for client := range chatWSClients.clients {
+		client.mu.Lock()
+		client.conn.WriteMessage(websocket.TextMessage, data)
 		client.mu.Unlock()
 	}
 }
@@ -213,10 +256,12 @@ type Message struct {
 type ChatStorage struct {
 	messages []Message
 	mu       sync.RWMutex
+	notifyCh chan struct{}
 }
 
 var chatStore = &ChatStorage{
 	messages: make([]Message, 0),
+	notifyCh: make(chan struct{}, 1),
 }
 
 // chatOpened — флаг: браузер чата уже открыт (auto или вручную)
@@ -228,7 +273,6 @@ var chatURL string
 // addMessage добавляет новое сообщение в хранилище
 func (cs *ChatStorage) addMessage(text, sender string) Message {
 	cs.mu.Lock()
-	defer cs.mu.Unlock()
 
 	msg := Message{
 		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
@@ -238,6 +282,13 @@ func (cs *ChatStorage) addMessage(text, sender string) Message {
 	}
 
 	cs.messages = append(cs.messages, msg)
+	cs.mu.Unlock()
+
+	select {
+	case cs.notifyCh <- struct{}{}:
+	default:
+	}
+
 	return msg
 }
 
@@ -290,6 +341,49 @@ func handleGetMessages(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
+}
+
+func handleWaitForMessages(w http.ResponseWriter, r *http.Request) {
+	if !isLocalRequest(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sinceStr := r.URL.Query().Get("since")
+	since, err := strconv.Atoi(sinceStr)
+	if err != nil || since < 0 {
+		http.Error(w, "invalid since parameter", http.StatusBadRequest)
+		return
+	}
+
+	timeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(r.Context(), timeout)
+	defer cancel()
+
+	for {
+		chatStore.mu.RLock()
+		n := len(chatStore.messages)
+		chatStore.mu.RUnlock()
+
+		if n > since {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]int{"count": n})
+			return
+		}
+
+		select {
+		case <-chatStore.notifyCh:
+			continue
+		case <-ctx.Done():
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]int{"count": n})
+			return
+		}
+	}
 }
 
 // handleSendMessage обрабатывает POST запрос для отправки сообщения
@@ -379,7 +473,8 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 		}
 
 		// Формируем кликабельную цепочку родительских каталогов
-		breadcrumbs := h.generateBreadcrumbs(displayPath)
+		canUpload := stat.Mode().Perm()&0200 != 0
+	breadcrumbs := h.generateBreadcrumbs(displayPath, canUpload)
 
 		// Формируем заголовок страницы
 		title := "WebDAV"
@@ -391,41 +486,39 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 			title += displayPath
 		}
 
-		// Формируем HTML строк файлов
 		var filesHTML strings.Builder
+		canDelete := canUpload
 		for _, info := range fileInfos {
 			name := info.Name()
 
-			// Получаем полный путь в FileSystem
 			fullPath := path.Join(r.URL.Path, name)
 
-			// Используем Stat от FileSystem для определения типа
-			// Это гарантирует правильную обработку симлинков через ResolvingFileSystem
 			stat, err := h.fileSystem.Stat(appCtx, fullPath)
 			if err != nil {
-				// Если не можем получить stat, пропускаем элемент
 				continue
 			}
 
-			// Формируем путь для ссылки - без суффикса /
 			filePath := path.Join(r.URL.Path, name)
 			if stat.IsDir() {
 				name += "/"
 			}
 
-			// Форматируем размер (только для файлов)
 			var size string
 			if !stat.IsDir() {
 				size = formatSize(stat.Size())
 			}
 
-			// Форматируем дату
 			modTime := stat.ModTime().Format("2006-01-02 15:04:05")
+
+			var chk string
+			if canDelete {
+				chk = ` <input type="checkbox" class="del-chk" data-path="` + filePath + `" onclick="onDelChk()">`
+			}
 
 			filesHTML.WriteString(`<tr>
 	<td class="name"><a href="` + filePath + `">` + name + `</a></td>
 	<td class="size">` + size + `</td>
-	<td class="date">` + modTime + `</td>
+	<td class="date">` + modTime + chk + `</td>
 </tr>
 `)
 		}
@@ -435,6 +528,7 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 		result := strings.ReplaceAll(tmpl, "<!--PH-->TITLE<!--PH-->", title)
 		result = strings.ReplaceAll(result, "<!--PH-->BREADCRUMBS<!--PH-->", breadcrumbs)
 		result = strings.ReplaceAll(result, "<!--PH-->FILES<!--PH-->", filesHTML.String())
+		result = strings.ReplaceAll(result, "<!--PH-->CAN_UPLOAD<!--PH-->", fmt.Sprintf("%v", stat.Mode().Perm()&0200 != 0))
 
 		// Обрабатываем секцию чата: показываем только для локальных IP
 		const chatStartMarker = "<!--PH:CHAT_START-->"
@@ -471,10 +565,9 @@ func formatSize(size int64) string {
 }
 
 // generateBreadcrumbs создает кликабельную цепочку родительских каталогов
-func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string) string {
+func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string, canUpload bool) string {
 	separator := `<span class="separator">›</span>`
 
-	// Получаем имя корневой директории
 	root := "Root"
 	rootDir := join()
 	if rootDir != "" {
@@ -484,25 +577,32 @@ func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string) str
 		}
 	}
 
+	var bc strings.Builder
+	bc.WriteString(`<div class="breadcrumbs">`)
+	bc.WriteString(`<div class="breadcrumbs-path"><a href="/">` + root + `</a>`)
+
 	if currentPath == "/" {
-		return fmt.Sprintf(`<div class="breadcrumbs"><a href="/">%s</a>%s</div>`, root, separator)
-	}
-
-	parts := strings.Split(strings.Trim(currentPath, "/"), "/")
-	var breadcrumbs strings.Builder
-	breadcrumbs.WriteString(fmt.Sprintf(`<div class="breadcrumbs"><a href="/">%s</a>`, root))
-
-	pathSoFar := ""
-	for i, part := range parts {
-		pathSoFar += "/" + part
-		if i == len(parts)-1 {
-			// Текущий каталог (не ссылка)
-			breadcrumbs.WriteString(fmt.Sprintf(`%s <span class="current">%s</span>`, separator, part))
-		} else {
-			// Родительский каталог (ссылка)
-			breadcrumbs.WriteString(fmt.Sprintf(`%s <a href="%s">%s</a>`, separator, pathSoFar, part))
+		bc.WriteString(separator)
+	} else {
+		parts := strings.Split(strings.Trim(currentPath, "/"), "/")
+		pathSoFar := ""
+		for i, part := range parts {
+			pathSoFar += "/" + part
+			if i == len(parts)-1 {
+				bc.WriteString(fmt.Sprintf(`%s <span class="current">%s</span>`, separator, part))
+			} else {
+				bc.WriteString(fmt.Sprintf(`%s <a href="%s">%s</a>`, separator, pathSoFar, part))
+			}
 		}
 	}
-	breadcrumbs.WriteString("</div>")
-	return breadcrumbs.String()
+
+	bc.WriteString(`</div>`)
+
+	if canUpload {
+		bc.WriteString(`<span class="upload-btn" id="uploadBtn">Upload</span>`)
+		bc.WriteString(`<span class="upload-status" id="uploadStatus" style="display:none"></span>`)
+	}
+
+	bc.WriteString(`</div>`)
+	return bc.String()
 }

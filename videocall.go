@@ -758,7 +758,12 @@ func handleCallWS(w http.ResponseWriter, r *http.Request) {
 							callStore.mu.RLock()
 							fixRoot := callStore.webdavRoot
 							callStore.mu.RUnlock()
-							go fixRecordingFile(fixRoot, fileName)
+							go func() {
+								fixRecordingFile(fixRoot, fileName)
+								if onFileTreeRefresh != nil {
+									onFileTreeRefresh()
+								}
+							}()
 						}
 					}
 					// НЕ пересылаем remote peer — это серверная команда
@@ -847,6 +852,31 @@ func handleCallEnd(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ended",
 	})
+}
+
+func broadcastCloseCalls() {
+	data, err := json.Marshal(map[string]string{"cmd": "close"})
+	if err != nil {
+		return
+	}
+	callStore.mu.RLock()
+	rooms := make([]*VideoCallRoom, 0, len(callStore.rooms))
+	for _, r := range callStore.rooms {
+		rooms = append(rooms, r)
+	}
+	callStore.mu.RUnlock()
+	n := 0
+	for _, room := range rooms {
+		room.wsMu.Lock()
+		for _, wsc := range room.wsConns {
+			wsc.mu.Lock()
+			wsc.conn.WriteMessage(websocket.TextMessage, data)
+			wsc.mu.Unlock()
+			n++
+		}
+		room.wsMu.Unlock()
+	}
+	log.Debugf("broadcastCloseCalls rooms=%d conns=%d", len(rooms), n)
 }
 
 // handleCallAPI маршрутизирует запросы API видеозвонков

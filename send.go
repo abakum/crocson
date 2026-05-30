@@ -534,6 +534,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 			removeEntry(path, fe, true)
 		})
+		broadcastRefresh()
 	}
 	OnSelectedTab[SENDi] = reload
 
@@ -629,48 +630,49 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
 			chatURL = ccn
 			chatOpened.Store(false)
-			// Polling goroutine: опрашивает /api/messages для auto-open
 			go func() {
-				// Начальный fetch — устанавливаем baseline (все текущие сообщения)
 				resp, err := insecureHTTPClient.Get(proxyURL.String() + "/api/messages")
 				if err != nil {
-					log.Debugf("[polling] initial fetch error: %v", err)
+					log.Debugf("[long-poll] initial fetch error: %v", err)
 					return
 				}
 				var initialMsgs []Message
 				json.NewDecoder(resp.Body).Decode(&initialMsgs)
 				resp.Body.Close()
 				lastCount := len(initialMsgs)
-				log.Debugf("[polling] baseline: %d messages", lastCount)
+				log.Debugf("[long-poll] baseline: %d messages", lastCount)
 
-				ticker := time.NewTicker(2 * time.Second)
-				defer ticker.Stop()
 				for {
+					if chatOpened.Load() {
+						return
+					}
 					select {
 					case <-appCtx.Done():
 						return
-					case <-ticker.C:
-						if chatOpened.Load() {
-							return // браузер уже открыт, JS возьмёт на себя
-						}
-						// Запрашиваем только новые сообщения с индекса lastCount
-						resp, err := insecureHTTPClient.Get(fmt.Sprintf("%s/api/messages?since=%d", proxyURL.String(), lastCount))
-						if err != nil {
-							log.Debugf("[polling] error: %v, stopping", err)
-							return // ошибка → прекращаем
-						}
-						var newMsgs []Message
-						json.NewDecoder(resp.Body).Decode(&newMsgs)
-						resp.Body.Close()
-						if len(newMsgs) > 0 {
-							lastCount += len(newMsgs)
-							if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
+					default:
+					}
 
-								log.Debugf("[polling] auto-opening browser: %s", chatURL)
-								OpenURL(chatURL)
-							}
-							return // браузер открыт → прекращаем, JS дальше
+					waitResp, err := insecureHTTPClient.Get(fmt.Sprintf("%s/api/messages/wait?since=%d", proxyURL.String(), lastCount))
+					if err != nil {
+						log.Debugf("[long-poll] error: %v", err)
+						select {
+						case <-appCtx.Done():
+							return
+						case <-time.After(5 * time.Second):
+							continue
 						}
+					}
+					var result struct{ Count int }
+					json.NewDecoder(waitResp.Body).Decode(&result)
+					waitResp.Body.Close()
+
+					if result.Count > lastCount {
+						lastCount = result.Count
+						if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
+							log.Debugf("[long-poll] auto-opening browser: %s", chatURL)
+							OpenURL(chatURL)
+						}
+						return
 					}
 				}
 			}()
@@ -754,11 +756,18 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	// Обновляем скроллер
 	scRefresh = func() {
 		if treeButton.Icon == theme.VisibilityIcon() {
-			de.Bounce(boxholder.Refresh)
+			de.Bounce(func() {
+				boxholder.Refresh()
+				broadcastRefresh()
+			})
 		} else {
-			switchToWebDAVTree()
+			de.Bounce(func() {
+				switchToWebDAVTree()
+				broadcastRefresh()
+			})
 		}
 	}
+	onFileTreeRefresh = scRefresh
 
 	treeButton.OnTapped = func() {
 		if treeButton.Icon == theme.VisibilityIcon() {

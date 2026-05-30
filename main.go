@@ -116,6 +116,7 @@ var (
 	notFinish              bool
 	wd                     string
 	OnSelectedTab          = make(map[int]func(), LENi)
+	onFileTreeRefresh      func()
 	swap                   bool
 	tempDir                string
 	ready                  func() bool
