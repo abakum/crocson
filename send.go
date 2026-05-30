@@ -820,6 +820,13 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			transitAddr := resolveTransit(p)
 			mailboxURL := resolveMailboxURL(relayAddr)
 			webdavAddr := davServer.addr
+			if webdavAddr == "" || !davServer.IsActive() {
+				fyne.Do(func() {
+					topline.SetText(lp("Use WebDAV for magic-wormhole relay"))
+					NewToast(w, lp("Use WebDAV for magic-wormhole relay")).Show()
+				})
+				return
+			}
 			showCancel()
 			fyne.Do(func() {
 				allEnabled(false, cosED...)

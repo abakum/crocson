@@ -614,21 +614,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 
-		if !cdLock.CompareAndSwap(0, 1) {
-			NewToast(w, lp("Cancel")+" "+lp("Send")).Show()
-			return
-		}
-		// cdLocked
-		if wd, _ := os.Getwd(); wd != join() {
-			err := os.Chdir(join())
-			log.Debugf("change to %s: %v", join(), err)
-			if err != nil {
-				log.Errorf("croc: %v", err)
-				NewToast(w, err.Error()).Show()
-				cdLock.Store(0)
-				return
-			}
-		}
 		secret := entry.Text
 		if totpCheck.Checked {
 			totpLabel.SetText(totp(entry.Text))
@@ -650,6 +635,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				transitAddr = resolveTransit(p)
 			}
 			webdavAddr := davServer.addr
+			if webdavAddr == "" || !davServer.IsActive() {
+				fyne.Do(func() {
+					topline.SetText(lp("Use WebDAV for magic-wormhole relay"))
+					NewToast(w, lp("Use WebDAV for magic-wormhole relay")).Show()
+				})
+				return
+			}
 			showCancel()
 			allEnabled(false, cosED...)
 			if davServer.IsActive() {
@@ -670,7 +662,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					default:
 						close(cancelChan)
 					}
-					cdLock.Store(0)
 					davServer.NotifyProxyState(false)
 					davServer.DisableTCPForwarding()
 					caffeinate(-1)
@@ -718,6 +709,22 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				}
 			}()
 			return
+		}
+
+		if !cdLock.CompareAndSwap(0, 1) {
+			NewToast(w, lp("Cancel")+" "+lp("Send")).Show()
+			return
+		}
+		// cdLocked
+		if wd, _ := os.Getwd(); wd != join() {
+			err := os.Chdir(join())
+			log.Debugf("change to %s: %v", join(), err)
+			if err != nil {
+				log.Errorf("croc: %v", err)
+				NewToast(w, err.Error()).Show()
+				cdLock.Store(0)
+				return
+			}
 		}
 
 		opt := croc.Options{

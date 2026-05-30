@@ -22,6 +22,7 @@ type Toast struct {
 	popup         *widget.PopUp
 	done          chan struct{}
 	isHiding      atomic.Int32
+	previousFocus fyne.Focusable
 }
 
 const (
@@ -80,6 +81,14 @@ func (t *Toast) Hide() {
 	}
 }
 
+func (t *Toast) restoreFocus() {
+	if t.previousFocus != nil {
+		t.window.Canvas().Focus(t.previousFocus)
+	} else {
+		t.window.RequestFocus()
+	}
+}
+
 // showWithAnimation запускается в потоке Fyne
 func (t *Toast) showWithAnimation(startPos, endPos fyne.Position) {
 	t.popup.Move(startPos)
@@ -115,12 +124,12 @@ func (t *Toast) hideWithAnimation(startPos fyne.Position) {
 		case <-time.After(AnimationDuration + 50*time.Millisecond):
 			fyne.Do(func() {
 				t.popup.Hide()
-				t.window.RequestFocus()
+				t.restoreFocus()
 			})
 		case <-t.done:
 			fyne.Do(func() {
 				t.popup.Hide()
-				t.window.RequestFocus()
+				t.restoreFocus()
 			})
 		}
 	}()
@@ -132,6 +141,7 @@ func (t *Toast) Show() {
 		return
 	}
 
+	t.previousFocus = t.window.Canvas().Focused()
 	popupContent := t.buildContent()
 	t.popup = widget.NewPopUp(popupContent, t.window.Canvas())
 
@@ -174,7 +184,7 @@ func (t *Toast) Show() {
 		select {
 		case <-t.done:
 			fyne.Do(func() {
-				t.window.RequestFocus()
+				t.restoreFocus()
 			})
 			return
 
@@ -185,7 +195,7 @@ func (t *Toast) Show() {
 						t.hideWithAnimation(endPos)
 					} else {
 						t.popup.Hide()
-						t.window.RequestFocus()
+						t.restoreFocus()
 					}
 				})
 			}
