@@ -72,7 +72,10 @@ type WormholeTunnel struct {
 
 func (wt *WormholeTunnel) Close() error {
 	wt.cancel()
-	err := wt.tunnel.Close()
+	var err error
+	if wt.tunnel != nil {
+		err = wt.tunnel.Close()
+	}
 	wt.wg.Wait()
 	return err
 }
