@@ -646,7 +646,8 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			transitAddr := ""
 			if relayAddr != "ws:" {
 				mailboxURL = resolveMailboxURL(relayAddr)
-				transitAddr = resolveTransitAddr(mailboxURL)
+				p := defs(pass, a.Preferences().String("relay-password"), DEFAULT_PASSPHRASE)
+				transitAddr = resolveTransit(p)
 			}
 			webdavAddr := davServer.addr
 			showCancel()

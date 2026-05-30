@@ -621,6 +621,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 	// Функция для переключения на WebDAV дерево
 	switchToWebDAVTree := func() {
+		if link.URL == nil {
+			return
+		}
 		if davServer.IsActive() || davServer.IsTCPForwardingActive() || davServer.IsRemote() {
 			_, ccn, proxyURL, _ := isDAV(link.URL.String())
 			log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
@@ -813,7 +816,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					return
 				}
 			}
-			transitAddr := resolveTransitAddr(relayAddr)
+			p := defs(pass, a.Preferences().String("relay-password"), DEFAULT_PASSPHRASE)
+			transitAddr := resolveTransit(p)
 			mailboxURL := resolveMailboxURL(relayAddr)
 			webdavAddr := davServer.addr
 			showCancel()
@@ -860,7 +864,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 				caffeinate(1)
 
-				code, wt, err := startWormholeSender(wormholeCtx, secret, mailboxURL, transitAddr, webdavAddr)
+				code, connectFn, wt, err := startWormholeSender(wormholeCtx, secret, mailboxURL, transitAddr, webdavAddr)
 				if err != nil {
 					log.Errorf("wormhole sender: %v", err)
 					fyne.Do(func() {
@@ -872,6 +876,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					})
 					return
 				}
+				defer wt.Close()
 				if code != secret {
 					fyne.Do(func() {
 						a.Preferences().SetString("secret", code)
@@ -879,7 +884,19 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						NewToast(w, code).Show()
 					})
 				}
-				defer wt.Close()
+				t, err := connectFn()
+				if err != nil {
+					log.Errorf("wormhole connect: %v", err)
+					fyne.Do(func() {
+						if wormholeCtx.Err() != nil {
+							topline.SetText(lp("Send cancelled."))
+						} else {
+							topline.SetText(err.Error())
+						}
+					})
+					return
+				}
+				wt.tunnel = t
 				log.Debugf("[wormhole] calling Serve localAddr=%s", webdavAddr)
 				if err := wt.tunnel.Serve(wormholeCtx, webdavAddr); err != nil && wormholeCtx.Err() == nil {
 					log.Errorf("wormhole tunnel serve: %v", err)

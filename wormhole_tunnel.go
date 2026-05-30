@@ -3,9 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
-	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -13,21 +10,6 @@ import (
 	"github.com/psanford/wormhole-william/wormhole/tunnel"
 	log "github.com/schollz/logger"
 )
-// Режимы relay-address (в настройках "relay-address"):
-//
-// 1. Croc relay — адрес без ws:/wss: префикса
-//    Пример: "croc.schollz.com"
-//    Используется croc-протокол (TCP, свой rendezvous)
-//
-// 2. Wormhole relay (полный URL) — ws:/wss: с путём
-//    Пример: "ws://relay.magic-wormhole.io:4000/v1"
-//    Mailbox = адрес как есть
-//    Transit = hostname:port+1 (вычисляется из mailbox)
-//
-// 3. Wormhole relay (короткий) — ws:/wss: без пути
-//    Пример: "ws://" или "ws://my-server.com:4000"
-//    Mailbox = ws://relay.magic-wormhole.io:4000/v1 (дефолтный)
-//    Transit = transit.magic-wormhole.io:4001 (дефолтный)
 
 const (
 	// DefaultWormholeMailbox = "ws://relay.magic-wormhole.io:4000/v1"
@@ -40,6 +22,21 @@ func isWormholeRelay(addr string) bool {
 	return strings.HasPrefix(addr, "ws:") || strings.HasPrefix(addr, "wss:") || strings.Contains(addr, "/v")
 }
 
+func maskSecret(p string) string {
+	if len(p) > 2 {
+		return fmt.Sprintf("%c***%c", p[0], p[len(p)-1])
+	}
+	return "***"
+}
+func resolveTransit(pass string) string {
+	if pass != "" && pass != DEFAULT_PASSPHRASE {
+		log.Debugf("wormhole transit=%s", maskSecret(pass))
+		return pass
+	}
+	log.Debugf("wormhole transit=%s default", DefaultWormholeTransit)
+	return DefaultWormholeTransit
+}
+
 func resolveMailboxURL(addr string) string {
 	s := addr
 	if s == "ws:" || s == "ws:/" || s == "ws://" {
@@ -49,22 +46,11 @@ func resolveMailboxURL(addr string) string {
 		s = s[strings.Index(s, "//")+2:]
 	}
 	if strings.Contains(s, "/v") {
-		log.Debugf("wormhole mailbox=%s transit from mailbox", addr)
+		log.Debugf("wormhole mailbox=%s", addr)
 		return ensureMailboxURL(addr)
 	}
-	log.Debugf("wormhole mailbox=%s transit default", DefaultWormholeMailbox)
+	log.Debugf("wormhole mailbox=%s default", DefaultWormholeMailbox)
 	return DefaultWormholeMailbox
-}
-
-func resolveTransitAddr(addr string) string {
-	mailbox := resolveMailboxURL(addr)
-	if mailbox == DefaultWormholeMailbox {
-		log.Debugf("wormhole transit=%s default", DefaultWormholeTransit)
-		return DefaultWormholeTransit
-	}
-	t := transitFromMailbox(addr)
-	log.Debugf("wormhole transit=%s from mailbox", t)
-	return t
 }
 
 func ensureMailboxURL(addr string) string {
@@ -75,32 +61,6 @@ func ensureMailboxURL(addr string) string {
 		return addr
 	}
 	return "ws://" + addr
-}
-
-func transitFromMailbox(addr string) string {
-	mailboxURL := ensureMailboxURL(addr)
-	u, err := url.Parse(mailboxURL)
-	if err != nil {
-		return ""
-	}
-	host := u.Hostname()
-	if strings.HasPrefix(host, "relay.") {
-		host = "transit." + strings.TrimPrefix(host, "relay.")
-	}
-	port := u.Port()
-	if port == "" {
-		switch u.Scheme {
-		case "wss":
-			port = "443"
-		default:
-			port = "80"
-		}
-	}
-	p, err := strconv.Atoi(port)
-	if err != nil {
-		return net.JoinHostPort(host, port)
-	}
-	return net.JoinHostPort(host, strconv.Itoa(p+1))
 }
 
 type WormholeTunnel struct {
@@ -117,7 +77,7 @@ func (wt *WormholeTunnel) Close() error {
 	return err
 }
 
-func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, webdavAddr string) (string, *WormholeTunnel, error) {
+func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, webdavAddr string) (string, func() (*tunnel.Tunnel, error), *WormholeTunnel, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	whClient := wh.Client{
@@ -125,14 +85,13 @@ func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitA
 		TransitRelayAddress: transitAddr,
 	}
 
-	code, t, err := whClient.CreateTunnel(ctx, secret)
+	code, connect, err := whClient.PrepareTunnel(ctx, secret)
 	if err != nil {
 		cancel()
-		return "", nil, fmt.Errorf("wormhole create tunnel: %w", err)
+		return "", nil, nil, fmt.Errorf("wormhole prepare tunnel: %w", err)
 	}
 
-	return code, &WormholeTunnel{
-		tunnel: t,
+	return code, connect, &WormholeTunnel{
 		cancel: cancel,
 		ctx:    ctx,
 	}, nil
@@ -163,8 +122,8 @@ func startWormholeReceiver(parentCtx context.Context, secret, mailboxURL, transi
 		defer wt.wg.Done()
 		if err := t.Forward(ctx, webdavAddr); err != nil && ctx.Err() == nil {
 			log.Errorf("wormhole tunnel forward: %v", err)
-			wt.cancel()
 		}
+		wt.cancel()
 	}()
 
 	return wt, nil
