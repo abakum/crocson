@@ -2028,6 +2028,7 @@ func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) 
 		//parent.SetFullScreen(true)
 		current := parent.Canvas().Size()
 		parent.Resize(current.AddWidthHeight(current.Width, 0))
+		parent.CenterOnScreen()
 
 		fd = dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
 			//parent.SetFullScreen(false)
@@ -2037,7 +2038,7 @@ func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) 
 	}
 
 	// Настраиваем размер и показываем
-	fd.Resize(parent.Canvas().Size())
+	fd.Resize(fyne.NewSize(99999, 99999))
 	fd.Show()
 }
 

@@ -1237,7 +1237,7 @@ func ShowFolderOpen0(callback func(fyne.ListableURI, error), parent fyne.Window)
 		return
 	}
 	fd := dialog.NewFolderOpen(callback, parent)
-	fd.Resize(parent.Canvas().Size())
+	fd.Resize(fyne.NewSize(99999, 99999))
 	fd.Show()
 }
 func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) {
@@ -1257,6 +1257,7 @@ func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) 
 		//parent.SetFullScreen(true)
 		current := parent.Canvas().Size()
 		parent.Resize(current.AddWidthHeight(current.Width, 0))
+		parent.CenterOnScreen()
 
 		fd = dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
 			//parent.SetFullScreen(false)
@@ -1266,7 +1267,7 @@ func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) 
 	}
 
 	// Настраиваем размер и показываем
-	fd.Resize(parent.Canvas().Size())
+	fd.Resize(fyne.NewSize(99999, 99999))
 	fd.Show()
 }
 
@@ -1283,6 +1284,7 @@ func newFileSave(callback func(fyne.URIWriteCloser, error), parent fyne.Window, 
 		//parent.SetFullScreen(true)
 		current := parent.Canvas().Size()
 		parent.Resize(current.AddWidthHeight(current.Width, 0))
+		parent.CenterOnScreen()
 
 		fd = dialog.NewFileSave(func(uri fyne.URIWriteCloser, err error) {
 			//parent.SetFullScreen(false)
@@ -1293,7 +1295,7 @@ func newFileSave(callback func(fyne.URIWriteCloser, error), parent fyne.Window, 
 		fd = dialog.NewFileSave(callback, parent)
 	}
 
-	fd.Resize(parent.Canvas().Size())
+	fd.Resize(fyne.NewSize(99999, 99999))
 	fd.SetFileName(fileName)
 	fd.Show()
 
