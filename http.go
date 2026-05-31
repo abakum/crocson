@@ -599,7 +599,7 @@ func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string, can
 	bc.WriteString(`</div>`)
 
 	if canUpload {
-		bc.WriteString(`<span class="upload-btn" id="uploadBtn">Upload</span>`)
+		bc.WriteString(`<span class="upload-controls"><span class="upload-btn" id="uploadBtn">Upload</span></span>`)
 		bc.WriteString(`<span class="upload-status" id="uploadStatus" style="display:none"></span>`)
 	}
 

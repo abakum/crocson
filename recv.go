@@ -657,8 +657,8 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			if totpCheck.Checked {
 				totpProg.Hide()
 			}
-			davServer.Stop()
 			go func() {
+				davServer.Stop()
 				var wormholeCtx context.Context
 				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
 

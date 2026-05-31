@@ -631,48 +631,59 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			chatURL = ccn
 			chatOpened.Store(false)
 			go func() {
+				errCount := 0
 				resp, err := insecureHTTPClient.Get(proxyURL.String() + "/api/messages")
 				if err != nil {
-					log.Debugf("[long-poll] initial fetch error: %v", err)
-					return
-				}
-				var initialMsgs []Message
-				json.NewDecoder(resp.Body).Decode(&initialMsgs)
-				resp.Body.Close()
-				lastCount := len(initialMsgs)
-				log.Debugf("[long-poll] baseline: %d messages", lastCount)
-
-				for {
-					if chatOpened.Load() {
+					errCount++
+					log.Debugf("[long-poll] initial fetch error (%d/3): %v", errCount, err)
+					if errCount >= 3 {
 						return
 					}
-					select {
-					case <-appCtx.Done():
-						return
-					default:
-					}
+				} else {
+					var initialMsgs []Message
+					json.NewDecoder(resp.Body).Decode(&initialMsgs)
+					resp.Body.Close()
+					lastCount := len(initialMsgs)
+					log.Debugf("[long-poll] baseline: %d messages", lastCount)
 
-					waitResp, err := insecureHTTPClient.Get(fmt.Sprintf("%s/api/messages/wait?since=%d", proxyURL.String(), lastCount))
-					if err != nil {
-						log.Debugf("[long-poll] error: %v", err)
+					for {
+						if chatOpened.Load() {
+							return
+						}
 						select {
 						case <-appCtx.Done():
 							return
-						case <-time.After(5 * time.Second):
-							continue
+						default:
 						}
-					}
-					var result struct{ Count int }
-					json.NewDecoder(waitResp.Body).Decode(&result)
-					waitResp.Body.Close()
 
-					if result.Count > lastCount {
-						lastCount = result.Count
-						if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
-							log.Debugf("[long-poll] auto-opening browser: %s", chatURL)
-							OpenURL(chatURL)
+						waitResp, err := insecureHTTPClient.Get(fmt.Sprintf("%s/api/messages/wait?since=%d", proxyURL.String(), lastCount))
+						if err != nil {
+							errCount++
+							if errCount >= 3 {
+								log.Debugf("[long-poll] giving up after %d errors", errCount)
+								return
+							}
+							log.Debugf("[long-poll] error (%d/3): %v", errCount, err)
+							select {
+							case <-appCtx.Done():
+								return
+							case <-time.After(5 * time.Second):
+								continue
+							}
 						}
-						return
+						errCount = 0
+						var result struct{ Count int }
+						json.NewDecoder(waitResp.Body).Decode(&result)
+						waitResp.Body.Close()
+
+						if result.Count > lastCount {
+							lastCount = result.Count
+							if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
+								log.Debugf("[long-poll] auto-opening browser: %s", chatURL)
+								OpenURL(chatURL)
+							}
+							return
+						}
 					}
 				}
 			}()
@@ -788,7 +799,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		scroller.Content = boxholder
 		de.Bounce(ti.Content.Refresh)
-		davServer.Stop()
+		go davServer.Stop()
 	}
 	cosED = append(cosED, treeButton)
 	cosDAV = append(cosDAV, treeButton)
