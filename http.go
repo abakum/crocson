@@ -487,7 +487,6 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 		}
 
 		var filesHTML strings.Builder
-		canDelete := canUpload
 		for _, info := range fileInfos {
 			name := info.Name()
 
@@ -511,7 +510,7 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 			modTime := stat.ModTime().Format("2006-01-02 15:04:05")
 
 			var chk string
-			if canDelete {
+			if stat.Mode().Perm()&0200 != 0 {
 				chk = ` <input type="checkbox" class="del-chk" data-path="` + filePath + `" onclick="onDelChk()">`
 			}
 
