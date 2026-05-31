@@ -474,7 +474,7 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 
 		// Формируем кликабельную цепочку родительских каталогов
 		canUpload := stat.Mode().Perm()&0200 != 0
-	breadcrumbs := h.generateBreadcrumbs(displayPath, canUpload)
+		breadcrumbs := h.generateBreadcrumbs(displayPath, canUpload)
 
 		// Формируем заголовок страницы
 		title := "WebDAV"
@@ -599,8 +599,11 @@ func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string, can
 	bc.WriteString(`</div>`)
 
 	if canUpload {
-		bc.WriteString(`<span class="upload-controls"><span class="upload-btn" id="uploadBtn">Upload</span></span>`)
+		bc.WriteString(`<span class="upload-controls">`)
 		bc.WriteString(`<span class="upload-status" id="uploadStatus" style="display:none"></span>`)
+		bc.WriteString(`<span class="upload-btn" id="uploadBtn">Upload</span>`)
+		bc.WriteString(`<input type="checkbox" id="delAllChk" class="del-all-chk" title="Select all">`)
+		bc.WriteString(`</span>`)
 	}
 
 	bc.WriteString(`</div>`)

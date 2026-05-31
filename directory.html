@@ -553,12 +553,8 @@ if (canUpload) {
 	fileInput.type = 'file';
 	fileInput.multiple = true;
 
-	var delAllChk = document.createElement('input');
-	delAllChk.type = 'checkbox';
-	delAllChk.id = 'delAllChk';
-	delAllChk.className = 'del-all-chk';
-	delAllChk.title = 'Select all';
-	btn.parentNode.insertBefore(delAllChk, btn.nextSibling);
+	// Получаем существующий чекбокс из HTML (статический)
+	var delAllChk = document.getElementById('delAllChk');
 
 	delAllChk.addEventListener('change', function() {
 		var boxes = document.querySelectorAll('.del-chk');
@@ -580,6 +576,11 @@ if (canUpload) {
 		btn.style.display = 'none';
 		statusEl.style.display = '';
 		statusEl.textContent = text;
+		var delAllChk = document.getElementById('delAllChk');
+		if (delAllChk && delAllChk.nextSibling !== statusEl) {
+			var parent = delAllChk.parentNode;
+			parent.insertBefore(statusEl, delAllChk);
+		}
 	}
 
 	function showBtn() {
