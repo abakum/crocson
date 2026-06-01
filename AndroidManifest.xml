@@ -2,7 +2,7 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1938"
+    android:versionCode="1939"
     android:versionName="1.11.60"
     package="com.github.abakum.crocson">
 
@@ -15,7 +15,8 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
             android:label="crocson"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Light">
+            android:theme="@android:style/Theme.Light"
+            android:resizeableActivity="true">
             
             <meta-data
                 android:name="android.app.lib_name"
@@ -109,7 +110,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
         
-            <uses-sdk
+                <uses-sdk
         android:minSdkVersion="23"
         android:targetSdkVersion="36" />
 </manifest>
