@@ -854,6 +854,8 @@ jobs:
               cat "$CHANGELOG_FILE"
               echo ""
             fi
+            echo "---"
+            echo ""
             cat "$TEMPLATE_FILE"
           } > release-assets/RELEASE_BODY.md
 
