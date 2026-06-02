@@ -542,7 +542,7 @@ jobs:
       # Step 6.5: Install Android SDK platform and build-tools
       - name: Install Android SDK
         run: |
-          yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
       # Step 7: Build the application using fyne package for Android targets
       - name: Build with fyne package for Android targets
