@@ -528,11 +528,10 @@ jobs:
 
       # Step 6.3: Set up JDK 21
       - name: Set up JDK 21
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-21-jdk-headless
-          sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
-          echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64" >> $GITHUB_ENV
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
       # Step 6.4: Install and pin NDK r27d
       - name: Setup NDK r27d
@@ -543,6 +542,7 @@ jobs:
       # Step 6.5: Install Android SDK platform and build-tools
       - name: Install Android SDK
         run: |
+          rm -rf "$ANDROID_HOME/platforms/android-3"* "$ANDROID_HOME/build-tools/3"*
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
       # Step 7: Build the application using fyne package for Android targets
