@@ -16,9 +16,9 @@ RepoType: git
 Repo: https://github.com/abakum/crocson
 
 Builds:
-  - versionName: 1.11.60
-    versionCode: 1938
-    commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
+  - versionName: 1.11.61
+    versionCode: 1939
+    commit: 9f6b51f7100ecb62fda69d05390e034ec8d1f285
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -26,7 +26,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@9381ef18667a2178b0dd975a7ce2b80c026431e6
+      - abakum-fyne-tools@32abad1c7dce28950b826ff51385478cdc33fc05
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -42,9 +42,9 @@ Builds:
       - fyne package -os android/arm --release
     ndk: r27d
 
-  - versionName: 1.11.60
-    versionCode: 1939
-    commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
+  - versionName: 1.11.61
+    versionCode: 1940
+    commit: 9f6b51f7100ecb62fda69d05390e034ec8d1f285
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -52,7 +52,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@9381ef18667a2178b0dd975a7ce2b80c026431e6
+      - abakum-fyne-tools@32abad1c7dce28950b826ff51385478cdc33fc05
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -68,9 +68,9 @@ Builds:
       - fyne package -os android/arm64 --release
     ndk: r27d
 
-  - versionName: 1.11.60
-    versionCode: 1940
-    commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
+  - versionName: 1.11.61
+    versionCode: 1941
+    commit: 9f6b51f7100ecb62fda69d05390e034ec8d1f285
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -78,7 +78,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@9381ef18667a2178b0dd975a7ce2b80c026431e6
+      - abakum-fyne-tools@32abad1c7dce28950b826ff51385478cdc33fc05
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -94,9 +94,9 @@ Builds:
       - fyne package -os android/386 --release
     ndk: r27d
 
-  - versionName: 1.11.60
-    versionCode: 1941
-    commit: 16758c7cb13d0ab17d70b9b32108c57417fbbdef
+  - versionName: 1.11.61
+    versionCode: 1942
+    commit: 9f6b51f7100ecb62fda69d05390e034ec8d1f285
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -104,7 +104,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@9381ef18667a2178b0dd975a7ce2b80c026431e6
+      - abakum-fyne-tools@32abad1c7dce28950b826ff51385478cdc33fc05
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -130,5 +130,5 @@ VercodeOperation:
   - '%c + 2'
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
-CurrentVersion: 1.11.60
-CurrentVersionCode: 1941
+CurrentVersion: 1.11.61
+CurrentVersionCode: 1942
