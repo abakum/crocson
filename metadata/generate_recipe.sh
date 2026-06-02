@@ -86,7 +86,7 @@ generate_builds() {
       - pushd \$\$${TOOLS_SRCLIB}\$\$/cmd/fyne
       - go install .
       - popd
-      - sdkmanager "platforms;android-36"
+      - sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - fyne package -os android/${ABI} --release
     ndk: r27d
 
