@@ -4,7 +4,7 @@ Website = "https://github.com/abakum/crocson/releases"
 Icon = "Icon.png"
 Name = "crocson"
 ID = "com.github.abakum.crocson"
-Version = "1.11.60"
+Version = "1.11.61"
 Build = 1939
 
 [Source]

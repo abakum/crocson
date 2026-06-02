@@ -1,0 +1,5 @@
+Wormhole: WebDAV ve web sohbet kullanarak wormhole sunucuları üzerinden dosya paylaşımı
+WebDAV: gerçek zamanlı senkronizasyon ile dizin listelemede dosya yükleme/silme
+TOTP: scrypt ve mnemonicode kullanarak geliştirilmiş anahtar türetme
+Android: Android 15+ için arka planda çalışmak üzere ön plan hizmeti
+Dosya seçim iletişim kutuları tam boyuta genişletildi, pencere ortalanda

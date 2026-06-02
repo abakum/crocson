@@ -1,0 +1,5 @@
+Wormhole: file sharing using WebDAV and web chat through wormhole servers
+WebDAV: file upload/delete in directory listing with real-time sync
+TOTP: improved key derivation using scrypt and mnemonicode
+Android: foreground service for background execution on Android 15+
+File dialogs expanded to full size, window centered

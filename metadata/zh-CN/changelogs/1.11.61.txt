@@ -1,0 +1,5 @@
+Wormhole: 通过 wormhole 服务器使用 WebDAV 和网页聊天进行文件共享
+WebDAV: 目录列表中的文件上传/删除（实时同步）
+TOTP: 使用 scrypt 和 mnemonicode 的改进密钥派生
+Android: 用于 Android 15+ 后台执行的前台服务
+文件对话框展开到完整尺寸，窗口居中显示
