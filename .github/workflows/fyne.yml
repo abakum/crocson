@@ -854,6 +854,7 @@ jobs:
               echo ""
               cat "$CHANGELOG_FILE"
               echo ""
+              echo ""
             fi
             echo "---"
             echo ""
