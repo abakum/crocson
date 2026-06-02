@@ -110,7 +110,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
         
-                <uses-sdk
+    <uses-sdk
         android:minSdkVersion="23"
         android:targetSdkVersion="36" />
 </manifest>
