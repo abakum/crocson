@@ -538,6 +538,12 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r27d
+
+      # Step 6.5: Install Android SDK platform and build-tools
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
       # Step 7: Build the application using fyne package for Android targets
       - name: Build with fyne package for Android targets
         run: |
@@ -718,10 +724,10 @@ jobs:
 
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
-          BUILD_TOOLS="$ANDROID_HOME/build-tools/31.0.0"
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
           if [ ! -d "$BUILD_TOOLS" ]; then
-            echo "Installing Android build tools 31.0.0..."
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;31.0.0"
+            echo "Installing Android build tools 36.0.0..."
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0"
           fi
 
           for apk in crocson-*.apk; do
