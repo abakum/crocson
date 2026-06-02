@@ -6,19 +6,13 @@ on:
       first:
         description: 'Initial registration: generate recipe from FyneApp.toml'
         required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
+        default: false
+        type: boolean
       load:
         description: 'Load current recipe from fdroiddata GitLab'
         required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
+        default: false
+        type: boolean
 
 permissions:
   contents: write
