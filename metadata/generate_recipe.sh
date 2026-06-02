@@ -87,7 +87,7 @@ generate_builds() {
       - go install .
       - popd
       - sdkmanager "platforms;android-36" "build-tools;36.0.0"
-      - fyne package -os android/${ABI} --release
+      - fyne package -os android/${ABI} --release --sign
     ndk: r27d
 
 BEOF
