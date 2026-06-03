@@ -84,9 +84,10 @@ public class CrocsonService extends Service {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "Crocson Foreground Service",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("WebDAV server foreground service");
+            channel.setSound(null, null);
             NotificationManager manager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {

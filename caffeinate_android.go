@@ -282,11 +282,11 @@ func caffeinate(i int32) int32 {
 	}
 
 	if old <= 0 && newVal > 0 {
-		acquireWakeLock()
+		// acquireWakeLock()
 		startForegroundService()
 	} else if old > 0 && newVal <= 0 {
 		stopForegroundService()
-		releaseWakeLock()
+		// releaseWakeLock()
 	}
 
 	return newVal

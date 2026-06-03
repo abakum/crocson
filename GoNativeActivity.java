@@ -8,9 +8,12 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.content.ClipData;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+
+import java.util.ArrayList;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -48,10 +51,23 @@ public class GoNativeActivity extends NativeActivity {
     private native void backPressed();
     private native void setDarkMode(boolean dark);
     private native void lifecycleEvent(String event);
+    private native void intentURI(String uri);
 
+    private native void intentText(String text);
+
+    private void logIntentURI(String uri) {
+        Log.d(TAG, "Java: intentURI sending to Go: " + uri);
+        intentURI(uri);
+    }
+
+    private void logIntentText(String text) {
+        Log.d(TAG, "Java: intentText sending to Go: " + (text != null && text.length() > 50 ? text.substring(0, 50) + "..." : text));
+        intentText(text);
+    }
 	private EditText mTextEdit;
 	private boolean ignoreKey = false;
 	private boolean keyboardUp = false;
+	private ArrayList<String> pendingIntentURIs = null;
 
 	public GoNativeActivity() {
 		super();
@@ -244,6 +260,28 @@ public class GoNativeActivity extends NativeActivity {
 		Log.d(TAG, "Java: onCreate");
 		lifecycleEvent("create");
 
+		Intent intent = getIntent();
+		int flags = (intent != null) ? intent.getFlags() : 0;
+		boolean fromHistory = (flags & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0;
+		boolean broughtToFront = (flags & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) != 0;
+
+		Log.d(TAG, "Java: onCreate flags=" + flags + ", LAUNCHED_FROM_HISTORY=" + fromHistory +
+		      ", BROUGHT_TO_FRONT=" + broughtToFront + ", savedInstanceState=" +
+		      (savedInstanceState == null ? "null" : "not null"));
+
+		if (savedInstanceState == null) {
+			if (!fromHistory) {
+				// Fresh launch from launcher or file manager
+				Log.d(TAG, "Java: onCreate processing intent (fresh launch)");
+				processIntentData(intent);
+			} else {
+				// Returning from Recents → skip processing (duplicate)
+				Log.d(TAG, "Java: onCreate skipping intent (LAUNCHED_FROM_HISTORY=true)");
+			}
+		} else {
+			Log.d(TAG, "Java: onCreate skipping intent (savedInstanceState != null, config change)");
+		}
+
 		View view = findViewById(android.R.id.content).getRootView();
 		view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
 			public void onLayoutChange (View v, int left, int top, int right, int bottom,
@@ -398,5 +436,132 @@ public class GoNativeActivity extends NativeActivity {
         Log.d(TAG, "Java: onDestroy");
         lifecycleEvent("destroy");
         super.onDestroy();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Log.d(TAG, "Java: onNewIntent action=" + (intent != null ? intent.getAction() : "null"));
+        processIntentData(intent);
+    }
+
+    private void sendIntentURIs(ArrayList<String> uriList) {
+        Log.d(TAG, "Java: sendIntentURIs called with " + uriList.size() + " URIs");
+        boolean needsPermission = false;
+        for (String uri : uriList) {
+            if (uri.startsWith("file://")) {
+                needsPermission = true;
+                Log.d(TAG, "Java: sendIntentURIs needs permission for file:// URI");
+                break;
+            }
+        }
+        if (needsPermission && checkSelfPermission("android.permission.READ_EXTERNAL_STORAGE") != 0) {
+            Log.d(TAG, "Java: sendIntentURIs requesting permissions");
+            pendingIntentURIs = uriList;
+            lifecycleEvent("permissionDialog");
+            requestPermissions(new String[]{
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE"
+            }, 123);
+            return;
+        }
+        Log.d(TAG, "Java: sendIntentURIs sending " + uriList.size() + " URIs to Go");
+        for (String uri : uriList) {
+            logIntentURI(uri);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.d(TAG, "Java: onRequestPermissionsResult requestCode=" + requestCode + ", grantResults=" + grantResults[0]);
+        if (requestCode == 123 && pendingIntentURIs != null) {
+            boolean granted = true;
+            for (int result : grantResults) {
+                if (result != 0) granted = false;
+            }
+            Log.d(TAG, "Java: permissionResult granted=" + granted + ", pending URIs=" + pendingIntentURIs.size());
+            if (granted) {
+                for (String uri : pendingIntentURIs) {
+                    Log.d(TAG, "Java: permissionResult sending URI=" + uri);
+                    logIntentURI(uri);
+                }
+            }
+            pendingIntentURIs = null;
+        }
+    }
+
+    private void processIntentData(Intent intent) {
+        if (intent == null || intent.getAction() == null || Intent.ACTION_MAIN.equals(intent.getAction())) {
+            Log.d(TAG, "Java: processIntentData skipped: null, null action, or MAIN");
+            return;
+        }
+
+        String action = intent.getAction();
+        String type = intent.getType();
+        ArrayList<String> uriList = new ArrayList<>();
+
+        Log.d(TAG, "Java: processIntentData action=" + action + ", type=" + type);
+
+        ClipData clipData = intent.getClipData();
+        if (clipData != null) {
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+                ClipData.Item item = clipData.getItemAt(i);
+                if (item.getUri() != null) {
+                    uriList.add(item.getUri().toString());
+                    Log.d(TAG, "Java: processIntentData ClipData uri=" + item.getUri().toString());
+                }
+                if (item.getText() != null) {
+                    logIntentText(item.getText().toString());
+                }
+            }
+            if (!uriList.isEmpty()) {
+                Log.d(TAG, "Java: processIntentData sending " + uriList.size() + " URIs");
+                sendIntentURIs(uriList);
+            }
+            return;
+        }
+
+        if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
+            String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (text != null) {
+                Log.d(TAG, "Java: processIntentData sending text/plain");
+                logIntentText(text);
+                return;
+            }
+        }
+
+        if (Intent.ACTION_VIEW.equals(action)) {
+            Uri uri = intent.getData();
+            if (uri != null) {
+                uriList.add(uri.toString());
+                Log.d(TAG, "Java: processIntentData sending VIEW uri=" + uri.toString());
+                sendIntentURIs(uriList);
+                return;
+            }
+        }
+
+        if (Intent.ACTION_SEND.equals(action)) {
+            Uri stream = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            if (stream != null) {
+                uriList.add(stream.toString());
+                Log.d(TAG, "Java: processIntentData sending SEND stream=" + stream.toString());
+                sendIntentURIs(uriList);
+                return;
+            }
+        }
+
+        if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
+            ArrayList<Uri> uris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            if (uris != null && !uris.isEmpty()) {
+                for (Uri u : uris) {
+                    uriList.add(u.toString());
+                }
+                Log.d(TAG, "Java: processIntentData sending SEND_MULTIPLE (" + uris.size() + " URIs)");
+                sendIntentURIs(uriList);
+                return;
+            }
+        }
     }
 }

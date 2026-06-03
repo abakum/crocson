@@ -1317,261 +1317,215 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	cosED = append(cosED, mainButton)
 
 	if isAndroid {
-		var (
-			intentWg sync.WaitGroup
-		)
-		intentCtx, intentCancel := context.WithCancel(appCtx)
-
-		handleResume := func() {
-			notFinish = false
-
-			// 1. Сигнал остановки через контекст (моментально)
-			intentCancel()
-
-			// 2. Ждём завершения старой горутины
-			intentWg.Wait()
-
-			// 3. Очищаем мусор из каналов (теперь безопасно — горутина мертва)
-			drainChannel(uriFromIntent)
-			drainChannel(textFromIntent)
-
-			// 4. Новый контекст для новой горутины
-			intentCtx, intentCancel = context.WithCancel(appCtx)
-
-			intentWg.Add(1)
-			go func() {
-				defer intentWg.Done()
-				for {
-					select {
-					case <-intentCtx.Done():
-						log.Debug("intent goroutine stopped")
-						return
-					case text := <-textFromIntent:
-						if text == "" {
-							// Ошибка обработки Намерения или Главная или из Недавних
-							log.Debug("doneProcessIntent notFinish")
-							notFinish = true
-							return
+		go func() {
+			for {
+				select {
+				case event := <-lifecycleFromJava:
+					switch event {
+					case "resume":
+						notFinish = false
+						if scannerIsBrowser {
+							clipboardText := a.Clipboard().Content()
+							if clipboardText != clipboardBeforeScan && strings.HasPrefix(clipboardText, IO) {
+								log.Debugf("scannerIsBrowser: sending clipboard to uriFromIntent: %q", clipboardText)
+								uriFromIntent <- clipboardText
+							}
+							scannerIsBrowser = false
 						}
-						if entry.Disabled() {
-							log.Debug("doneProcessIntent Sending")
-							return
+						fyne.Do(func() {
+							at.OnSelected(at.Selected())
+							de.Bounce(ti.Content.Refresh)
+						})
+					case "pause":
+						if !notFinish && treeButton.Icon == theme.VisibilityIcon() {
+							finish()
 						}
-						log.Debugf("clip\n%s", text)
-						src := join(hashToFilename(text))
-						if fe := addEntry(src, func(d *widget.Button, p *widget.ProgressBar, l *widget.Label) {
-							setSizes(p, int64(len(text)))
-						}); fe == nil {
-							continue
-						}
+					case "stop":
+						saveAccordionState()
+					case "permissionDialog":
+						notFinish = true
+					}
 
-						source, err := os.Create(src)
-						if err != nil {
-							log.Errorf("create: %v", err)
-							continue
-						}
+				case text := <-textFromIntent:
+					if text == "" {
+						log.Debug("doneProcessIntent notFinish")
+						notFinish = true
+						continue
+					}
+					if entry.Disabled() {
+						log.Debug("doneProcessIntent Sending")
+						continue
+					}
+					log.Debugf("clip\n%s", text)
+					src := join(hashToFilename(text))
+					if fe := addEntry(src, func(d *widget.Button, p *widget.ProgressBar, l *widget.Label) {
+						setSizes(p, int64(len(text)))
+					}); fe == nil {
+						continue
+					}
 
-						_, err = source.WriteString(text)
-						if err != nil {
-							source.Close()
-							os.Remove(src)
-							log.Errorf("write: %v", err)
-							continue
-						}
+					source, err := os.Create(src)
+					if err != nil {
+						log.Errorf("create: %v", err)
+						continue
+					}
 
+					_, err = source.WriteString(text)
+					if err != nil {
 						source.Close()
-						showPage() //textFromIntent
+						os.Remove(src)
+						log.Errorf("write: %v", err)
+						continue
+					}
 
-					case uriString := <-uriFromIntent:
-						if uriString == "" {
-							log.Debug("doneProcessIntent")
-							return
-						}
+					source.Close()
+					showPage()
 
-						// deepLink https://abakum.github.io/croc#
-						if st, ne, as, a6, ps, pd, s5, ct, err := fromURI(uriString); err == nil {
-							var _, _, _ = pd, s5, ct
-							switch st {
-							case "App info":
-								idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
-								return
-							}
-							entry.SetText(st)
-							a.Preferences().SetString("new-relay", ne)
-							a.Preferences().SetString("relay-address", as)
-							a.Preferences().SetString("relay6", a6)
-							a.Preferences().SetString("relay-ports", ps)
-							// a.Preferences().SetString("relay-password", pd)
-							// a.Preferences().SetString("socks5", s5)
-							// a.Preferences().SetString("connect", ct)
-							addCurrentRelay(a)
-							return
-						}
-						// deepLink davX: webdavX:
-						if _, ccn, _, ok := isDAV(uriString); ok {
-
-							log.Debugf("[intent] isDAV ccn=%q, opening manually", ccn)
-							if err := OpenURL(ccn); err == nil {
-								chatOpened.Store(true)
-							} else {
-								log.Error(err)
-							}
-							return
-						}
-
-						if entry.Disabled() {
-							log.Debug("Sending")
-							log.Debug("doneProcessIntent")
-							return
-						}
-						u, err := storage.ParseURI(uriString)
-						if err != nil {
-							log.Errorf("parse %s: %v", u, err)
+				case uriString := <-uriFromIntent:
+					if uriString == "" {
+						log.Debug("doneProcessIntent")
+						continue
+					}
+					// deepLink https://abakum.github.io/croc#
+					if st, ne, as, a6, ps, pd, s5, ct, err := fromURI(uriString); err == nil {
+						var _, _, _ = pd, s5, ct
+						switch st {
+						case "App info":
+							idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
 							continue
 						}
-						log.Debugf("uri %s", u)
-						log.Debugf("apiLevel %d", apiLevel())
-						name := uriBase(u)
-						dst := join(name)
-						if u.Scheme() == "file" {
-							// TotalCommander до Андроида 12
-							// может посылать каталоги
-							if !HasStoragePermission() {
-								RequestStoragePermission()
-								NewToast(w, lp("Allow access to read")+": "+name).Show()
-								return
-							}
-							fe := addEntry(dst, nil)
-							if fe == nil {
-								continue
-							}
-							if fi, err := os.Stat(u.Path()); err == nil {
-								if fi.IsDir() {
-									go func() {
-										var wg sync.WaitGroup
-										log.Debugf("copyFiles: %v",
-											copyFiles(storage.NewFileURI(u.Path()), dst, func(u fyne.URI, dstPath string) error {
-												src := u.Path()
-												rel, err := filepath.Rel(join(), dstPath)
-												if err != nil {
-													rel = dstPath
-												}
-												feCopy := addEntry(dstPath, func(d *widget.Button, p *widget.ProgressBar, l *widget.Label) {
-													l.SetText(rel)
-												})
-												if feCopy == nil {
-													return nil
-												}
-												// }
-												wg.Add(1)
-												CopyFileProgress(src, dstPath, feCopy, func(err error) {
-													defer wg.Done()
-													if err != nil {
-														log.Errorf("copy %s %s: %v", src, dstPath, err)
-														removeEntry(dstPath, feCopy, true)
-														return
-													}
-
-													if _, err := os.Stat(dstPath); err != nil {
-														// не закэшировал
-														log.Errorf("stat %s: %v", dstPath, err)
-													} else {
-														// закэшировал
-														log.Debugf("copy %s %s", src, dstPath)
-													}
-												})
-												return nil
-											}))
-										select {
-										case <-appCtx.Done():
-										default:
-											wg.Wait()
-											log.Debugf("copyFiles done")
-											showPage()
-										}
-									}()
-									continue
-								}
-								CopyFileProgress(u.Path(), dst, fe, func(err error) {
-									showPage()
-									if err != nil {
-										log.Errorf("copy %s %s: %s", u, dst, err)
-										removeEntry(dst, fe, true)
-										return
-									}
-
-									if _, err := os.Stat(dst); err != nil {
-										log.Errorf("stat %s: %v", dst, err)
-										removeEntry(dst, fe, true)
-									} else {
-										log.Errorf("copy %s %s", u, dst)
-									}
-								})
-								continue
-							}
+						entry.SetText(st)
+						a.Preferences().SetString("new-relay", ne)
+						a.Preferences().SetString("relay-address", as)
+						a.Preferences().SetString("relay6", a6)
+						a.Preferences().SetString("relay-ports", ps)
+						addCurrentRelay(a)
+						continue
+					}
+					// deepLink davX: webdavX:
+					if _, ccn, _, ok := isDAV(uriString); ok {
+						log.Debugf("[intent] isDAV ccn=%q, opening manually", ccn)
+						if err := OpenURL(ccn); err == nil {
+							chatOpened.Store(true)
+						} else {
+							log.Error(err)
 						}
+						continue
+					}
 
-						if IsDirectory(u) {
-							continue
-						}
-
-						source, err := Reader(u)
-						if err != nil {
-							log.Errorf("reader: %v", err)
-							continue
-						}
+					if entry.Disabled() {
+						log.Debug("Sending")
+						log.Debug("doneProcessIntent")
+						continue
+					}
+					u, err := storage.ParseURI(uriString)
+					if err != nil {
+						log.Errorf("parse %s: %v", u, err)
+						continue
+					}
+					log.Debugf("uri %s", u)
+					log.Debugf("apiLevel %d", apiLevel())
+					name := uriBase(u)
+					dst := join(name)
+					if u.Scheme() == "file" {
 						fe := addEntry(dst, nil)
 						if fe == nil {
 							continue
 						}
+						if fi, err := os.Stat(u.Path()); err == nil {
+							if fi.IsDir() {
+								go func() {
+									var wg sync.WaitGroup
+									log.Debugf("copyFiles: %v",
+										copyFiles(storage.NewFileURI(u.Path()), dst, func(u fyne.URI, dstPath string) error {
+											src := u.Path()
+											rel, err := filepath.Rel(join(), dstPath)
+											if err != nil {
+												rel = dstPath
+											}
+											feCopy := addEntry(dstPath, func(d *widget.Button, p *widget.ProgressBar, l *widget.Label) {
+												l.SetText(rel)
+											})
+											if feCopy == nil {
+												return nil
+											}
+											wg.Add(1)
+											CopyFileProgress(src, dstPath, feCopy, func(err error) {
+												defer wg.Done()
+												if err != nil {
+													log.Errorf("copy %s %s: %v", src, dstPath, err)
+													removeEntry(dstPath, feCopy, true)
+													return
+												}
 
-						copyFromURCProgress(source, "", fe, func(err error) {
-							showPage() //uriFromIntent
-							if err != nil {
-								log.Errorf("copy %s %s: %s", u, dst, err)
-								removeEntry(dst, fe, true)
-								return
+												if _, err := os.Stat(dstPath); err != nil {
+													// не закэшировал
+													log.Errorf("stat %s: %v", dstPath, err)
+												} else {
+													// закэшировал
+													log.Debugf("copy %s %s", src, dstPath)
+												}
+											})
+											return nil
+										}))
+									select {
+									case <-appCtx.Done():
+									default:
+										wg.Wait()
+										log.Debugf("copyFiles done")
+										showPage()
+									}
+								}()
+								continue
 							}
+							CopyFileProgress(u.Path(), dst, fe, func(err error) {
+								showPage()
+								if err != nil {
+									log.Errorf("copy %s %s: %s", u, dst, err)
+									removeEntry(dst, fe, true)
+									return
+								}
 
-							if _, err := os.Stat(dst); err != nil {
-								log.Errorf("stat %s: %v", dst, err)
-								removeEntry(dst, fe, true)
-							} else {
-								log.Infof("copy %s %s", u, dst)
-							}
-						})
+								if _, err := os.Stat(dst); err != nil {
+									log.Errorf("stat %s: %v", dst, err)
+									removeEntry(dst, fe, true)
+								} else {
+									log.Errorf("copy %s %s", u, dst)
+								}
+							})
+							continue
+						}
 					}
-				}
-			}()
-			if scannerIsBrowser {
-				clipboardText := a.Clipboard().Content()
-				if clipboardText != clipboardBeforeScan && strings.HasPrefix(clipboardText, IO) {
-					// Браузерный сканер — шлём буфер обмена в канал
-					log.Debugf("scannerIsBrowser: sending clipboard to uriFromIntent: %q", clipboardText)
-					uriFromIntent <- clipboardText
-				} else {
-					processIntent()
-				}
-				scannerIsBrowser = false
-			} else {
-				processIntent()
-			}
-			fyne.Do(func() {
-				at.OnSelected(at.Selected())
-				de.Bounce(ti.Content.Refresh)
-			})
-		}
-		go func() {
-			for event := range lifecycleFromJava {
-				switch event {
-				case "resume":
-					handleResume()
-				case "pause":
-					if !notFinish && treeButton.Icon == theme.VisibilityIcon() {
-						finish()
+
+					if IsDirectory(u) {
+						continue
 					}
-				case "stop":
-					saveAccordionState()
+
+					source, err := Reader(u)
+					if err != nil {
+						log.Errorf("reader: %v", err)
+						continue
+					}
+					fe := addEntry(dst, nil)
+					if fe == nil {
+						continue
+					}
+
+					copyFromURCProgress(source, "", fe, func(err error) {
+						showPage()
+						if err != nil {
+							log.Errorf("copy %s %s: %s", u, dst, err)
+							removeEntry(dst, fe, true)
+							return
+						}
+
+						if _, err := os.Stat(dst); err != nil {
+							log.Errorf("stat %s: %v", dst, err)
+							removeEntry(dst, fe, true)
+						} else {
+							log.Infof("copy %s %s", u, dst)
+						}
+					})
 				}
 			}
 		}()
@@ -2572,16 +2526,6 @@ func wHandle(w fyne.Window) string {
 func isWSL() bool {
 	// WSL_DISTRO_NAME устанавливается в WSL и содержит имя дистрибутива
 	return os.Getenv("WSL_DISTRO_NAME") != ""
-}
-
-func drainChannel(ch chan string) {
-	for {
-		select {
-		case <-ch:
-		default:
-			return
-		}
-	}
 }
 
 func defWeb(sch string, s bool, h, p, path string) (host string, u url.URL) {

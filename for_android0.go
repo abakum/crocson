@@ -17,8 +17,6 @@ import (
 	"fyne.io/fyne/v2/storage"
 )
 
-func processIntent() {}
-
 func uriBase(uri fyne.URI) string {
 	return uri.Name()
 }
@@ -29,9 +27,6 @@ func IsSaveDialogSupported() (bool, error) { return !noDialogs, nil }
 func IsFolderPickerSupported() (bool, error) { return !noDialogs, nil }
 
 // func IsFolderPickerSupported() (bool, error) { return false, nil }
-
-func RequestStoragePermission() {}
-func OpenAppSettings()          {}
 
 func CanList(u fyne.URI) (bool, error) {
 	return storage.CanList(u)
@@ -267,7 +262,6 @@ func setModTime(uri fyne.URI, mtime time.Time) error {
 }
 
 func startActivity()             {}
-func HasStoragePermission() bool { return false }
 func openAppSettings()           {}
 func openAppInfo()               {}
 func IsTaskRoot() bool           { return false }
