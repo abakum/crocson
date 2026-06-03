@@ -30,6 +30,7 @@ import android.widget.TextView.OnEditorActionListener;
 
 public class GoNativeActivity extends NativeActivity {
 	private static GoNativeActivity goNativeActivity;
+	private static final String TAG = "croc";
 	private static final int FILE_OPEN_CODE = 1;
 	private static final int FILE_SAVE_CODE = 2;
 
@@ -46,6 +47,7 @@ public class GoNativeActivity extends NativeActivity {
     private native void keyboardDelete();
     private native void backPressed();
     private native void setDarkMode(boolean dark);
+    private native void lifecycleEvent(String event);
 
 	private EditText mTextEdit;
 	private boolean ignoreKey = false;
@@ -239,6 +241,8 @@ public class GoNativeActivity extends NativeActivity {
 		super.onCreate(savedInstanceState);
 		setupEntry();
 		updateTheme(getResources().getConfiguration());
+		Log.d(TAG, "Java: onCreate");
+		lifecycleEvent("create");
 
 		View view = findViewById(android.R.id.content).getRootView();
 		view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
@@ -352,5 +356,47 @@ public class GoNativeActivity extends NativeActivity {
     protected void updateTheme(Configuration config) {
         boolean dark = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         setDarkMode(dark);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "Java: onStart");
+        lifecycleEvent("start");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "Java: onRestart");
+        lifecycleEvent("restart");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "Java: onResume");
+        lifecycleEvent("resume");
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "Java: onPause");
+        lifecycleEvent("pause");
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "Java: onStop");
+        lifecycleEvent("stop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "Java: onDestroy");
+        lifecycleEvent("destroy");
+        super.onDestroy();
     }
 }
