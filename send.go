@@ -1322,40 +1322,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		)
 		intentCtx, intentCancel := context.WithCancel(appCtx)
 
-		oH := ""
-		mH := ""
-		// Если получили файл или текст то исключаем из Недавних
-		// Одни файловые менеджеры это делают сами
-		// другим типа totalcommander надо помогать
-		// но у меня не получилось
-		excludeRecents := false
-		a.Lifecycle().SetOnExitedForeground(func() {
-			log.Debug("ExitedForeground " + wHandle(w))
-			if !notFinish && treeButton.Icon == theme.VisibilityIcon() {
-				if excludeRecents {
-					// Для Андроида 9 это просто finish
-					// excludeFromRecents()
-					finish()
-				} else {
-					// if md, ok := a.Driver().(mobile.Driver); ok && md != nil {
-					// 	md.GoBack()
-					// }
-					finish()
-				}
-			}
-		})
-		a.Lifecycle().SetOnStopped(func() {
-			log.Debug("Stopped " + wHandle(w))
-			saveAccordionState()
-		})
-		a.Lifecycle().SetOnStarted(func() {
-			log.Debug("Started " + wHandle(w))
-			oH = wHandle(w)
-		})
-		a.Lifecycle().SetOnEnteredForeground(func() {
-			log.Debug("EnteredForeground " + wHandle(w))
+		handleResume := func() {
 			notFinish = false
-			// excludeRecents = false
 
 			// 1. Сигнал остановки через контекст (моментально)
 			intentCancel()
@@ -1373,32 +1341,11 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			intentWg.Add(1)
 			go func() {
 				defer intentWg.Done()
-
-				tt := time.NewTicker(time.Millisecond * 777)
-				defer tt.Stop()
 				for {
 					select {
 					case <-intentCtx.Done():
 						log.Debug("intent goroutine stopped")
 						return
-					case <-tt.C:
-						// В Андроид 9 если нажать Хоум или кнопку Недавние
-						// то ни один из хуков lifecycle не сработает.
-						// Если выбрать не crocson а потом выбрать crocson
-						// то crocson зависнет.
-						// Чтоб это предотвратить ослеживаем смену хэндла окна w
-						// и в этот момент открепляем и прикрепляем активность к w
-						nH := wHandle(w)
-						if oH != nH {
-							if mH != oH {
-								log.Errorf("mH %s wH %s-> nH %s", mH, oH, nH)
-								finish()
-								time.Sleep(time.Millisecond * 777)
-								startActivity()
-								return
-							}
-							oH = nH
-						}
 					case text := <-textFromIntent:
 						if text == "" {
 							// Ошибка обработки Намерения или Главная или из Недавних
@@ -1406,7 +1353,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							notFinish = true
 							return
 						}
-						// excludeRecents = true
 						if entry.Disabled() {
 							log.Debug("doneProcessIntent Sending")
 							return
@@ -1473,7 +1419,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							return
 						}
 
-						excludeRecents = true
 						if entry.Disabled() {
 							log.Debug("Sending")
 							log.Debug("doneProcessIntent")
@@ -1611,15 +1556,25 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			} else {
 				processIntent()
 			}
-			mH = wHandle(w)
-			// log.Debug("mainH " + mH)
-			// fyne.Do(func() {
-			at.OnSelected(at.Selected())
-			// at.Refresh()
-			// at.Selected().Content.Refresh()
-			de.Bounce(ti.Content.Refresh)
-			// })
-		})
+			fyne.Do(func() {
+				at.OnSelected(at.Selected())
+				de.Bounce(ti.Content.Refresh)
+			})
+		}
+		go func() {
+			for event := range lifecycleFromJava {
+				switch event {
+				case "resume":
+					handleResume()
+				case "pause":
+					if !notFinish && treeButton.Icon == theme.VisibilityIcon() {
+						finish()
+					}
+				case "stop":
+					saveAccordionState()
+				}
+			}
+		}()
 	} else {
 		a.Lifecycle().SetOnExitedForeground(func() {
 			log.Debug("ExitedForeground " + wHandle(w))
