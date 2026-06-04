@@ -1,3 +1,5 @@
+//go:build !android
+
 // toast.go
 package main
 

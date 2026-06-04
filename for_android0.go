@@ -17,6 +17,8 @@ import (
 	"fyne.io/fyne/v2/storage"
 )
 
+var lifecycleFromJava chan string
+
 func uriBase(uri fyne.URI) string {
 	return uri.Name()
 }
@@ -261,10 +263,10 @@ func setModTime(uri fyne.URI, mtime time.Time) error {
 	return os.Chtimes(uri.Path(), time.Time{}, mtime)
 }
 
-func startActivity()             {}
-func openAppSettings()           {}
-func openAppInfo()               {}
-func IsTaskRoot() bool           { return false }
+func startActivity()   {}
+func openAppSettings() {}
+func openAppInfo()     {}
+func IsTaskRoot() bool { return false }
 
 // Если зарегистрированы схемы то через них
 // иначе регистрируем для юникс

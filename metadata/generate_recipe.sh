@@ -29,10 +29,7 @@ echo "Go version: $GO_VERSION"
 echo "Output: $YML"
 
 HEADER_DEFAULT="Categories:
-  - Internet
-  - Connectivity
-  - Multimedia
-  - Security
+  - File Transfer
 License: ISC
 AuthorName: Konstantin Abakumov
 AuthorEmail: koka.abakum@gmail.com

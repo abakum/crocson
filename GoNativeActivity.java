@@ -30,6 +30,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
 
 public class GoNativeActivity extends NativeActivity {
 	private static GoNativeActivity goNativeActivity;
@@ -162,6 +163,42 @@ public class GoNativeActivity extends NativeActivity {
     static void hideKeyboard() {
         goNativeActivity.doHideKeyboard();
         goNativeActivity.keyboardUp = false;
+    }
+
+    static void startCrocsonService() {
+        try {
+            Class<?> serviceClass = Class.forName("com.github.abakum.crocson.CrocsonService");
+            Intent intent = new Intent(goNativeActivity, serviceClass);
+            if (Build.VERSION.SDK_INT >= 26) {
+                goNativeActivity.startForegroundService(intent);
+            } else {
+                goNativeActivity.startService(intent);
+            }
+            Log.d(TAG, "Java: Foreground service started (API " + Build.VERSION.SDK_INT + ")");
+        } catch (Exception e) {
+            Log.e(TAG, "Java: startCrocsonService failed: " + e.getMessage());
+        }
+    }
+
+    static void stopCrocsonService() {
+        try {
+            Class<?> serviceClass = Class.forName("com.github.abakum.crocson.CrocsonService");
+            Intent intent = new Intent(goNativeActivity, serviceClass);
+            goNativeActivity.stopService(intent);
+            Log.d(TAG, "Java: Foreground service stopped");
+        } catch (Exception e) {
+            Log.e(TAG, "Java: stopCrocsonService failed: " + e.getMessage());
+        }
+    }
+
+    static void showToast(String message) {
+        goNativeActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(goNativeActivity, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+        Log.d(TAG, "Java: showToast: " + message);
     }
 
     void doHideKeyboard() {
