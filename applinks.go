@@ -462,7 +462,6 @@ func (qr *QR) scanner() {
 		&Intent{Package: "org.mozilla.firefox", Categories: []string{CATEGORY_BROWSABLE}},
 	}
 
-	notFinish = false
 	contains := false
 	sel := qr.app.Preferences().String("scanner")
 	key := strings.ToLower(strings.Fields(sel)[0])
@@ -903,7 +902,6 @@ func idActions(id string, actions ...string) {
 			FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
 		),
 	}
-	notFinish = true
 	for _, i := range actions {
 		intent.SetAction(i)
 		if err := OpenURL(intent.String()); err == nil {
@@ -911,7 +909,6 @@ func idActions(id string, actions ...string) {
 			return
 		}
 	}
-	notFinish = false
 }
 
 var (
@@ -1054,11 +1051,10 @@ func (qr *QR) handleIOTapped() {
 		Scheme: qr.link.URL.Scheme,
 		Flags: flagActivity(
 			FLAG_ACTIVITY_SINGLE_TOP,
-			FLAG_ACTIVITY_REQUIRE_NON_BROWSER,
+			// FLAG_ACTIVITY_REQUIRE_NON_BROWSER,
 		),
 	}
 
-	notFinish = true
 	if err := OpenURL(intent.String()); err == nil {
 		NewToast(qr.window, "OK").Show()
 		return
@@ -1068,7 +1064,6 @@ func (qr *QR) handleIOTapped() {
 	if err := OpenURL(intent.String()); err != nil {
 		qr.app.SendNotification(fyne.NewNotification("Error", err.Error()))
 	}
-	notFinish = false
 }
 
 // updateVisibility управляет видимостью виджетов

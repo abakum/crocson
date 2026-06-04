@@ -1085,9 +1085,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 			var sendErr error
 
-			log.Warnf("Restart %v", !noRestart)
 			ctx, ctc := context.WithCancel(appCtx)
-			client, err := crocNew(noRestart, ctx, opt)
+			client, err := crocNew(ctx, opt)
 			if err != nil {
 				log.Errorf("croc: %v", err)
 				fyne.Do(NewToast(w, err.Error()).Show)
@@ -1170,9 +1169,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							os.RemoveAll(join())
 							os.MkdirAll(join(), 0700)
 						}
-						fyne.Do(func() {
-							restart(w)
-						})
 						return
 					case <-cancelChan:
 						s := fmt.Sprintf("%s %s", lp("Send cancelled."), filename)
@@ -1181,14 +1177,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							topline.SetText(s)
 						})
 
-						if noRestart {
-							ctc()
-						} else {
-							Stop(client)
-							fyne.Do(func() {
-								restart(w)
-							})
-						}
+						ctc()
 						return
 					case <-ticker.C:
 						if client == nil {
@@ -1323,7 +1312,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				case event := <-lifecycleFromJava:
 					switch event {
 					case "resume":
-						notFinish = false
 						if scannerIsBrowser {
 							clipboardText := a.Clipboard().Content()
 							if clipboardText != clipboardBeforeScan && strings.HasPrefix(clipboardText, IO) {
@@ -1336,20 +1324,13 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							at.OnSelected(at.Selected())
 							de.Bounce(ti.Content.Refresh)
 						})
-					case "pause":
-						if !notFinish && treeButton.Icon == theme.VisibilityIcon() {
-							finish()
-						}
 					case "stop":
 						saveAccordionState()
 					case "permissionDialog":
-						notFinish = true
 					}
 
 				case text := <-textFromIntent:
 					if text == "" {
-						log.Debug("doneProcessIntent notFinish")
-						notFinish = true
 						continue
 					}
 					if entry.Disabled() {
@@ -1714,17 +1695,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				return
 			}
 
-			raf := func() {
-			}
-			if apiLevel() < 29 && strings.HasPrefix(src, ZhangHai) {
-				raf = func() {
-					fyne.Do(func() {
-						restart(w)
-					})
-				}
-			}
 			copyFromURCProgress(source, "", fe, func(err error) {
-				defer raf()
 				if err != nil {
 					log.Errorf("copy %s %s: %v", src, dst, err)
 					removeEntry(dst, fe, true)
@@ -1922,7 +1893,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) {
 	if isMobile {
-		notFinish = true
 		dialog.ShowFileOpen(callback, parent)
 		return
 	}
@@ -1949,18 +1919,6 @@ func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) 
 	// Настраиваем размер и показываем
 	fd.Resize(fyne.NewSize(99999, 99999))
 	fd.Show()
-}
-
-// For mobile os.Exit.
-// For desktop Restart.
-func restart(w fyne.Window) {
-	if noRestart {
-		return
-	}
-	log.Debugf("A restart is better than leaving goroutines leaking")
-	start()
-	cleanup(w)
-	os.Exit(0)
 }
 
 func Conns(client any) ([]*comm.Comm, error) {

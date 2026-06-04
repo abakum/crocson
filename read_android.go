@@ -341,7 +341,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"unsafe"
 
 	log "github.com/schollz/logger"
@@ -561,12 +560,6 @@ func canRead(uri fyne.URI) bool {
 	case MIME_TYPE_DIR:
 		return false
 	case MIME_TYPE_OCTET_STREAM:
-		if strings.HasPrefix(uri.String(), ZhangHai) {
-			size, sizeErr := getSize(uri)
-			if sizeErr == nil && size == 4096 {
-				return false // иначе storage.CanRead  вернёт syscall.EISDIR и крэшит
-			}
-		}
 	}
 	ok, err := storage.CanRead(uri)
 	if err != nil {

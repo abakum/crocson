@@ -38,17 +38,17 @@ import (
 )
 
 const (
-	EMULATE                = time.Second * 0
-	CROC_SECRET            = "CROC_SECRET"
-	CROC                   = "croc"
-	CROCGUI                = "crocgui"
-	STDIN                  = CROC + "-stdin-"
-	CROCDEBUGLOG           = CROC + "debuglog.txt"
-	SCHOLLZ                = "schollz"
-	TOTP                   = "TOTP-" + CROC_SECRET
-	DOTZIP                 = ".zip"
-	DOTTXT                 = ".txt"
-	ZhangHai               = "content://me.zhanghai.android.files.file_provider/"
+	EMULATE      = time.Second * 0
+	CROC_SECRET  = "CROC_SECRET"
+	CROC         = "croc"
+	CROCGUI      = "crocgui"
+	STDIN        = CROC + "-stdin-"
+	CROCDEBUGLOG = CROC + "debuglog.txt"
+	SCHOLLZ      = "schollz"
+	TOTP         = "TOTP-" + CROC_SECRET
+	DOTZIP       = ".zip"
+	DOTTXT       = ".txt"
+
 	Ghisler                = "content://com.ghisler.files/"
 	CS                     = "crocson"
 	SEND                   = "send"
@@ -113,7 +113,6 @@ var (
 	replacer               *strings.Replacer
 	logOutput              logWriter
 	atSI                   int
-	notFinish              bool
 	wd                     string
 	OnSelectedTab          = make(map[int]func(), LENi)
 	onFileTreeRefresh      func()
@@ -136,11 +135,6 @@ var (
 	// cmd/c "set CROC_NO_DIALOGS=1&crocson.exe"
 	// CROC_NO_DIALOGS=1 crocson
 	noDialogs = os.Getenv("CROC_NO_DIALOGS") != ""
-
-	// Чтоб перезапускать приложение при завершении передачи
-	// cmd/c "set CROC_RESTART=1&crocson.exe"
-	// CROC_RESTART=1 crocson
-	noRestart = os.Getenv("CROC_RESTART") == ""
 
 	// Чтоб на десктопе отладить копирование вместо переноса из кэша приёма
 	// cmd/c "set CROC_NO_RENAME=1&crocson.exe"
@@ -485,18 +479,10 @@ func defs(ss ...string) string {
 	return ""
 }
 
-func crocNew(NoRestart bool, ctx context.Context, opt croc.Options) (client *croc.Client, err error) {
-	if !NoRestart {
-		return croc.New(opt)
-	}
+func crocNew(ctx context.Context, opt croc.Options) (client *croc.Client, err error) {
 	return croc.NewCtx(ctx, opt)
-	// return croc.New(opt)
 }
 
-func tcpRun(NoRestart bool, ctx context.Context, debugLevel, host, port, password string, banner ...string) (err error) {
-	if !NoRestart {
-		return tcp.Run(debugLevel, host, port, password, banner...)
-	}
+func tcpRun(ctx context.Context, debugLevel, host, port, password string, banner ...string) (err error) {
 	return tcp.RunCtx(ctx, debugLevel, host, port, password, banner...)
-	// return tcp.Run(debugLevel, host, port, password, banner...)
 }

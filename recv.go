@@ -524,11 +524,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			)
 			return
 		}
-		// savedialog := dialog.NewFileSave(fileSave, parent)
-		// savedialog.SetFileName(child)
-		// savedialog.Resize(parent.Canvas().Size())
-		// notFinish = true
-		// savedialog.Show()
 		newFileSave(fileSave, parent, child)
 	} //ShowFileSave
 
@@ -767,7 +762,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		ctx, ctc := context.WithCancel(appCtx)
-		client, err := crocNew(noRestart, ctx, opt)
+		client, err := crocNew(ctx, opt)
 		if err != nil {
 			log.Errorf("croc: %v", err)
 			NewToast(w, err.Error()).Show()
@@ -847,14 +842,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						topline.SetText(s)
 					})
 					a.Preferences().SetString("DeleteFile", join(filename))
-					if noRestart {
-						ctc()
-					} else {
-						Stop(client)
-						fyne.Do(func() {
-							restart(w)
-						})
-					}
+					ctc()
 					return
 				case <-ticker.C:
 					if client == nil {
@@ -1232,7 +1220,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 // Большой диалог для десктопа
 func ShowFolderOpen0(callback func(fyne.ListableURI, error), parent fyne.Window) {
 	if isMobile {
-		notFinish = true
 		dialog.ShowFolderOpen(callback, parent)
 		return
 	}
@@ -1242,7 +1229,6 @@ func ShowFolderOpen0(callback func(fyne.ListableURI, error), parent fyne.Window)
 }
 func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) {
 	if isMobile {
-		notFinish = true
 		dialog.ShowFolderOpen(callback, parent)
 		return
 	}
@@ -1273,7 +1259,6 @@ func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) 
 
 func newFileSave(callback func(fyne.URIWriteCloser, error), parent fyne.Window, fileName string) (fd *dialog.FileDialog) {
 	if isMobile {
-		notFinish = true
 		fd = dialog.NewFileSave(callback, parent)
 		fd.SetFileName(fileName)
 		fd.Show()

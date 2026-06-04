@@ -238,7 +238,6 @@ import "C"
 import (
 	"fmt"
 	"os"
-	"strings"
 	"unsafe"
 
 	"fyne.io/fyne/v2"
@@ -315,13 +314,6 @@ func IsDirectory(uri fyne.URI) bool {
 		// log.Debug("-------------MIME_TYPE_DIR true")
 		return true
 	case MIME_TYPE_OCTET_STREAM:
-		if strings.HasPrefix(uri.String(), ZhangHai) {
-			size, sizeErr := getSize(uri)
-			if sizeErr == nil && size == 4096 {
-				// log.Debug("-------------ZhangHai true")
-				return true
-			}
-		}
 		fallthrough
 	case "":
 		// отсутствуют права

@@ -195,37 +195,16 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 		hostBinding.Set(next)
-		if noRestart {
-			if next == OFF {
-				//Лучше использовать testing или ip или явно host чем флудить локалку
-				// disableLocalBinding.Set(false)
-				// disableLocalCheck.Refresh()
-				prev = OFF
-				ctc()
-				return
-			}
-			if prev != OFF {
-				// 192.168.0.1->0.0.0.0 не позволяем а опускаем 192.168.0.1
-				hostSelect.SetSelected(OFF) // рекурсия
-				return
-			}
-			ctx, ctc = context.WithCancel(appCtx)
-		} else {
-			if next == OFF {
-				// disableLocalBinding.Set(false)
-				// disableLocalCheck.Refresh()
-				if prev != OFF {
-					restart(w)
-				}
-				return
-			}
-			if prev != OFF {
-				if next != prev {
-					restart(w)
-				}
-				return
-			}
+		if next == OFF {
+			prev = OFF
+			ctc()
+			return
 		}
+		if prev != OFF {
+			hostSelect.SetSelected(OFF) // рекурсия
+			return
+		}
+		ctx, ctc = context.WithCancel(appCtx)
 		var pass, host, ports string
 		relay := getRelayByAddress(a, next)
 		if relay.Name == "" {
@@ -244,11 +223,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		disableLocalCheck.Refresh()
 		go func() {
 			var err error
-			if noRestart {
-				err = relayRunCtx(ctx, w, pass, host, ports)
-			} else {
-				err = relayRun(w, pass, host, ports)
-			}
+			err = relayRunCtx(ctx, w, pass, host, ports)
 			log.Debugf("relayRun: %v", err)
 			// netstat -tlnp|grep crocson
 			// ss -tlnp|grep crocson
