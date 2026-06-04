@@ -441,6 +441,15 @@ public class GoNativeActivity extends NativeActivity {
     }
 
     @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        Log.d(TAG, "Java: onUserLeaveHint");
+        if (Build.VERSION.SDK_INT <= 28) {
+            finishActivity();
+        }
+    }
+
+    @Override
     protected void onRestart() {
         super.onRestart();
         Log.d(TAG, "Java: onRestart");
