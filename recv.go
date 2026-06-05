@@ -1218,15 +1218,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 }
 
 // Большой диалог для десктопа
-func ShowFolderOpen0(callback func(fyne.ListableURI, error), parent fyne.Window) {
-	if isMobile {
-		dialog.ShowFolderOpen(callback, parent)
-		return
-	}
-	fd := dialog.NewFolderOpen(callback, parent)
-	fd.Resize(fyne.NewSize(99999, 99999))
-	fd.Show()
-}
+
 func ShowFolderOpen(callback func(fyne.ListableURI, error), parent fyne.Window) {
 	if isMobile {
 		dialog.ShowFolderOpen(callback, parent)

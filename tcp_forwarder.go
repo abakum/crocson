@@ -671,12 +671,6 @@ func (f *TCPForwarder) sendMessage(connID ForwarderConnID, msgType byte, payload
 	return f.conns[idx].Send(encrypted)
 }
 
-func (f *TCPForwarder) generateID0() ForwarderConnID {
-	var b [8]byte
-	rand.Read(b[:])
-	return ForwarderConnID(binary.LittleEndian.Uint64(b[:]))
-}
-
 func (f *TCPForwarder) generateID() ForwarderConnID {
 	// Используем nanosecond timestamp как основу
 	timestamp := uint64(time.Now().UnixNano())

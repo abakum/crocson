@@ -182,22 +182,3 @@ func storageChild(uri fyne.URI) (isDir bool, childCount int, err error) {
 	childCount = len(children)
 	return
 }
-
-func fileChild(path string) (isDir bool, childCount int, err error) {
-	fi, err := os.Stat(path)
-	if err != nil {
-		return false, 0, err
-	}
-
-	if !fi.IsDir() {
-		return false, 0, nil
-	}
-
-	child, err := os.ReadDir(path)
-	if err != nil {
-		return true, 0, err
-	}
-
-	childCount = len(child)
-	return true, childCount, nil
-}

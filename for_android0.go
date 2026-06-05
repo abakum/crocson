@@ -5,7 +5,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -63,10 +62,6 @@ func LogD(string)         {}
 func excludeFromRecents() {}
 func finish()             {}
 
-func hasChild(uri fyne.URI) (isDir bool, childCount int, err error) {
-	return storageChild(uri)
-}
-
 // getSize возвращает размер файла в байтах
 func getSize(uri fyne.URI) (size int64, err error) {
 	if uri == nil {
@@ -81,46 +76,6 @@ func getSize(uri fyne.URI) (size int64, err error) {
 		}
 	}
 	return 0, fmt.Errorf("uri is not file")
-}
-
-// getSize возвращает размер файла в байтах для не-Android платформ
-func getSize0(uri fyne.URI) (size int64, err error) {
-	if uri == nil {
-		return 0, ErrNilURI
-	}
-
-	// Проверяем существование файла
-	exists, err := storage.Exists(uri)
-	if err != nil {
-		return 0, fmt.Errorf("failed to check if URI exists: %w", err)
-	}
-	if !exists {
-		return 0, fmt.Errorf("file does not exist: %s", uri.String())
-	}
-
-	// Пытаемся получить размер через os.Stat для локальных файлов
-	if uri.Scheme() == "file" || uri.Scheme() == "" {
-		filePath := uri.Path()
-		fileInfo, err := os.Stat(filePath)
-		if err == nil {
-			return fileInfo.Size(), nil
-		}
-		// Если os.Stat не сработал, продолжаем другими методами
-	}
-
-	// Альтернативный метод: открываем и читаем файл для определения размера
-	readCloser, err := storage.Reader(uri)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer readCloser.Close()
-
-	written, err := io.Copy(io.Discard, readCloser)
-	if err != nil {
-		return 0, fmt.Errorf("failed to read file content: %w", err)
-	}
-
-	return written, nil
 }
 
 func start() {
@@ -266,7 +221,6 @@ func setModTime(uri fyne.URI, mtime time.Time) error {
 func startActivity()   {}
 func openAppSettings() {}
 func openAppInfo()     {}
-func IsTaskRoot() bool { return false }
 
 // Если зарегистрированы схемы то через них
 // иначе регистрируем для юникс
