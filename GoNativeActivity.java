@@ -212,12 +212,8 @@ public class GoNativeActivity extends NativeActivity {
             android.database.Cursor cursor = goNativeActivity.getContentResolver().query(uri, projection, null, null, null);
             if (cursor != null) {
                 try {
-                    if (cursor.moveToFirst()) {
-                        return cursor.getString(0);
-                    }
-                } finally {
-                    cursor.close();
-                }
+                    if (cursor.moveToFirst()) return cursor.getString(0);
+                } finally { cursor.close(); }
             }
         } catch (Exception e) {
             Log.e(TAG, "Java: getFileName failed: " + e.getMessage());
@@ -244,12 +240,14 @@ public class GoNativeActivity extends NativeActivity {
         return false;
     }
 
-    static void openIntent(String intentStr) {
+    static boolean openIntent(String intentStr) {
         try {
             android.content.Intent intent = android.content.Intent.parseUri(intentStr, android.content.Intent.URI_INTENT_SCHEME);
             goNativeActivity.startActivity(intent);
+            return true;
         } catch (Exception e) {
             Log.e(TAG, "Java: openIntent failed: " + e.getMessage());
+            return false;
         }
     }
 
@@ -273,6 +271,271 @@ public class GoNativeActivity extends NativeActivity {
             Log.e(TAG, "Java: getMimeType failed: " + e.getMessage());
         }
         return null;
+    }
+
+    static String createFileInDownloads(String fileName, String mimeType) {
+        try {
+            if (mimeType == null || mimeType.isEmpty()) {
+                mimeType = "application/octet-stream";
+            }
+            if (Build.VERSION.SDK_INT >= 29) {
+                return createFileInDownloadsModern(fileName, mimeType);
+            } else {
+                if (goNativeActivity.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != 0) {
+                    goNativeActivity.requestPermissions(new String[]{
+                        "android.permission.READ_EXTERNAL_STORAGE",
+                        "android.permission.WRITE_EXTERNAL_STORAGE"
+                    }, 123);
+                    return null;
+                }
+                return createFileInDownloadsLegacy(fileName);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: createFileInDownloads failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    static String createFileInDownloadsModern(String fileName, String mimeType) {
+        try {
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            android.content.ContentValues values = new android.content.ContentValues();
+            String dirPath = null;
+            String baseName = fileName;
+            int lastSlash = fileName.lastIndexOf('/');
+            if (lastSlash >= 0) {
+                dirPath = fileName.substring(0, lastSlash);
+                baseName = fileName.substring(lastSlash + 1);
+                createDirectoriesInMediaStore(resolver, dirPath);
+            }
+            values.put("_display_name", baseName);
+            values.put("mime_type", mimeType);
+            if (dirPath != null && !dirPath.isEmpty()) {
+                values.put("relative_path", "Download/" + dirPath);
+            } else {
+                values.put("relative_path", "Download");
+            }
+            android.net.Uri uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            return uri != null ? uri.toString() : null;
+        } catch (Exception e) {
+            Log.e(TAG, "Java: createFileInDownloadsModern failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    static void createDirectoriesInMediaStore(android.content.ContentResolver resolver, String relativePath) {
+        if (relativePath == null || relativePath.isEmpty()) return;
+        try {
+            String[] parts = relativePath.split("/");
+            StringBuilder currentPath = new StringBuilder();
+            for (String part : parts) {
+                if (currentPath.length() > 0) currentPath.append("/");
+                currentPath.append(part);
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put("_display_name", currentPath.toString());
+                values.put("mime_type", "vnd.android.document/directory");
+                values.put("relative_path", "Download");
+                try {
+                    resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: createDirectoriesInMediaStore failed: " + e.getMessage());
+        }
+    }
+
+    static String createFileInDownloadsLegacy(String fileName) {
+        try {
+            java.io.File downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);
+            java.io.File file = new java.io.File(downloadsDir, fileName);
+            file.createNewFile();
+            return file.toURI().toString();
+        } catch (Exception e) {
+            Log.e(TAG, "Java: createFileInDownloadsLegacy failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    static long getSize(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            String[] projection = {android.provider.OpenableColumns.SIZE};
+            android.database.Cursor cursor = resolver.query(uri, projection, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getLong(0);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: getSize failed: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    static long getModTime(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            try {
+                String[] projection = {"last_modified"};
+                android.database.Cursor cursor = resolver.query(uri, projection, null, null, null);
+                if (cursor != null) {
+                    try {
+                        if (cursor.moveToFirst()) return cursor.getLong(0);
+                    } finally { cursor.close(); }
+                }
+            } catch (Exception ignored) {}
+            try {
+                android.database.Cursor cursor = resolver.query(uri, new String[]{"date_modified"}, null, null, null);
+                if (cursor != null) {
+                    try {
+                        if (cursor.moveToFirst()) return cursor.getLong(0);
+                    } finally { cursor.close(); }
+                }
+            } catch (Exception ignored) {}
+        } catch (Exception e) {
+            Log.e(TAG, "Java: getModTime failed: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    static int countChildren(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            android.net.Uri childUri = null;
+            try {
+                String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
+                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, treeDocId);
+            } catch (Exception e1) {
+                try {
+                    String docId = android.provider.DocumentsContract.getDocumentId(uri);
+                    childUri = android.provider.DocumentsContract.buildChildDocumentsUri(uri.getAuthority(), docId);
+                } catch (Exception e2) {
+                    childUri = uri;
+                }
+            }
+            android.database.Cursor cursor = resolver.query(childUri, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    return cursor.getCount();
+                } finally { cursor.close(); }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: countChildren failed: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    static String getChildrenURIs(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            android.net.Uri childUri = null;
+            try {
+                String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
+                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, treeDocId);
+                android.database.Cursor testCursor = resolver.query(childUri, new String[]{"_display_name", "document_id"}, null, null, null);
+                if (testCursor != null) { testCursor.close(); }
+                else {
+                    testCursor = resolver.query(childUri, null, null, null, null);
+                    if (testCursor != null) { testCursor.close(); }
+                    else { childUri = null; }
+                }
+            } catch (Exception e1) {
+                childUri = null;
+                try {
+                    String docId = android.provider.DocumentsContract.getDocumentId(uri);
+                    childUri = android.provider.DocumentsContract.buildChildDocumentsUri(uri.getAuthority(), docId);
+                    android.database.Cursor testCursor = resolver.query(childUri, new String[]{"document_id"}, null, null, null);
+                    if (testCursor != null) { testCursor.close(); }
+                    else { childUri = null; }
+                } catch (Exception e2) {
+                    childUri = null;
+                    return "";
+                }
+            }
+            if (childUri == null) return "";
+            android.database.Cursor cursor = resolver.query(childUri, new String[]{"document_id"}, null, null, null);
+            if (cursor == null) return "";
+            return processChildrenCursor(cursor, uri);
+        } catch (Exception e) {
+            Log.e(TAG, "Java: getChildrenURIs failed: " + e.getMessage());
+        }
+        return "";
+    }
+
+    private static String processChildrenCursor(android.database.Cursor cursor, android.net.Uri treeUri) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            int docIdCol = cursor.getColumnIndex("document_id");
+            if (docIdCol < 0) docIdCol = 0;
+            boolean first = true;
+            while (cursor.moveToNext()) {
+                String docId = cursor.getString(docIdCol);
+                if (docId != null) {
+                    android.net.Uri childDocUri = null;
+                    try {
+                        childDocUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
+                    } catch (Exception ignored) {}
+                    if (childDocUri == null) {
+                        try {
+                            childDocUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, docId);
+                        } catch (Exception ignored) {}
+                    }
+                    if (childDocUri == null) {
+                        try {
+                            childDocUri = treeUri.buildUpon().appendPath(docId).build();
+                        } catch (Exception ignored) {}
+                    }
+                    if (childDocUri != null) {
+                        if (!first) sb.append("|");
+                        sb.append(childDocUri.toString());
+                        first = false;
+                    }
+                }
+            }
+        } finally { cursor.close(); }
+        return sb.toString();
+    }
+
+    static String createFileInTree(String treeUri, String fileName, String mimeType) {
+        try {
+            if (mimeType == null || mimeType.isEmpty()) mimeType = "application/octet-stream";
+            android.net.Uri uri = android.net.Uri.parse(treeUri);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
+            android.net.Uri childDocsUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, treeDocId);
+            android.net.Uri newFileUri = android.provider.DocumentsContract.createDocument(resolver, childDocsUri, mimeType, fileName);
+            if (newFileUri != null) return newFileUri.toString();
+            return "error: createDocument returned null";
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            return msg != null ? "error: " + msg : "error: createFileInTree failed";
+        }
+    }
+
+    static boolean isIntentSupported(String action, String mimeType) {
+        try {
+            android.content.Intent intent = new android.content.Intent(action);
+            intent.addCategory(android.content.Intent.CATEGORY_DEFAULT);
+            if (!action.equals(android.content.Intent.ACTION_OPEN_DOCUMENT_TREE)) {
+                intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+            }
+            if (mimeType != null && !mimeType.isEmpty()) {
+                intent.setType(mimeType);
+            }
+            java.util.List<android.content.pm.ResolveInfo> activities = goNativeActivity.getPackageManager().queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            return activities != null && !activities.isEmpty();
+        } catch (Exception e) {
+            Log.e(TAG, "Java: isIntentSupported failed: " + e.getMessage());
+        }
+        return false;
     }
 
     void doHideKeyboard() {
@@ -519,7 +782,7 @@ public class GoNativeActivity extends NativeActivity {
         super.onUserLeaveHint();
         Log.d(TAG, "Java: onUserLeaveHint");
         if (Build.VERSION.SDK_INT <= 28) {
-            finishActivity();
+            // finishActivity();
         }
     }
 

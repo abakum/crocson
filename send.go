@@ -466,7 +466,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			close()
 			clode()
 			if err == nil {
-				if t, err := ModTime(source.URI()); err == nil && !t.IsZero() {
+				t, err := ModTime(source.URI())
+				log.Debugf("ModTime %s: %v %v", source.URI(), t, err)
+				if err == nil && !t.IsZero() {
 					log.Debugf("Chtimes %s %v: %v", destination.Name(), t,
 						os.Chtimes(destination.Name(), time.Time{}, t))
 				}

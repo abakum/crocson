@@ -60,6 +60,13 @@ func sendNotification(a fyne.App, title, content string) {
 
 func LogD(string) {}
 
+func setModTime(uri fyne.URI, mtime time.Time) {
+	if uri == nil {
+		return
+	}
+	os.Chtimes(uri.Path(), time.Time{}, mtime)
+}
+
 // getSize возвращает размер файла в байтах
 func getSize(uri fyne.URI) (size int64, err error) {
 	if uri == nil {
