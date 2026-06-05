@@ -58,9 +58,7 @@ func sendNotification(a fyne.App, title, content string) {
 	a.SendNotification(notification)
 }
 
-func LogD(string)         {}
-func excludeFromRecents() {}
-func finish()             {}
+func LogD(string) {}
 
 // getSize возвращает размер файла в байтах
 func getSize(uri fyne.URI) (size int64, err error) {

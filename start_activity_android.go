@@ -91,7 +91,6 @@ cleanup_activity:
 */
 import "C"
 import (
-	"time"
 	"unsafe"
 
 	"fyne.io/fyne/v2/driver"
@@ -115,14 +114,4 @@ func startActivity() {
 		log.Debug("C.startActivitySimple completed")
 		return nil
 	})
-}
-
-// Это просто связывает окно w
-// c активностью org.golang.app.GoNativeActivity
-func start() {
-	// excludeFromRecents()
-	finish()
-	sendNotification(nil, "Croc", AppClosed)
-	time.Sleep(300 * time.Millisecond)
-	startActivity()
 }
