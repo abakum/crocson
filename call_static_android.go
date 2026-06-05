@@ -157,9 +157,17 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+	"sync/atomic"
+	"time"
 	"unsafe"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver"
+	"fyne.io/fyne/v2/storage"
+
+	log "github.com/schollz/logger"
 )
 
 var errJNI = errors.New("JNI call failed")
@@ -271,4 +279,148 @@ func callVoidInt(method string, arg int32) error {
 		}
 		return nil
 	})
+}
+
+// --- callers ---
+
+func apiLevel() int {
+	n, _ := callInt("getApiLevel")
+	return n
+}
+
+func caffeinate(i int32) int32 {
+	old := atomic.LoadInt32(&sleepCounter)
+	var newVal int32
+
+	if i == 0 {
+		atomic.StoreInt32(&sleepCounter, 0)
+		newVal = 0
+	} else {
+		newVal = atomic.AddInt32(&sleepCounter, i)
+	}
+
+	if old <= 0 && newVal > 0 {
+		startForegroundService()
+	} else if old > 0 && newVal <= 0 {
+		stopForegroundService()
+	}
+
+	return newVal
+}
+
+func SleepAllowed() bool {
+	return atomic.LoadInt32(&sleepCounter) <= 0
+}
+
+func startForegroundService() {
+	if err := callVoid("startCrocsonService"); err != nil {
+		log.Errorf("Foreground service start failed: %v", err)
+		return
+	}
+	log.Debugf("Foreground service started")
+}
+
+func stopForegroundService() {
+	if err := callVoid("stopCrocsonService"); err != nil {
+		log.Errorf("Foreground service stop failed: %v", err)
+		return
+	}
+	log.Debugf("Foreground service stopped")
+}
+
+func MimeType(uri fyne.URI) string {
+	if uri == nil {
+		return ""
+	}
+	s, _ := callStringString("getMimeType", uri.String())
+	return s
+}
+
+func OpenURL(intentStr string) error {
+	if err := callVoidString("openIntent", intentStr); err != nil {
+		return fmt.Errorf("intent failed: %s: %w", intentStr, err)
+	}
+	return nil
+}
+
+func OpenDAV(s string) error {
+	u, err := url.Parse(s)
+	if err != nil {
+		return err
+	}
+
+	if schemes, _, _, ok := isDAV(s); ok {
+		u.Scheme = schemes[0]
+	}
+
+	return OpenURL(u.String())
+}
+
+func CanList(u fyne.URI) (bool, error) {
+	if u == nil {
+		return false, nil
+	}
+
+	if apiLevel() > 28 {
+		return storage.CanList(u)
+	}
+
+	return callBooleanString("canListDirectory", u.String())
+}
+
+func uriBase(uri fyne.URI) string {
+	name, err := callStringString("getFileName", uri.String())
+	if err == nil && name != "" {
+		return name
+	}
+	return base(uri.Path())
+}
+
+func base(path string) string {
+	decoded, err := url.PathUnescape(path)
+	if err != nil {
+		decoded = strings.ReplaceAll(path, "%2F", "/")
+	}
+
+	lastSlash := strings.LastIndex(decoded, "/")
+	if lastSlash < 0 {
+		return replace(decoded)
+	}
+
+	return replace(decoded[lastSlash+1:])
+}
+
+func replace(s string) string {
+	return strings.NewReplacer(
+		"?", "_",
+		":", "_",
+	).Replace(s)
+}
+
+type Toast struct {
+	message string
+}
+
+const (
+	ToastShort        = 3 * time.Second
+	ToastLong         = 4 * time.Second
+	DefaultPadding    = 10.0
+	AnimationDuration = 300 * time.Millisecond
+)
+
+func NewToast(_ fyne.Window, message string) *Toast {
+	return &Toast{message: message}
+}
+
+func (t *Toast) SetIcon(_ fyne.Resource) *Toast       { return t }
+func (t *Toast) SetText(message string) *Toast         { t.message = message; return t }
+func (t *Toast) SetTimeout(_ time.Duration) *Toast     { return t }
+func (t *Toast) SetPadding(_ float32) *Toast           { return t }
+func (t *Toast) SetAnimation(_ bool) *Toast            { return t }
+func (t *Toast) Short() *Toast                         { return t }
+func (t *Toast) Long() *Toast                          { return t }
+func (t *Toast) Hide()                                 {}
+
+func (t *Toast) Show() {
+	callVoidString("showToast", t.message)
 }

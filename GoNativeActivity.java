@@ -244,6 +244,37 @@ public class GoNativeActivity extends NativeActivity {
         return false;
     }
 
+    static void openIntent(String intentStr) {
+        try {
+            android.content.Intent intent = android.content.Intent.parseUri(intentStr, android.content.Intent.URI_INTENT_SCHEME);
+            goNativeActivity.startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Java: openIntent failed: " + e.getMessage());
+        }
+    }
+
+    static String getMimeType(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            String type = goNativeActivity.getContentResolver().getType(uri);
+            if (type != null) return type;
+            String[] projection = {"mime_type"};
+            android.database.Cursor cursor = goNativeActivity.getContentResolver().query(uri, projection, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getString(0);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: getMimeType failed: " + e.getMessage());
+        }
+        return null;
+    }
+
     void doHideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         View view = findViewById(android.R.id.content).getRootView();
