@@ -5,6 +5,7 @@ package main
 /*
 #include <jni.h>
 #include <stdlib.h>
+#include <string.h>
 #include <android/log.h>
 
 #define LogE(...) __android_log_print(ANDROID_LOG_ERROR, "croc", __VA_ARGS__)
@@ -53,6 +54,103 @@ static jint callVoidString(JNIEnv* env, jobject context, const char* method, con
     (*env)->DeleteLocalRef(env, cls);
     return 0;
 }
+
+static jint callInt(JNIEnv* env, jobject context, const char* method) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callInt(%s)", method); return -1; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "()I");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    jint result = (*env)->CallStaticIntMethod(env, cls, mid);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    return result;
+}
+
+static char* callStringString(JNIEnv* env, jobject context, const char* method, const char* strArg) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callStringString(%s)", method); return NULL; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "(Ljava/lang/String;)Ljava/lang/String;");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return NULL;
+    }
+    jstring jarg = (*env)->NewStringUTF(env, strArg);
+    jstring jresult = (jstring)(*env)->CallStaticObjectMethod(env, cls, mid, jarg);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, jarg);
+        (*env)->DeleteLocalRef(env, cls);
+        return NULL;
+    }
+    char* result = NULL;
+    if (jresult != NULL) {
+        const char* utf = (*env)->GetStringUTFChars(env, jresult, NULL);
+        result = strdup(utf);
+        (*env)->ReleaseStringUTFChars(env, jresult, utf);
+        (*env)->DeleteLocalRef(env, jresult);
+    }
+    (*env)->DeleteLocalRef(env, jarg);
+    (*env)->DeleteLocalRef(env, cls);
+    return result;
+}
+
+static jint callBooleanString(JNIEnv* env, jobject context, const char* method, const char* strArg) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callBooleanString(%s)", method); return -1; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "(Ljava/lang/String;)Z");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    jstring jarg = (*env)->NewStringUTF(env, strArg);
+    jboolean result = (*env)->CallStaticBooleanMethod(env, cls, mid, jarg);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, jarg);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    (*env)->DeleteLocalRef(env, jarg);
+    (*env)->DeleteLocalRef(env, cls);
+    return result ? 1 : 0;
+}
+
+static jint callVoidInt(JNIEnv* env, jobject context, const char* method, jint intArg) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callVoidInt(%s)", method); return -1; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "(I)V");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    (*env)->CallStaticVoidMethod(env, cls, mid, intArg);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    return 0;
+}
 */
 import "C"
 
@@ -93,6 +191,83 @@ func callVoidString(method, arg string) error {
 		defer C.free(unsafe.Pointer(cArg))
 		if C.callVoidString((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod, cArg) != 0 {
 			return fmt.Errorf("callVoidString(%s): %w", method, errJNI)
+		}
+		return nil
+	})
+}
+
+func callInt(method string) (int, error) {
+	var result int
+	err := driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		defer C.free(unsafe.Pointer(cMethod))
+		r := C.callInt((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod)
+		if r < 0 {
+			return fmt.Errorf("callInt(%s): %w", method, errJNI)
+		}
+		result = int(r)
+		return nil
+	})
+	return result, err
+}
+
+func callStringString(method, arg string) (string, error) {
+	var result string
+	err := driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		cArg := C.CString(arg)
+		defer C.free(unsafe.Pointer(cMethod))
+		defer C.free(unsafe.Pointer(cArg))
+		r := C.callStringString((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod, cArg)
+		if r == nil {
+			return fmt.Errorf("callStringString(%s): %w", method, errJNI)
+		}
+		defer C.free(unsafe.Pointer(r))
+		result = C.GoString(r)
+		return nil
+	})
+	return result, err
+}
+
+func callBooleanString(method, arg string) (bool, error) {
+	var result bool
+	err := driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		cArg := C.CString(arg)
+		defer C.free(unsafe.Pointer(cMethod))
+		defer C.free(unsafe.Pointer(cArg))
+		r := C.callBooleanString((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod, cArg)
+		if r < 0 {
+			return fmt.Errorf("callBooleanString(%s): %w", method, errJNI)
+		}
+		result = r > 0
+		return nil
+	})
+	return result, err
+}
+
+func callVoidInt(method string, arg int32) error {
+	return driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		defer C.free(unsafe.Pointer(cMethod))
+		if C.callVoidInt((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod, C.jint(arg)) != 0 {
+			return fmt.Errorf("callVoidInt(%s): %w", method, errJNI)
 		}
 		return nil
 	})

@@ -201,6 +201,49 @@ public class GoNativeActivity extends NativeActivity {
         Log.d(TAG, "Java: showToast: " + message);
     }
 
+    static int getApiLevel() {
+        return Build.VERSION.SDK_INT;
+    }
+
+    static String getFileName(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            String[] projection = {android.provider.OpenableColumns.DISPLAY_NAME};
+            android.database.Cursor cursor = goNativeActivity.getContentResolver().query(uri, projection, null, null, null);
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        return cursor.getString(0);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: getFileName failed: " + e.getMessage());
+        }
+        return null;
+    }
+
+    static boolean canListDirectory(String uriStr) {
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            if (Build.VERSION.SDK_INT >= 21) {
+                android.net.Uri childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, null);
+                if (childUri != null) return true;
+            }
+            String[] projection = {"document_id"};
+            android.database.Cursor cursor = goNativeActivity.getContentResolver().query(uri, projection, null, null, null);
+            if (cursor != null) {
+                cursor.close();
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: canListDirectory failed: " + e.getMessage());
+        }
+        return false;
+    }
+
     void doHideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         View view = findViewById(android.R.id.content).getRootView();
