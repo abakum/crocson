@@ -209,17 +209,6 @@ func ModTime(uri fyne.URI) (time.Time, error) {
 	return fileModTime(uri.Path())
 }
 
-func setModTime(uri fyne.URI, mtime time.Time) error {
-	if uri == nil {
-		return ErrNilURI
-	}
-	return os.Chtimes(uri.Path(), time.Time{}, mtime)
-}
-
-func startActivity()   {}
-func openAppSettings() {}
-func openAppInfo()     {}
-
 // Если зарегистрированы схемы то через них
 // иначе регистрируем для юникс
 // иначе монтируем для дарвина и виндовс
