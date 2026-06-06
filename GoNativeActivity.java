@@ -37,6 +37,7 @@ public class GoNativeActivity extends NativeActivity {
 	private static final String TAG = "croc";
 	private static final int FILE_OPEN_CODE = 1;
 	private static final int FILE_SAVE_CODE = 2;
+	private static final int INTENT_OPEN_CODE = 3;
 
 	private static final int DEFAULT_INPUT_TYPE = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
 
@@ -68,6 +69,7 @@ public class GoNativeActivity extends NativeActivity {
 	private EditText mTextEdit;
 	private boolean ignoreKey = false;
 	private boolean keyboardUp = false;
+	private boolean expectingResult = false;
 	private ArrayList<String> pendingIntentURIs = null;
 
 	public GoNativeActivity() {
@@ -243,7 +245,8 @@ public class GoNativeActivity extends NativeActivity {
     static boolean openIntent(String intentStr) {
         try {
             android.content.Intent intent = android.content.Intent.parseUri(intentStr, android.content.Intent.URI_INTENT_SCHEME);
-            goNativeActivity.startActivity(intent);
+            goNativeActivity.expectingResult = true;
+            goNativeActivity.startActivityForResult(intent, INTENT_OPEN_CODE);
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Java: openIntent failed: " + e.getMessage());
@@ -568,6 +571,7 @@ public class GoNativeActivity extends NativeActivity {
             intent.setType(mimes);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
         }
+        expectingResult = true;
         startActivityForResult(Intent.createChooser(intent, "Open File"), FILE_OPEN_CODE);
     }
 
@@ -585,6 +589,7 @@ public class GoNativeActivity extends NativeActivity {
         }
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
+        expectingResult = true;
         startActivityForResult(Intent.createChooser(intent, "Save File"), FILE_SAVE_CODE);
     }
 	static int getRune(int deviceId, int keyCode, int metaState) {
@@ -722,8 +727,12 @@ public class GoNativeActivity extends NativeActivity {
         });
 	}
 
-	@Override
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        expectingResult = false;
+        if (requestCode == INTENT_OPEN_CODE) {
+            return;
+        }
         // unhandled request
         if (requestCode != FILE_OPEN_CODE && requestCode != FILE_SAVE_CODE) {
             return;
@@ -780,9 +789,10 @@ public class GoNativeActivity extends NativeActivity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        Log.d(TAG, "Java: onUserLeaveHint");
-        if (Build.VERSION.SDK_INT <= 28) {
-            // finishActivity();
+        Log.d(TAG, "Java: onUserLeaveHint expectingResult=" + expectingResult);
+        lifecycleEvent("UserLeaveHint");
+        if (Build.VERSION.SDK_INT <= 28 && !expectingResult) {
+            finishActivity();
         }
     }
 
