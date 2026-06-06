@@ -88,7 +88,7 @@ emulator:
 	emulator -avd Medium_Phone_API_36.1
 
 adb:
-	adb install crocson.apk
+	adb install -r -d crocson.apk
 
 apk:
 	apkanalyzer manifest print crocson.apk

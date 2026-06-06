@@ -346,6 +346,11 @@ func (qr *QR) makeScannerSettings() fyne.CanvasObject {
 	labelL.Wrapping = fyne.TextWrapWord
 	labelL.Alignment = fyne.TextAlignTrailing
 
+	if apiLevel() <= 28 {
+		labelT.Hide()
+		labelL.Hide()
+	}
+
 	// Разрешить
 	setupButton := widget.NewButtonWithIcon(lp("Allow")+"\n"+GHP, theme.SettingsIcon(), func() {
 		idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
@@ -1045,13 +1050,16 @@ func (qr *QR) handleIOTapped() {
 		}
 		return
 	}
+	if apiLevel() <= 28 {
+		return
+	}
 
 	intent := &Intent{
 		Data:   strings.TrimPrefix(qr.link.URL.String(), qr.link.URL.Scheme+":"),
 		Scheme: qr.link.URL.Scheme,
 		Flags: flagActivity(
 			FLAG_ACTIVITY_SINGLE_TOP,
-			// FLAG_ACTIVITY_REQUIRE_NON_BROWSER,
+			FLAG_ACTIVITY_REQUIRE_NON_BROWSER,
 		),
 	}
 

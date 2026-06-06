@@ -507,7 +507,7 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 				size = formatSize(stat.Size())
 			}
 
-			modTime := stat.ModTime().Format("2006-01-02 15:04:05")
+			modTime := stat.ModTime().Format("20060102 150405")
 
 			var chk string
 			if stat.Mode().Perm()&0200 != 0 {
@@ -516,8 +516,7 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 
 			filesHTML.WriteString(`<tr>
 	<td class="name"><a href="` + filePath + `">` + name + `</a></td>
-	<td class="size">` + size + `</td>
-	<td class="date">` + modTime + chk + `</td>
+	<td class="meta">` + size + ` ` + modTime + chk + `</td>
 </tr>
 `)
 		}
