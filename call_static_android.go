@@ -829,3 +829,286 @@ func (t *Toast) Hide()                             {}
 func (t *Toast) Show() {
 	callVoidString("showToast", t.message)
 }
+
+// --- count children ---
+
+func countChild(uri fyne.URI) (count int, err error) {
+	if uri == nil {
+		return 0, fmt.Errorf("uri is nil")
+	}
+
+	count, err = callIntString("countChildren", uri.String())
+	if err != nil {
+		return 0, fmt.Errorf("countChildren failed: %w", err)
+	}
+
+	log.Debugf("countChildren: successfully counted %d children for URI: %s", count, uri.String())
+	return count, nil
+}
+
+func IsDirectory(uri fyne.URI) bool {
+	if uri == nil {
+		return false
+	}
+	if uri.Scheme() == "file" {
+		if fi, err := os.Stat(uri.Path()); err == nil {
+			return fi.IsDir()
+		}
+	}
+	switch MimeType(uri) {
+	case MIME_TYPE_DIR:
+		return true
+	case MIME_TYPE_OCTET_STREAM:
+		fallthrough
+	case "":
+		_, err := countChild(uri)
+		return err == nil
+	default:
+		return false
+	}
+}
+
+// --- get size ---
+
+func getSize(uri fyne.URI) (size int64, err error) {
+	if uri == nil {
+		return 0, fmt.Errorf("uri is nil")
+	}
+
+	size, err = callLongString("getSize", uri.String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to get size: %w", err)
+	}
+	return size, nil
+}
+
+// --- get mod time ---
+
+func getModTime(uri fyne.URI) (modTime int64, err error) {
+	if uri == nil {
+		return 0, fmt.Errorf("uri is nil")
+	}
+
+	modTime, err = callLongString("getModTime", uri.String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to get modification time: %w", err)
+	}
+	return modTime, nil
+}
+
+func ModTime(uri fyne.URI) (time.Time, error) {
+	if uri == nil {
+		return time.Time{}, fmt.Errorf("uri is nil")
+	}
+
+	if uri.Scheme() != "content" {
+		return fileModTime(uri.Path())
+	}
+
+	modTimeMs, err := getModTime(uri)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if modTimeMs <= 0 {
+		return time.Time{}, fmt.Errorf("modification time not available")
+	}
+
+	return time.UnixMilli(modTimeMs), nil
+}
+
+// --- get children uri ---
+
+func list(uri fyne.URI) (children []fyne.URI, err error) {
+	if uri == nil {
+		return nil, fmt.Errorf("uri is nil")
+	}
+
+	childrenStr, err := callStringString("getChildrenURIs", uri.String())
+	if err != nil {
+		return nil, fmt.Errorf("getChildrenURIs failed: %w", err)
+	}
+
+	if childrenStr == "" {
+		return []fyne.URI{}, nil
+	}
+
+	uriStrs := strings.Split(childrenStr, "|")
+	children = make([]fyne.URI, 0, len(uriStrs))
+
+	for _, uriStr := range uriStrs {
+		if uriStr != "" {
+			childURI := storage.NewURI(uriStr)
+			children = append(children, childURI)
+		}
+	}
+
+	log.Debugf("getChildrenURIs: parsed %d children URIs for parent URI: %s", len(children), uri.String())
+
+	return children, nil
+}
+
+func List(u fyne.URI) (c []fyne.URI, err error) {
+	if u == nil {
+		err = fmt.Errorf("uri is nul")
+		return
+	}
+	if u.Scheme() == "content" {
+		return list(u)
+	}
+	return storage.List(u)
+}
+
+// --- documents ---
+
+func IsIntentSupported(action, mimeType string) (bool, error) {
+	if noDialogs {
+		return false, nil
+	}
+
+	result, err := callBooleanString2("isIntentSupported", action, mimeType)
+	if err != nil {
+		log.Error("Error in IsIntentSupported: ", err.Error())
+		return false, err
+	}
+
+	return result, nil
+}
+
+func IsFilePickerSupported() (bool, error) {
+	supported, err := IsIntentSupported("android.intent.action.GET_CONTENT", "*/*")
+	if err != nil {
+		log.Error("File picker support check failed: ", err.Error())
+	}
+	return supported, err
+}
+
+func IsSaveDialogSupported() (bool, error) {
+	supported, err := IsIntentSupported("android.intent.action.CREATE_DOCUMENT", "*/*")
+	if err != nil {
+		log.Error("Save dialog support check failed: ", err.Error())
+	}
+	return supported, err
+}
+
+func IsFolderPickerSupported() (bool, error) {
+	supported, err := IsIntentSupported("android.intent.action.OPEN_DOCUMENT_TREE", "")
+	if err != nil {
+		log.Error("Folder picker support check failed: ", err.Error())
+	}
+	return supported, err
+}
+
+// --- child ---
+
+func CreateFileInTree(treeUri, fileName, mimeType string) (string, error) {
+	if mimeType == "" {
+		mimeType = detectMimeType(fileName)
+	}
+
+	result, err := callStringStringString("createFileInTree", treeUri, fileName, mimeType)
+	if err != nil {
+		return "", fmt.Errorf("createFileInTree failed: %w", err)
+	}
+	if result == "" {
+		return "", fmt.Errorf("empty result from createFileInTree")
+	}
+	if strings.HasPrefix(result, "error:") {
+		return "", fmt.Errorf("createFileInTree: %s", result)
+	}
+
+	return result, nil
+}
+
+func Child(parent fyne.URI, component string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+
+	child, err = storage.Child(parent, component)
+	if err == nil {
+		return
+	}
+
+	newFileURL, err := CreateFileInTree(parent.String(), component, "")
+	if err != nil {
+		err = fmt.Errorf("CreateFileInTree failed: %v", err)
+		return
+	}
+
+	child, err = storage.ParseURI(newFileURL)
+	if err != nil {
+		err = fmt.Errorf("parse URI failed: %v", err)
+		return
+	}
+
+	return
+}
+
+// --- download ---
+
+func CreateFileInDownloads(fileName, mimeType string) (string, error) {
+	log.Debug("Creating file in Downloads: ", fileName)
+
+	if mimeType == "" {
+		mimeType = detectMimeType(fileName)
+	}
+
+	result, err := callStringString2("createFileInDownloads", fileName, mimeType)
+	if err != nil {
+		log.Error("Failed to create file: ", err.Error())
+		return "", fmt.Errorf("failed to create file: %w", err)
+	}
+	if result == "" {
+		return "", fmt.Errorf("empty result from createFileInDownloads")
+	}
+
+	return result, nil
+}
+
+func ChildDownload(component string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+
+	uri, err := CreateFileInDownloads(component, "")
+	if err != nil {
+		err = fmt.Errorf("createFileInDownloads failed: %v", err)
+		return
+	}
+
+	child, err = storage.ParseURI(uri)
+	if err != nil {
+		err = fmt.Errorf("parse URI failed: %v", err)
+		return
+	}
+
+	return
+}
+
+// --- reader ---
+
+func Reader(u fyne.URI) (r fyne.URIReadCloser, err error) {
+	if u == nil {
+		err = fmt.Errorf("uri is nul")
+		return
+	}
+	if !canRead(u) {
+		err = fmt.Errorf("uri not readable")
+		return
+	}
+	return storage.Reader(u)
+}
+
+func canRead(uri fyne.URI) bool {
+	if uri == nil {
+		return false
+	}
+	switch MimeType(uri) {
+	case MIME_TYPE_DIR:
+		return false
+	case MIME_TYPE_OCTET_STREAM:
+	}
+	ok, err := storage.CanRead(uri)
+	if err != nil {
+		log.Errorf("canRead: %v", err)
+		return false
+	}
+	return ok
+}
