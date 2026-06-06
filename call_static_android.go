@@ -9,6 +9,9 @@ package main
 #include <android/log.h>
 
 #define LogE(...) __android_log_print(ANDROID_LOG_ERROR, "croc", __VA_ARGS__)
+static void LogD(const char* message) {
+	__android_log_write(ANDROID_LOG_DEBUG, "croc", message);
+}
 
 static jint callVoid(JNIEnv* env, jobject context, const char* method) {
     jclass cls = (*env)->GetObjectClass(env, context);
@@ -1111,4 +1114,56 @@ func canRead(uri fyne.URI) bool {
 		return false
 	}
 	return ok
+}
+
+// --- log ---
+
+func LogD(message string) {
+	cmessage := C.CString(message)
+	defer C.free(unsafe.Pointer(cmessage))
+
+	C.LogD(cmessage)
+}
+
+// --- lifecycle ---
+
+var lifecycleFromJava = make(chan string, 10)
+
+//export lifecycleEventNotify
+func lifecycleEventNotify(event *C.char) {
+	goEvent := C.GoString(event)
+	LogD("lifecycle: " + goEvent)
+	select {
+	case lifecycleFromJava <- goEvent:
+	default:
+		LogD("lifecycle: channel full, dropping " + goEvent)
+	}
+}
+
+// --- intent ---
+
+//export intentURINotify
+func intentURINotify(uri *C.char) {
+	if uri != nil {
+		goURI := C.GoString(uri)
+		LogD("intent: URI " + goURI)
+		select {
+		case uriFromIntent <- goURI:
+		default:
+			LogD("intent: URI channel full, dropping")
+		}
+	}
+}
+
+//export intentTextNotify
+func intentTextNotify(text *C.char) {
+	if text != nil {
+		goText := C.GoString(text)
+		LogD("intent: text received")
+		select {
+		case textFromIntent <- goText:
+		default:
+			LogD("intent: text channel full, dropping")
+		}
+	}
 }
