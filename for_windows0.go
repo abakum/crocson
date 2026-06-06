@@ -4,4 +4,4 @@ package main
 
 import "net/url"
 
-func netUse(u *url.URL, del bool) error { return nil }
+func netUse(_ *url.URL, _ bool) error { return nil }

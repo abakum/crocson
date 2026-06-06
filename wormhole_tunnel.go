@@ -80,7 +80,7 @@ func (wt *WormholeTunnel) Close() error {
 	return err
 }
 
-func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, webdavAddr string) (string, func() (*tunnel.Tunnel, error), *WormholeTunnel, error) {
+func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, _ string) (string, func() (*tunnel.Tunnel, error), *WormholeTunnel, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	whClient := wh.Client{

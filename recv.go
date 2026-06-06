@@ -764,6 +764,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		ctx, ctc := context.WithCancel(appCtx)
 		client, err := crocNew(ctx, opt)
 		if err != nil {
+			ctc()
 			log.Errorf("croc: %v", err)
 			NewToast(w, err.Error()).Show()
 			cdLock.Store(0)
@@ -798,6 +799,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			ticker := time.NewTicker(time.Millisecond * 100)
 			caffeinate(1)
 			defer func() {
+				ctc()
 				// Конец
 				davServer.DisableTCPForwarding()
 				caffeinate(-1)

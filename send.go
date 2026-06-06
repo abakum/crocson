@@ -1090,6 +1090,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			ctx, ctc := context.WithCancel(appCtx)
 			client, err := crocNew(ctx, opt)
 			if err != nil {
+				ctc()
 				log.Errorf("croc: %v", err)
 				fyne.Do(NewToast(w, err.Error()).Show)
 
@@ -1132,6 +1133,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				ticker := time.NewTicker(time.Millisecond * 100)
 				caffeinate(1)
 				defer func() {
+					ctc()
 					// Конец
 					davServer.DisableTCPForwarding()
 					caffeinate(-1)
@@ -1952,9 +1954,7 @@ func Conns(client any) ([]*comm.Comm, error) {
 		return nil, errors.New("field 'conn' has wrong type")
 	}
 
-	// Безопасный доступ через unsafe
-	addr := connField.UnsafeAddr()
-	ptr := (*[]*comm.Comm)(unsafe.Pointer(addr))
+	ptr := (*[]*comm.Comm)(unsafe.Pointer(connField.UnsafeAddr()))
 	if ptr == nil {
 		return nil, errors.New("connection slice is nil")
 	}
@@ -1987,11 +1987,11 @@ func Stop(c *croc.Client) {
 		Type:    message.TypeError,
 		Message: REFUSING,
 	})
-	log.Debug("Stop %s: %v", REFUSING, err)
+	log.Debugf("Stop %s: %v", REFUSING, err)
 
 	time.Sleep(time.Millisecond * 33)
 	conns[0].Close()
-	log.Debug("Stop close %s", conns[0].Connection().RemoteAddr())
+	log.Debugf("Stop close %s", conns[0].Connection().RemoteAddr())
 	time.Sleep(time.Millisecond * 333)
 }
 
@@ -2339,7 +2339,7 @@ func trimDotSlash(fi croc.FileInfo) (s string) {
 	return
 }
 
-func filter(filesInfo, emptyFoldersToTransfer []croc.FileInfo, totalNumberFolders int, exclusions []string, allowed ...string) ([]croc.FileInfo, []croc.FileInfo, int) {
+func filter(filesInfo, emptyFoldersToTransfer []croc.FileInfo, _ int, exclusions []string, allowed ...string) ([]croc.FileInfo, []croc.FileInfo, int) {
 	// Вспомогательная функция для проверки исключений
 	shouldExclude := func(f croc.FileInfo) bool {
 		if len(exclusions) == 0 {

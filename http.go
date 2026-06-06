@@ -302,9 +302,16 @@ func (cs *ChatStorage) getMessages() []Message {
 	return result
 }
 
-// isLocalRequest проверяет, что запрос пришёл с локального IP адреса
+// isLocalRequest определяет, разрешён ли доступ к чату, звонкам и API.
+// Доступ разрешён в двух случаях:
+//   - локально (127.0.0.1, ::1 или локальный IP интерфейса);
+//   - удалённо, но через HTTPS-прокси или TCP-форвардинг (IsRemote/IsTCPForwardingActive).
+// Без прокси/форвардинга удалённые запросы отклоняются — это предотвращает
+// ошибки при попытке звонка с не-локального адреса по голому HTTP.
 func isLocalRequest(r *http.Request) bool {
-	return true
+	if davServer.IsRemote() || davServer.IsTCPForwardingActive() {
+		return true
+	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		host = r.RemoteAddr
@@ -514,11 +521,16 @@ func (h *WebDAVWithDirectoryListing) serveDirectoryListing(w http.ResponseWriter
 				chk = ` <input type="checkbox" class="del-chk" data-path="` + filePath + `" onclick="onDelChk()">`
 			}
 
-			filesHTML.WriteString(`<tr>
-	<td class="name"><a href="` + filePath + `">` + name + `</a></td>
-	<td class="meta">` + size + ` ` + modTime + chk + `</td>
-</tr>
-`)
+			filesHTML.WriteString("<tr>\n\t<td class=\"name\"><a href=\"")
+		filesHTML.WriteString(filePath)
+		filesHTML.WriteString("\">")
+		filesHTML.WriteString(name)
+		filesHTML.WriteString("</a></td>\n\t<td class=\"meta\">")
+		filesHTML.WriteString(size)
+		filesHTML.WriteString(" ")
+		filesHTML.WriteString(modTime)
+		filesHTML.WriteString(chk)
+		filesHTML.WriteString("</td>\n</tr>\n")
 		}
 
 		// Получаем шаблон и подставляем данные
@@ -577,7 +589,9 @@ func (h *WebDAVWithDirectoryListing) generateBreadcrumbs(currentPath string, can
 
 	var bc strings.Builder
 	bc.WriteString(`<div class="breadcrumbs">`)
-	bc.WriteString(`<div class="breadcrumbs-path"><a href="/">` + root + `</a>`)
+	bc.WriteString(`<div class="breadcrumbs-path"><a href="/">`)
+	bc.WriteString(root)
+	bc.WriteString(`</a>`)
 
 	if currentPath == "/" {
 		bc.WriteString(separator)

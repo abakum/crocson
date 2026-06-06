@@ -444,27 +444,27 @@ func (qr *QR) scanner() {
 	// send 0x1b080001
 	intents := []*Intent{
 		// html5-qrcode
-		&Intent{Categories: []string{CATEGORY_DEFAULT, CATEGORY_BROWSABLE}},
+		{Categories: []string{CATEGORY_DEFAULT, CATEGORY_BROWSABLE}},
 		// XIAOMI / REDMI / POCO
-		&Intent{Action: "miui.intent.action.scanner"},
+		{Action: "miui.intent.action.scanner"},
 		// SAMSUNG
-		&Intent{Action: "com.samsung.android.app.opticalreader.SCAN"},
+		{Action: "com.samsung.android.app.opticalreader.SCAN"},
 		// OPPO / REALME / ONEPLUS (ColorOS/Oplus)
-		&Intent{Component: "com.oplus.scanner/.ScanActivity"},
+		{Component: "com.oplus.scanner/.ScanActivity"},
 		// BINARY EYE
-		&Intent{Data: "//scan/", Scheme: "binaryeye"},
-		&Intent{Data: "//details?id=de.markusfisch.android.binaryeye", Scheme: "market"},
+		{Data: "//scan/", Scheme: "binaryeye"},
+		{Data: "//details?id=de.markusfisch.android.binaryeye", Scheme: "market"},
 		// Google Lens
-		&Intent{Component: "com.google.ar.lens/com.google.vr.apps.ornament.app.lens.LensLauncherActivity"},
-		&Intent{Data: "//details?id=com.google.ar.lens", Scheme: "market"},
+		{Component: "com.google.ar.lens/com.google.vr.apps.ornament.app.lens.LensLauncherActivity"},
+		{Data: "//details?id=com.google.ar.lens", Scheme: "market"},
 		// ZXING
-		&Intent{Action: "com.google.zxing.client.android.SCAN"},
-		&Intent{Package: "com.android.chrome", Categories: []string{CATEGORY_BROWSABLE}},
-		&Intent{Package: "mark.via.gp", Categories: []string{CATEGORY_BROWSABLE}},
-		&Intent{Package: "com.sec.android.app.sbrowser", Categories: []string{CATEGORY_BROWSABLE}},
-		&Intent{Package: "com.opera.mini.native", Categories: []string{CATEGORY_BROWSABLE}},
-		&Intent{Package: "com.microsoft.emmx", Categories: []string{CATEGORY_BROWSABLE}},
-		&Intent{Package: "org.mozilla.firefox", Categories: []string{CATEGORY_BROWSABLE}},
+		{Action: "com.google.zxing.client.android.SCAN"},
+		{Package: "com.android.chrome", Categories: []string{CATEGORY_BROWSABLE}},
+		{Package: "mark.via.gp", Categories: []string{CATEGORY_BROWSABLE}},
+		{Package: "com.sec.android.app.sbrowser", Categories: []string{CATEGORY_BROWSABLE}},
+		{Package: "com.opera.mini.native", Categories: []string{CATEGORY_BROWSABLE}},
+		{Package: "com.microsoft.emmx", Categories: []string{CATEGORY_BROWSABLE}},
+		{Package: "org.mozilla.firefox", Categories: []string{CATEGORY_BROWSABLE}},
 	}
 
 	contains := false

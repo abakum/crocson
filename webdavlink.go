@@ -60,7 +60,7 @@ func (fs *ResolvingFileSystem) isVirtualPath(name string) bool {
 }
 
 // resolvePath resolves symlinks in the entire path, including intermediate directories
-func (fs *ResolvingFileSystem) resolvePath(ctx context.Context, name string) (string, error) {
+func (fs *ResolvingFileSystem) resolvePath(_ context.Context, name string) (string, error) {
 	// Handle root case
 	if name == "/" || name == "" {
 		return fs.root, nil
