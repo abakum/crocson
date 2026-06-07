@@ -306,6 +306,8 @@ func main() {
 		setOut(GUI)
 	}
 
+	ensureDesktopEntry()
+
 	log.Info(tempDir)
 	w := a.NewWindow(CS)
 	w.SetIcon(fyne.NewStaticResource("Icon.png", iconData))

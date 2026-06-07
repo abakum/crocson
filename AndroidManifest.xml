@@ -2,7 +2,7 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1941"
+    android:versionCode="1940"
     android:versionName="1.11.62"
     package="com.github.abakum.crocson">
 
@@ -108,7 +108,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
-            <uses-sdk
+    <uses-sdk
         android:minSdkVersion="23"
         android:targetSdkVersion="36" />
 </manifest>
