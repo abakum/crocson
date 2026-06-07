@@ -75,11 +75,11 @@ func ChildViaMediaStore(parent fyne.URI, component string) (child fyne.URI, clea
 	return
 }
 
-func createViaMediaStoreFromFileURI(safURI fyne.URI) (fyne.URI, error) {
+func createViaMediaStoreFromFileURI(_ fyne.URI) (fyne.URI, error) {
 	return nil, fmt.Errorf("not supported")
 }
 
-func isMediaStorePath(uri fyne.URI) bool {
+func isMediaStorePath(_ fyne.URI) bool {
 	return false
 }
 

@@ -98,7 +98,7 @@ const (
 
 var textlogobytes, _ = metadata.ReadFile("metadata/en-US/images/featureGraphic.png")
 
-//go:embed Icon.png
+//go:embed res/mipmap-xxxhdpi-v4/icon.png
 var iconData []byte // 512x512 PNG иконка
 
 var (
