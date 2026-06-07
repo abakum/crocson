@@ -39,11 +39,11 @@ func ensureDesktopEntry() {
 		return
 	}
 
-	pixmapsDir := filepath.Join(xdg.DataHome, "pixmaps")
-	iconPath := filepath.Join(pixmapsDir, appID+".png")
+	iconsDir := filepath.Join(xdg.DataHome, "icons", "hicolor", "512x512", "apps")
+	iconPath := filepath.Join(iconsDir, appID+".png")
 	if _, err := os.Stat(iconPath); err != nil {
-		if err := os.MkdirAll(pixmapsDir, 0755); err != nil {
-			log.Errorf("MkdirAll %s: %v", pixmapsDir, err)
+		if err := os.MkdirAll(iconsDir, 0755); err != nil {
+			log.Errorf("MkdirAll %s: %v", iconsDir, err)
 			return
 		}
 		if err := os.WriteFile(iconPath, iconData, 0644); err != nil {
@@ -51,6 +51,9 @@ func ensureDesktopEntry() {
 			return
 		}
 		log.Infof("installed icon %s", iconPath)
+		if p, err := exec.LookPath("gtk-update-icon-cache"); err == nil {
+			_ = exec.Command(p, filepath.Join(xdg.DataHome, "icons", "hicolor"), "-f").Run()
+		}
 	}
 
 	name := data.Details.Name
@@ -75,6 +78,7 @@ func ensureDesktopEntry() {
 	desktop += "\n"
 
 	desktop += "Icon=" + appID + "\n"
+	desktop += "StartupWMClass=" + name + "\n"
 
 	if data.LinuxAndBSD != nil {
 		if data.LinuxAndBSD.Comment != "" {

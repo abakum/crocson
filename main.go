@@ -230,6 +230,7 @@ func main() {
 	hideConsole()
 
 	a := app.NewWithID(ID)
+	a.SetIcon(fyne.NewStaticResource("Icon.png", iconData))
 
 	wd, _ = os.Getwd()
 	//tempDir = os.TempDir()
@@ -310,7 +311,6 @@ func main() {
 
 	log.Info(tempDir)
 	w := a.NewWindow(CS)
-	w.SetIcon(fyne.NewStaticResource("Icon.png", iconData))
 
 	w.SetCloseIntercept(func() {
 		log.Debug("CloseIntercept")
