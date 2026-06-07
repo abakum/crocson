@@ -1,0 +1,8 @@
+ Android: C/JNI → Java static methods 迁移，删除约3300行原生代码
+ Android: 通过JNI桥接的Activity生命周期（onCreate/onStart/…/onDestroy）
+ Android: 使用onNewIntent()替代C轮询处理intent
+ Android: scoped storage的MediaStore URI支持（Android 10+）
+ Android: 修复API ≤ 28上的EGL_BAD_SURFACE问题（onUserLeaveHint）
+ Linux: 首次运行时自动安装.desktop文件和图标
+ 删除无用代码（restart、WakeLock、notification、symlinks）
+ 应用菜单的桌面搜索关键词

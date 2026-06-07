@@ -1,0 +1,8 @@
+ Android: C/JNI → Java static methods migration, ~3300 lines of native code removed
+ Android: Activity lifecycle via JNI bridge (onCreate/onStart/…/onDestroy)
+ Android: intent handling via onNewIntent() instead of C-polling
+ Android: MediaStore URI for scoped storage (Android 10+)
+ Android: EGL_BAD_SURFACE fix for API ≤ 28 (onUserLeaveHint)
+ Linux: automatic .desktop entry and icon installation on first run
+ Removed dead code (restart, WakeLock, notification, symlinks)
+ Desktop search keywords for application menu

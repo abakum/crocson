@@ -1,0 +1,8 @@
+ Android: C/JNI → Java static methodsへの移行、ネイティブコード約3300行を削除
+ Android: JNIブリッジ経由のActivityライフサイクル（onCreate/onStart/…/onDestroy）
+ Android: Cポーリングに代わるonNewIntent()によるインテント処理
+ Android: scoped storage向けMediaStore URI（Android 10+）
+ Android: API ≤ 28でのEGL_BAD_SURFACE修正（onUserLeaveHint）
+ Linux: 初回起動時の.desktopエントリとアイコンの自動インストール
+ 不要なコードを削除（restart、WakeLock、notification、symlinks）
+ アプリケーションメニューのデスクトップ検索キーワード

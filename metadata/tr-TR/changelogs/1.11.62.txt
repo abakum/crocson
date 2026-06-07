@@ -1,0 +1,8 @@
+ Android: C/JNI → Java static methods geçişi, ~3300 satır yerel kod silindi
+ Android: JNI köprüsü ile Activity yaşam döngüsü (onCreate/onStart/…/onDestroy)
+ Android: C-polling yerine onNewIntent() ile intent işleme
+ Android: Scoped storage için MediaStore URI (Android 10+)
+ Android: API ≤ 28 için EGL_BAD_SURFACE düzeltmesi (onUserLeaveHint)
+ Linux: İlk çalıştırmada .desktop girdisi ve simgenin otomatik kurulması
+ Kullanılmayan kod silindi (restart, WakeLock, notification, symlinks)
+ Uygulama menüsü için masaüstü arama anahtar kelimeleri

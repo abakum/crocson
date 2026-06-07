@@ -1,0 +1,8 @@
+ Android: миграция C/JNI → Java static methods, удалено ~3300 строк нативного кода
+ Android: жизненный цикл Activity через JNI-мост (onCreate/onStart/…/onDestroy)
+ Android: обработка intents через onNewIntent() вместо C-поллинга
+ Android: MediaStore URI для scoped storage (Android 10+)
+ Android: защита от EGL_BAD_SURFACE на API ≤ 28 (onUserLeaveHint)
+ Linux: автоматическая установка .desktop и иконки при первом запуске
+ Удалён мёртвый код (restart, WakeLock, notification, симлинки)
+ Ключевые слова для поиска в меню приложений
