@@ -14,8 +14,8 @@ Repo: https://github.com/abakum/crocson
 
 Builds:
   - versionName: 1.11.62
-    versionCode: 1939
-    commit: 4344ce55137b316c15ecab69ee7c0765003e60f5
+    versionCode: 1940
+    commit: f248898fbe7f74dc7be43ff541546d8afde7e1ba
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -41,8 +41,8 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.62
-    versionCode: 1940
-    commit: 4344ce55137b316c15ecab69ee7c0765003e60f5
+    versionCode: 1941
+    commit: f248898fbe7f74dc7be43ff541546d8afde7e1ba
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -68,8 +68,8 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.62
-    versionCode: 1941
-    commit: 4344ce55137b316c15ecab69ee7c0765003e60f5
+    versionCode: 1942
+    commit: f248898fbe7f74dc7be43ff541546d8afde7e1ba
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -95,8 +95,8 @@ Builds:
     ndk: r27d
 
   - versionName: 1.11.62
-    versionCode: 1942
-    commit: 4344ce55137b316c15ecab69ee7c0765003e60f5
+    versionCode: 1943
+    commit: f248898fbe7f74dc7be43ff541546d8afde7e1ba
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -132,4 +132,4 @@ VercodeOperation:
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
 CurrentVersion: 1.11.62
-CurrentVersionCode: 1942
+CurrentVersionCode: 1943
