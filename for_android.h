@@ -13,6 +13,7 @@ char* callStringString2(JNIEnv* env, jobject context, const char* method, const 
 jlong callLongString(JNIEnv* env, jobject context, const char* method, const char* strArg);
 jint callIntString(JNIEnv* env, jobject context, const char* method, const char* strArg);
 char* callStringStringString(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2, const char* strArg3);
+char* callStringString4(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2, const char* strArg3, const char* strArg4);
 jint callBooleanString2(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2);
 jint callVoidInt(JNIEnv* env, jobject context, const char* method, jint intArg);
 jint callBooleanStringLong(JNIEnv* env, jobject context, const char* method, const char* strArg, jlong longArg);

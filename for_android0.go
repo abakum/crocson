@@ -67,6 +67,22 @@ func setModTime(uri fyne.URI, mtime time.Time) {
 	os.Chtimes(uri.Path(), time.Time{}, mtime)
 }
 
+func setModTimeMediaStore(uri fyne.URI, mtime time.Time) {}
+
+func ChildViaMediaStore(parent fyne.URI, component string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+	err = fmt.Errorf("not supported")
+	return
+}
+
+func createViaMediaStoreFromFileURI(safURI fyne.URI) (fyne.URI, error) {
+	return nil, fmt.Errorf("not supported")
+}
+
+func isMediaStorePath(uri fyne.URI) bool {
+	return false
+}
+
 // getSize возвращает размер файла в байтах
 func getSize(uri fyne.URI) (size int64, err error) {
 	if uri == nil {

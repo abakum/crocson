@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -305,6 +306,227 @@ func setModTime(uri fyne.URI, mtime time.Time) {
 	modTimeMs := mtime.UnixMilli()
 	ok := setModTimeUsingFD(uri.String(), modTimeMs)
 	log.Debugf("setModTime FD %s %v: %v", uri, mtime, ok)
+}
+
+func callStringString4(method, arg1, arg2, arg3, arg4 string) (string, error) {
+	var result string
+	err := driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		cArg1 := C.CString(arg1)
+		cArg2 := C.CString(arg2)
+		cArg3 := C.CString(arg3)
+		cArg4 := C.CString(arg4)
+		defer C.free(unsafe.Pointer(cMethod))
+		defer C.free(unsafe.Pointer(cArg1))
+		defer C.free(unsafe.Pointer(cArg2))
+		defer C.free(unsafe.Pointer(cArg3))
+		defer C.free(unsafe.Pointer(cArg4))
+		r := C.callStringString4((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod, cArg1, cArg2, cArg3, cArg4)
+		if r == nil {
+			return fmt.Errorf("callStringString4(%s): %w", method, errJNI)
+		}
+		defer C.free(unsafe.Pointer(r))
+		result = C.GoString(r)
+		return nil
+	})
+	return result, err
+}
+
+func isMediaStorePath(uri fyne.URI) bool {
+	if uri == nil || uri.Scheme() != "content" {
+		return false
+	}
+	uriStr := uri.String()
+	if strings.Contains(uriStr, "content://media/") {
+		return true
+	}
+	decoded, err := url.QueryUnescape(uriStr)
+	if err != nil {
+		decoded = uriStr
+	}
+	path := ""
+	switch {
+	case strings.Contains(decoded, "primary:"):
+		idx := strings.Index(decoded, "primary:")
+		path = decoded[idx+len("primary:"):]
+	case strings.Contains(decoded, "primary%3A"):
+		idx := strings.Index(decoded, "primary%3A")
+		path = decoded[idx+len("primary%3A"):]
+		path, _ = url.QueryUnescape(path)
+	case strings.Contains(decoded, "raw:"):
+		idx := strings.Index(decoded, "raw:")
+		path = decoded[idx+len("raw:"):]
+	case strings.Contains(decoded, "raw%3A"):
+		idx := strings.Index(decoded, "raw%3A")
+		path = decoded[idx+len("raw%3A"):]
+		path, _ = url.QueryUnescape(path)
+	default:
+		return false
+	}
+	path = strings.TrimPrefix(path, "/storage/emulated/0/")
+	return strings.HasPrefix(path, "Download") ||
+		strings.HasPrefix(path, "Pictures") ||
+		strings.HasPrefix(path, "DCIM") ||
+		strings.HasPrefix(path, "Movies") ||
+		strings.HasPrefix(path, "Music") ||
+		strings.HasPrefix(path, "Alarms") ||
+		strings.HasPrefix(path, "Podcasts") ||
+		strings.HasPrefix(path, "Ringtones")
+}
+
+func resolveMediaStoreURI(uriStr string) string {
+	result, err := callStringString("resolveMediaStoreUri", uriStr)
+	if err != nil || result == "" {
+		return ""
+	}
+	return result
+}
+
+func setModTimeMediaStore(uri fyne.URI, mtime time.Time) {
+	if uri == nil || uri.Scheme() != "content" || !isMediaStorePath(uri) {
+		return
+	}
+	if apiLevel() < 29 {
+		return
+	}
+	uriStr := uri.String()
+	if strings.Contains(uriStr, "content://media/") {
+		return
+	}
+	mediaUri := resolveMediaStoreURI(uriStr)
+	if mediaUri == "" {
+		return
+	}
+	modTimeMs := mtime.UnixMilli()
+	ok := setModTimeUsingFD(mediaUri, modTimeMs)
+	log.Debugf("setModTimeMediaStore %s → %s %v: %v", uriStr, mediaUri, mtime, ok)
+}
+
+func parseMediaStoreInfo(uriStr string) (collectionType, relativePath string) {
+	decoded, err := url.QueryUnescape(uriStr)
+	if err != nil {
+		decoded = uriStr
+	}
+	path := ""
+	switch {
+	case strings.Contains(decoded, "primary:"):
+		idx := strings.Index(decoded, "primary:")
+		path = decoded[idx+len("primary:"):]
+	case strings.Contains(decoded, "primary%3A"):
+		idx := strings.Index(decoded, "primary%3A")
+		path = decoded[idx+len("primary%3A"):]
+		path, _ = url.QueryUnescape(path)
+	case strings.Contains(decoded, "raw:"):
+		idx := strings.Index(decoded, "raw:")
+		path = decoded[idx+len("raw:"):]
+	case strings.Contains(decoded, "raw%3A"):
+		idx := strings.Index(decoded, "raw%3A")
+		path = decoded[idx+len("raw%3A"):]
+		path, _ = url.QueryUnescape(path)
+	default:
+		return "downloads", ""
+	}
+	path = strings.TrimPrefix(path, "/storage/emulated/0/")
+
+	switch {
+	case strings.HasPrefix(path, "Download"):
+		collectionType = "downloads"
+		relativePath = "Download"
+	case strings.HasPrefix(path, "Pictures"):
+		collectionType = "images"
+		relativePath = "Pictures"
+	case strings.HasPrefix(path, "DCIM"):
+		collectionType = "images"
+		relativePath = "DCIM"
+	case strings.HasPrefix(path, "Movies"):
+		collectionType = "video"
+		relativePath = "Movies"
+	case strings.HasPrefix(path, "Music"):
+		collectionType = "audio"
+		relativePath = "Music"
+	default:
+		return "downloads", ""
+	}
+
+	sub := strings.TrimPrefix(path, relativePath)
+	sub = strings.TrimPrefix(sub, "/")
+	if sub != "" {
+		if lastSlash := strings.LastIndex(sub, "/"); lastSlash >= 0 {
+			relativePath += "/" + sub[:lastSlash]
+		} else {
+			relativePath += "/" + sub
+		}
+	}
+	return
+}
+
+func ChildViaMediaStore(parent fyne.URI, component string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+	if apiLevel() < 29 {
+		err = fmt.Errorf("MediaStore not available on API < 29")
+		return
+	}
+	if !isMediaStorePath(parent) {
+		err = fmt.Errorf("not a MediaStore path")
+		return
+	}
+
+	collectionType, relativePath := parseMediaStoreInfo(parent.String())
+	mimeType := detectMimeType(component)
+
+	result, err := callStringString4("createFileViaMediaStore", collectionType, relativePath, component, mimeType)
+	if err != nil || result == "" {
+		err = fmt.Errorf("createFileViaMediaStore failed: %v", err)
+		return
+	}
+
+	child, err = storage.ParseURI(result)
+	if err != nil {
+		err = fmt.Errorf("parse URI failed: %v", err)
+		return
+	}
+
+	return
+}
+
+func createViaMediaStoreFromFileURI(safURI fyne.URI) (fyne.URI, error) {
+	if !isMediaStorePath(safURI) {
+		return nil, fmt.Errorf("not a MediaStore path")
+	}
+	uriStr := safURI.String()
+
+	decoded, err := url.QueryUnescape(uriStr)
+	if err != nil {
+		decoded = uriStr
+	}
+	path := ""
+	switch {
+	case strings.Contains(decoded, "primary:"):
+		idx := strings.Index(decoded, "primary:")
+		path = decoded[idx+len("primary:"):]
+	case strings.Contains(decoded, "primary%3A"):
+		idx := strings.Index(decoded, "primary%3A")
+		path = decoded[idx+len("primary%3A"):]
+		path, _ = url.QueryUnescape(path)
+	default:
+		return nil, fmt.Errorf("cannot extract path from %s", uriStr)
+	}
+	path = strings.TrimPrefix(path, "/storage/emulated/0/")
+
+	fileName := filepath.Base(path)
+	collectionType, relativePath := parseMediaStoreInfo(uriStr)
+	mimeType := detectMimeType(fileName)
+
+	result, err := callStringString4("createFileViaMediaStore", collectionType, relativePath, fileName, mimeType)
+	if err != nil || result == "" {
+		return nil, fmt.Errorf("createFileViaMediaStore failed: %v", err)
+	}
+
+	return storage.ParseURI(result)
 }
 
 func apiLevel() int {

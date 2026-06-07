@@ -523,6 +523,121 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
+    static String resolveMediaStoreUri(String safUri) {
+        if (Build.VERSION.SDK_INT < 29) return null;
+        try {
+            if (safUri == null || safUri.isEmpty()) return null;
+            if (safUri.contains("content://media/")) return safUri;
+
+            String decoded = java.net.URLDecoder.decode(safUri, "UTF-8");
+            String path = null;
+
+            if (decoded.contains("primary:") || decoded.contains("primary%3A")) {
+                int idx = decoded.indexOf("primary:");
+                if (idx == -1) idx = decoded.indexOf("primary%3A");
+                if (idx == -1) return null;
+                int start = decoded.indexOf(":", idx) + 1;
+                if (start == 0) return null;
+                path = decoded.substring(start);
+            } else if (decoded.contains("raw:") || decoded.contains("raw%3A")) {
+                int idx = decoded.indexOf("raw:");
+                if (idx == -1) idx = decoded.indexOf("raw%3A");
+                if (idx == -1) return null;
+                int start = decoded.indexOf(":", idx) + 1;
+                if (start == 0) return null;
+                path = decoded.substring(start);
+                path = java.net.URLDecoder.decode(path, "UTF-8");
+            } else {
+                return null;
+            }
+
+            if (path.startsWith("/storage/emulated/0/")) {
+                path = path.substring("/storage/emulated/0/".length());
+            }
+
+            if (path.isEmpty()) return null;
+
+            int lastSlash = path.lastIndexOf('/');
+            String fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            String collectionType;
+            android.net.Uri collectionUri;
+
+            if (path.startsWith("Download")) {
+                collectionType = "downloads";
+                collectionUri = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            } else if (path.startsWith("Pictures") || path.startsWith("DCIM")) {
+                collectionType = "images";
+                collectionUri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            } else if (path.startsWith("Movies")) {
+                collectionType = "video";
+                collectionUri = android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            } else if (path.startsWith("Music") || path.startsWith("Alarms") || path.startsWith("Podcasts") || path.startsWith("Ringtones")) {
+                collectionType = "audio";
+                collectionUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            } else {
+                return null;
+            }
+
+            String[] projection = {"_id"};
+            String selection = "_display_name = ?";
+            String[] selectionArgs = {fileName};
+            android.database.Cursor cursor = resolver.query(collectionUri, projection, selection, selectionArgs, null);
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        long id = cursor.getLong(0);
+                        String resultUri = "content://media/external/" + collectionType + "/" + id;
+                        Log.d(TAG, "resolveMediaStoreUri: " + safUri + " -> " + resultUri);
+                        return resultUri;
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+            Log.d(TAG, "resolveMediaStoreUri: not found for " + safUri + " path=" + path);
+        } catch (Exception e) {
+            Log.e(TAG, "resolveMediaStoreUri failed: " + e.getMessage());
+        }
+        return null;
+    }
+
+    static String createFileViaMediaStore(String collectionType, String relativePath, String fileName, String mimeType) {
+        if (Build.VERSION.SDK_INT < 29) return null;
+        try {
+            if (mimeType == null || mimeType.isEmpty()) mimeType = "application/octet-stream";
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            android.content.ContentValues values = new android.content.ContentValues();
+            values.put("_display_name", fileName);
+            values.put("mime_type", mimeType);
+            if (relativePath != null && !relativePath.isEmpty()) {
+                values.put("relative_path", relativePath);
+            }
+
+            android.net.Uri collectionUri;
+            if ("images".equals(collectionType)) {
+                collectionUri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            } else if ("video".equals(collectionType)) {
+                collectionUri = android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            } else if ("audio".equals(collectionType)) {
+                collectionUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            } else {
+                collectionUri = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            }
+
+            android.net.Uri uri = resolver.insert(collectionUri, values);
+            if (uri != null) {
+                Log.d(TAG, "createFileViaMediaStore: " + uri.toString());
+                return uri.toString();
+            }
+            return null;
+        } catch (Exception e) {
+            Log.e(TAG, "createFileViaMediaStore failed: " + e.getMessage());
+            return null;
+        }
+    }
+
     static boolean isIntentSupported(String action, String mimeType) {
         try {
             android.content.Intent intent = new android.content.Intent(action);

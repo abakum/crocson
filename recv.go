@@ -997,11 +997,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 
 			if lu != nil {
-				// lastLU = lu
-				u, cl, err = Child(lu, child)
+				u, cl, err = ChildViaMediaStore(lu, child)
 				if err != nil {
-					log.Errorf("%s/%s: %v", lu, child, err)
-					u, cl, err = ChildDownload(child)
+					u, cl, err = Child(lu, child)
+					if err != nil {
+						log.Errorf("%s/%s: %v", lu, child, err)
+						u, cl, err = ChildDownload(child)
+					}
 				}
 			} else {
 				u, cl, err = ChildDownload(child)

@@ -252,6 +252,46 @@ char* callStringStringString(JNIEnv* env, jobject context, const char* method, c
     return result;
 }
 
+char* callStringString4(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2, const char* strArg3, const char* strArg4) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callStringString4(%s)", method); return NULL; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return NULL;
+    }
+    jstring jarg1 = (*env)->NewStringUTF(env, strArg1);
+    jstring jarg2 = (*env)->NewStringUTF(env, strArg2);
+    jstring jarg3 = (*env)->NewStringUTF(env, strArg3);
+    jstring jarg4 = (*env)->NewStringUTF(env, strArg4);
+    jstring jresult = (jstring)(*env)->CallStaticObjectMethod(env, cls, mid, jarg1, jarg2, jarg3, jarg4);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, jarg1);
+        (*env)->DeleteLocalRef(env, jarg2);
+        (*env)->DeleteLocalRef(env, jarg3);
+        (*env)->DeleteLocalRef(env, jarg4);
+        (*env)->DeleteLocalRef(env, cls);
+        return NULL;
+    }
+    char* result = NULL;
+    if (jresult != NULL) {
+        const char* utf = (*env)->GetStringUTFChars(env, jresult, NULL);
+        result = strdup(utf);
+        (*env)->ReleaseStringUTFChars(env, jresult, utf);
+        (*env)->DeleteLocalRef(env, jresult);
+    }
+    (*env)->DeleteLocalRef(env, jarg1);
+    (*env)->DeleteLocalRef(env, jarg2);
+    (*env)->DeleteLocalRef(env, jarg3);
+    (*env)->DeleteLocalRef(env, jarg4);
+    (*env)->DeleteLocalRef(env, cls);
+    return result;
+}
+
 jint callBooleanString2(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2) {
     jclass cls = (*env)->GetObjectClass(env, context);
     if (cls == NULL) { LogE("GetObjectClass failed for callBooleanString2(%s)", method); return -1; }
