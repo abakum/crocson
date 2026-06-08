@@ -1,0 +1,46 @@
+name: PEPK Export
+
+on:
+  workflow_dispatch:
+    inputs:
+      encryptionkey:
+        description: 'RuStore encryption key'
+        required: true
+
+jobs:
+  pepk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
+
+      - name: Run pepk.jar
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" | java -jar rustore/pepk.jar \
+            --keystore=/tmp/keystore.jks \
+            --alias="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --output=pepk_out.zip \
+            --encryptionkey="${{ github.event.inputs.encryptionkey }}" \
+            --include-cert
+
+      - name: Upload rustore signing artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustore-signing
+          path: |
+            pepk_out.zip
+            rustore/upload.pem
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/keystore.jks

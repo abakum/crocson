@@ -60,6 +60,10 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
+      - name: Decode RuStore upload keystore
+        run: |
+          echo "${{ secrets.RUSTORE_UPLOAD_KEYSTORE }}" | base64 -d > /tmp/rustore-upload.keystore
+
       - name: Read version from FyneApp.toml
         id: version
         run: |
@@ -79,9 +83,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           fyne release --os android \
-            --keystore /tmp/keystore.jks \
-            --key-name "${{ secrets.ANDROID_KEY_ALIAS }}" \
-            --keystore-pass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --keystore /tmp/rustore-upload.keystore \
+            --key-name "${{ secrets.RUSTORE_KEY_ALIAS }}" \
+            --keystore-pass "${{ secrets.RUSTORE_UPLOAD_KEYSTORE_PASSWORD }}" \
             --app-version "${{ steps.version.outputs.version }}" \
             --app-build "${{ steps.version.outputs.build }}"
           if [ ! -f "crocson.aab" ]; then
@@ -129,7 +133,7 @@ jobs:
           zip $GITHUB_WORKSPACE/workspace/crocson/crocson-arm64.zip base-master.apk base-arm64_v8a.apk
           cd $GITHUB_WORKSPACE/workspace/crocson
           rm -rf crocson-arm64-dir
-          rm -f /tmp/keystore.jks
+          rm -f /tmp/keystore.jks /tmp/rustore-upload.keystore
           ls -la crocson-arm64.zip
 
       - name: Upload crocson.aab
