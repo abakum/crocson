@@ -2,10 +2,6 @@ name: PEPK Export
 
 on:
   workflow_dispatch:
-    inputs:
-      encryptionkey:
-        description: 'RuStore encryption key'
-        required: true
 
 jobs:
   pepk:
@@ -25,11 +21,12 @@ jobs:
 
       - name: Run pepk.jar
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" | java -jar rustore/pepk.jar \
+          java -jar rustore/pepk.jar \
             --keystore=/tmp/keystore.jks \
             --alias="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --keystore-pass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             --output=pepk_out.zip \
-            --encryptionkey="${{ github.event.inputs.encryptionkey }}" \
+            --encryptionkey="${{ secrets.RUSTORE_ENCRYPTION_KEY }}" \
             --include-cert
 
       - name: Upload rustore signing artifacts
