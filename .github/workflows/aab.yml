@@ -1,0 +1,124 @@
+name: AAB Build and Verify
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-aab:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository (crocson)
+        uses: actions/checkout@v4
+        with:
+          path: workspace/crocson
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ github.workspace }}/workspace/crocson/go.mod
+          cache-dependency-path: ${{ github.workspace }}/workspace/crocson/go.sum
+
+      - name: Checkout tools dependency
+        uses: actions/checkout@v4
+        with:
+          repository: abakum/tools
+          ref: main
+          path: workspace/tools
+
+      - name: Install Fyne CLI
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/tools/cmd/fyne
+          go install
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup NDK r27d
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27d
+
+      - name: Install Android SDK
+        run: |
+          rm -rf "$ANDROID_HOME/platforms/android-3"* "$ANDROID_HOME/build-tools/3"*
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Download bundletool 1.18.1
+        run: |
+          wget -q https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar -O /tmp/bundletool-all-1.18.1.jar
+          printf '#!/bin/bash\nexec java -jar /tmp/bundletool-all-1.18.1.jar "$@"\n' | sudo tee /usr/local/bin/bundletool > /dev/null
+          sudo chmod +x /usr/local/bin/bundletool
+          bundletool version
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
+
+      - name: Read version from FyneApp.toml
+        id: version
+        run: |
+          FYNEAPP_TOML="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          BUILD_NUMBER=$(grep -E '^\s*Build\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          if [ -z "$VERSION_NAME" ] || [ -z "$BUILD_NUMBER" ]; then
+            echo "ERROR: Could not extract Version or Build from FyneApp.toml"
+            cat "$FYNEAPP_TOML"
+            exit 1
+          fi
+          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "build=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION_NAME, Build: $BUILD_NUMBER"
+
+      - name: fyne release — build AAB
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          fyne release --os android \
+            --keystore /tmp/keystore.jks \
+            --key-name "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --keystore-pass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --app-version "${{ steps.version.outputs.version }}" \
+            --app-build "${{ steps.version.outputs.build }}"
+          if [ ! -f "crocson.aab" ]; then
+            echo "ERROR: crocson.aab was not created"
+            ls -la .
+            exit 1
+          fi
+          echo "AAB created:"
+          ls -la crocson.aab
+
+      - name: bundletool build-apks — extract APKs
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
+            --bundle=crocson.aab \
+            --output-format=DIRECTORY \
+            --output=crocson-apks \
+            --ks=/tmp/keystore.jks \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
+          echo "Extracted APKs:"
+          find crocson-apks -type f -name '*.apk' | sort
+          rm -f /tmp/keystore.jks
+
+      - name: Archive APKs directory
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          tar czf crocson-apks.tar.gz crocson-apks/
+
+      - name: Upload AAB and APKs
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: |
+            ${{ github.workspace }}/workspace/crocson/crocson.aab
+            ${{ github.workspace }}/workspace/crocson/crocson-apks.tar.gz
+          retention-days: 7
+          if-no-files-found: error
