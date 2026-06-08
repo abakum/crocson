@@ -61,7 +61,7 @@
 13. **bundletool — arm64 APK** (по device-spec):
     ```bash
     cat > /tmp/device-arm64.json << 'EOF'
-    {"supportedAbis":["arm64-v8a"],"screenDensity":640,"supportedLocales":["en"]}
+    {"supportedAbis":["arm64-v8a"],"screenDensity":640,"supportedLocales":["en"],"sdkVersion":23}
     EOF
     java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
       --bundle=crocson.aab \
