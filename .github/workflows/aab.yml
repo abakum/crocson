@@ -107,11 +107,6 @@ jobs:
           find crocson-apks -type f -name '*.apk' | sort
           rm -f /tmp/keystore.jks
 
-      - name: Archive APKs directory
-        run: |
-          cd $GITHUB_WORKSPACE/workspace/crocson
-          tar czf crocson-apks.tar.gz crocson-apks/
-
       - name: Upload AAB and APKs
         if: success() || failure()
         uses: actions/upload-artifact@v4
@@ -119,6 +114,10 @@ jobs:
           name: android-aab
           path: |
             ${{ github.workspace }}/workspace/crocson/crocson.aab
-            ${{ github.workspace }}/workspace/crocson/crocson-apks.tar.gz
+            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-master.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-armeabi_v7a.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-arm64_v8a.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-x86.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-x86_64.apk
           retention-days: 7
           if-no-files-found: error

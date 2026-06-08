@@ -60,14 +60,16 @@
     - `base-x86.apk` (386)
     - `base-x86_64.apk` (amd64)
 
-13. **Архивировать каталог APK** в tar для upload-artifact:
-    ```bash
-    tar czf crocson-apks.tar.gz crocson-apks/
-    ```
-14. **Cleanup:** `rm -f /tmp/keystore.jks`
-15. **Upload artifacts:**
+13. **Cleanup keystore** (в том же шаге что и build-apks): `rm -f /tmp/keystore.jks`
+14. **Upload artifacts** — 6 отдельных файлов в одном артефакте:
     - `crocson.aab`
-    - `crocson-apks.tar.gz`
+    - `crocson-apks/splits/base-master.apk`
+    - `crocson-apks/splits/base-armeabi_v7a.apk`
+    - `crocson-apks/splits/base-arm64_v8a.apk`
+    - `crocson-apks/splits/base-x86.apk`
+    - `crocson-apks/splits/base-x86_64.apk`
+
+    Убрать шаг архивирования в tar — не нужен.
 
 ### Secrets (те же что в fyne.yml)
 - `ANDROID_SIGNING_KEY`, `ANDROID_KEY_ALIAS`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`
