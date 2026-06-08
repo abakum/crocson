@@ -92,20 +92,52 @@ jobs:
           echo "AAB created:"
           ls -la crocson.aab
 
-      - name: bundletool build-apks — extract APKs
+      - name: bundletool — universal APK
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
             --bundle=crocson.aab \
             --output-format=DIRECTORY \
-            --output=crocson-apks \
+            --output=crocson-universal \
+            --mode=universal \
             --ks=/tmp/keystore.jks \
             --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
             --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
-          echo "Extracted APKs:"
-          find crocson-apks -type f -name '*.apk' | sort
+          mv crocson-universal/universal.apk crocson-all.apk
+          rm -rf crocson-universal
+          ls -la crocson-all.apk
+
+      - name: bundletool — arm64 APK
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          cat > /tmp/device-arm64.json << 'EOF'
+          {"supportedAbis":["arm64-v8a"],"screenDensity":640,"supportedLocales":["en"]}
+          EOF
+          java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
+            --bundle=crocson.aab \
+            --output-format=DIRECTORY \
+            --output=crocson-arm64-dir \
+            --device-spec=/tmp/device-arm64.json \
+            --ks=/tmp/keystore.jks \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
+          echo "arm64 split APKs:"
+          find crocson-arm64-dir/splits -type f -name '*.apk' | sort
+          APKS=(crocson-arm64-dir/splits/*.apk)
+          if [ ${#APKS[@]} -eq 1 ]; then
+            mv "${APKS[0]}" crocson-arm64.apk
+          else
+            rm -f crocson-arm64.apk
+            for f in "${APKS[@]}"; do
+              base=$(basename "$f" .apk)
+              mv "$f" "crocson-arm64-${base#base-}.apk"
+            done
+          fi
+          rm -rf crocson-arm64-dir
           rm -f /tmp/keystore.jks
+          ls -la crocson-arm64*.apk
 
       - name: Upload AAB and APKs
         if: success() || failure()
@@ -114,10 +146,7 @@ jobs:
           name: android-aab
           path: |
             ${{ github.workspace }}/workspace/crocson/crocson.aab
-            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-master.apk
-            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-armeabi_v7a.apk
-            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-arm64_v8a.apk
-            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-x86.apk
-            ${{ github.workspace }}/workspace/crocson/crocson-apks/splits/base-x86_64.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-all.apk
+            ${{ github.workspace }}/workspace/crocson/crocson-arm64*.apk
           retention-days: 7
           if-no-files-found: error

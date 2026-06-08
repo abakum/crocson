@@ -42,34 +42,53 @@
     ```
     Результат: `crocson.aab` (подписан jarsigner, содержит arm/arm64/386/amd64)
 
-12. **bundletool build-apks — извлечь APK:**
+12. **bundletool — universal APK** (`--mode=universal`, один файл со всеми arch):
     ```bash
     java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
       --bundle=crocson.aab \
       --output-format=DIRECTORY \
-      --output=crocson-apks \
+      --output=crocson-universal \
+      --mode=universal \
       --ks=/tmp/keystore.jks \
       --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
       --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
       --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
+    mv crocson-universal/universal.apk crocson-all.apk
+    rm -rf crocson-universal
     ```
-    Результат — каталог `crocson-apks/splits/`:
-    - `base-master.apk` (базовый)
-    - `base-armeabi_v7a.apk` (arm)
-    - `base-arm64_v8a.apk` (arm64)
-    - `base-x86.apk` (386)
-    - `base-x86_64.apk` (amd64)
+    Результат: `crocson-all.apk`
 
-13. **Cleanup keystore** (в том же шаге что и build-apks): `rm -f /tmp/keystore.jks`
-14. **Upload artifacts** — 6 отдельных файлов в одном артефакте:
-    - `crocson.aab`
-    - `crocson-apks/splits/base-master.apk`
-    - `crocson-apks/splits/base-armeabi_v7a.apk`
-    - `crocson-apks/splits/base-arm64_v8a.apk`
-    - `crocson-apks/splits/base-x86.apk`
-    - `crocson-apks/splits/base-x86_64.apk`
+13. **bundletool — arm64 APK** (по device-spec):
+    ```bash
+    cat > /tmp/device-arm64.json << 'EOF'
+    {"supportedAbis":["arm64-v8a"],"screenDensity":640,"supportedLocales":["en"]}
+    EOF
+    java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
+      --bundle=crocson.aab \
+      --output-format=DIRECTORY \
+      --output=crocson-arm64-dir \
+      --device-spec=/tmp/device-arm64.json \
+      --ks=/tmp/keystore.jks \
+      --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+      --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+      --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
+    cat crocson-arm64-dir/toc.pb > /dev/null 2>&1 || true
+    find crocson-arm64-dir/splits -type f -name '*.apk' -exec mv {} . \;
+    rm -rf crocson-arm64-dir
+    ```
+    Результат: `crocson-arm64.apk` (один файл, только arm64)
 
-    Убрать шаг архивирования в tar — не нужен.
+    > Примечание: bundletool с `--output-format=DIRECTORY` + `--device-spec` создаёт `splits/` с 1-2 APK. Если генерируется несколько split (master + arm64), их нужно объединить или оставить как есть.
+
+14. **Cleanup keystore:** `rm -f /tmp/keystore.jks`
+
+15. **Upload artifacts** — 3 файла:
+    ```yaml
+    path: |
+      ${{ github.workspace }}/workspace/crocson/crocson.aab
+      ${{ github.workspace }}/workspace/crocson/crocson-all.apk
+      ${{ github.workspace }}/workspace/crocson/crocson-arm64.apk
+    ```
 
 ### Secrets (те же что в fyne.yml)
 - `ANDROID_SIGNING_KEY`, `ANDROID_KEY_ALIAS`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`
