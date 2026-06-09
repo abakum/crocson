@@ -153,6 +153,15 @@ jobs:
           echo "Contents of crocson.apks:"
           unzip -l crocson.apks
 
+      - name: Filter .apks — keep uncompressed .so only
+        if: ${{ inputs.build-apks }}
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          go run ./cmd/apks -o crocson-filtered.apks crocson.apks
+          mv crocson-filtered.apks crocson.apks
+          echo "Filtered .apks contents:"
+          unzip -l crocson.apks
+
       - name: Upload crocson.aab
         if: ${{ inputs.build-aab }}
         uses: actions/upload-artifact@v4
