@@ -134,14 +134,24 @@ jobs:
         if: ${{ inputs.build-apks }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
+
+          cat > /tmp/device-all.json << 'EOF'
+          {"supportedAbis":["arm64-v8a","armeabi-v7a","x86","x86_64"],"screenDensity":640,"supportedLocales":["en"],"sdkVersion":23}
+          EOF
+
           java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
             --bundle=crocson.aab \
             --output=crocson.apks \
+            --device-spec=/tmp/device-all.json \
             --ks=/tmp/keystore.jks \
             --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
             --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+          rm -f /tmp/device-all.json
           ls -la crocson.apks
+          echo "Contents of crocson.apks:"
+          unzip -l crocson.apks
 
       - name: Upload crocson.aab
         if: ${{ inputs.build-aab }}
