@@ -144,7 +144,8 @@ func fixTOC(toc []byte, paths map[string]bool) ([]byte, error) {
 	}
 
 	if bestVariant == nil {
-		return nil, fmt.Errorf("no uncompressed variant found")
+		fmt.Println("  -> no uncompressed variant found, skipping")
+		return toc, nil
 	}
 
 	fmt.Printf("  -> keeping variant_number=%d\n", bestVN)
