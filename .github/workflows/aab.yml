@@ -2,6 +2,22 @@ name: AAB Build and Verify
 
 on:
   workflow_dispatch:
+    inputs:
+      build-aab:
+        description: 'Upload .aab'
+        required: false
+        default: true
+        type: boolean
+      build-apk:
+        description: 'Build & upload universal .apk'
+        required: false
+        default: false
+        type: boolean
+      build-apks:
+        description: 'Build & upload .apks (all ABI splits)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -57,6 +73,7 @@ jobs:
           bundletool version
 
       - name: Decode keystore
+        if: ${{ inputs.build-apk || inputs.build-apks }}
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
@@ -97,6 +114,7 @@ jobs:
           ls -la crocson.aab
 
       - name: bundletool — universal APK
+        if: ${{ inputs.build-apk }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
@@ -112,32 +130,21 @@ jobs:
           rm -rf crocson-universal
           ls -la crocson-all.apk
 
-      - name: bundletool — arm64 APK
+      - name: bundletool — all ABIs APKs
+        if: ${{ inputs.build-apks }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
-          cat > /tmp/device-arm64.json << 'EOF'
-          {"supportedAbis":["arm64-v8a"],"screenDensity":640,"supportedLocales":["en"],"sdkVersion":23}
-          EOF
           java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
             --bundle=crocson.aab \
-            --output-format=DIRECTORY \
-            --output=crocson-arm64-dir \
-            --device-spec=/tmp/device-arm64.json \
+            --output=crocson.apks \
             --ks=/tmp/keystore.jks \
             --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
             --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             --key-pass="pass:${{ secrets.ANDROID_KEY_PASSWORD }}"
-          echo "arm64 split APKs:"
-          find crocson-arm64-dir/splits -type f -name '*.apk' | sort
-          cd crocson-arm64-dir/splits
-          zip $GITHUB_WORKSPACE/workspace/crocson/crocson-arm64.zip base-master.apk base-arm64_v8a.apk
-          cd $GITHUB_WORKSPACE/workspace/crocson
-          rm -rf crocson-arm64-dir
-          rm -f /tmp/keystore.jks /tmp/rustore-upload.keystore
-          ls -la crocson-arm64.zip
+          ls -la crocson.apks
 
       - name: Upload crocson.aab
-        if: success() || failure()
+        if: ${{ inputs.build-aab }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson.aab
@@ -146,7 +153,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload crocson-all.apk
-        if: success() || failure()
+        if: ${{ inputs.build-apk }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson-all.apk
@@ -154,11 +161,15 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Upload crocson-arm64.zip
-        if: success() || failure()
+      - name: Upload crocson.apks
+        if: ${{ inputs.build-apks }}
         uses: actions/upload-artifact@v4
         with:
-          name: crocson-arm64.zip
-          path: ${{ github.workspace }}/workspace/crocson/crocson-arm64.zip
+          name: crocson.apks
+          path: ${{ github.workspace }}/workspace/crocson/crocson.apks
           retention-days: 7
           if-no-files-found: error
+
+      - name: Cleanup keystores
+        if: always()
+        run: rm -f /tmp/keystore.jks /tmp/rustore-upload.keystore
