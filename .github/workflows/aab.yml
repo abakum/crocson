@@ -122,6 +122,7 @@ jobs:
             --output-format=DIRECTORY \
             --output=crocson-universal \
             --mode=universal \
+            --override-min-sdk-version=23 \
             --ks=/tmp/keystore.jks \
             --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
             --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
@@ -137,6 +138,7 @@ jobs:
           java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
             --bundle=crocson.aab \
             --output=crocson.apks \
+            --override-min-sdk-version=23 \
             --ks=/tmp/keystore.jks \
             --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
             --ks-pass="pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
