@@ -5,7 +5,7 @@ Icon = "res/mipmap-xxxhdpi-v4/icon.png"
 Name = "crocson"
 ID = "com.github.abakum.crocson"
 Version = "1.11.63"
-Build = 1945
+Build = 1944
 
 [Source]
 Repo = "https://github.com/abakum/crocson"
