@@ -1,0 +1,52 @@
+name: Submit to AppImage Hub
+
+on:
+  workflow_dispatch:
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fork AppImage/appimage.github.io
+        env:
+          GH_TOKEN: ${{ secrets.APPIMAGEHUB_TOKEN }}
+        run: |
+          gh repo fork AppImage/appimage.github.io --clone=false
+
+      - name: Clone fork and create PR
+        env:
+          GH_TOKEN: ${{ secrets.APPIMAGEHUB_TOKEN }}
+        run: |
+          UPSTREAM="AppImage/appimage.github.io"
+          USERNAME=$(gh api user --jq '.login')
+          FORK="${USERNAME}/appimage.github.io"
+          BRANCH="add-crocson"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${FORK}.git" repo
+          cd repo
+          git remote add upstream "https://github.com/${UPSTREAM}.git"
+          git fetch upstream master
+          git checkout -b "${BRANCH}" upstream/master
+
+          if [ -f "data/crocson" ]; then
+            echo "data/crocson already exists upstream, skipping"
+            exit 0
+          fi
+
+          echo "https://github.com/abakum/crocson/" > data/crocson
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/crocson
+          git commit -m "Add crocson"
+          git push -u origin "${BRANCH}"
+
+          gh pr create \
+            --repo "${UPSTREAM}" \
+            --head "${USERNAME}:${BRANCH}" \
+            --title "Add crocson" \
+            --body "Automated PR to add [crocson](https://github.com/abakum/crocson) to the AppImage Hub catalog.
+
+The AppImage follows standard nomenclature: \`crocson-VERSION-x86_64.AppImage\` on [GitHub Releases](https://github.com/abakum/crocson/releases).
+
+Includes AppStream metainfo (\`com.github.abakum.crocson.appdata.xml\`) with screenshots."
