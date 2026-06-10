@@ -65,12 +65,10 @@ jobs:
           rm -rf "$ANDROID_HOME/platforms/android-3"* "$ANDROID_HOME/build-tools/3"*
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Download bundletool 1.18.1
-        run: |
-          wget -q https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar -O /tmp/bundletool-all-1.18.1.jar
-          printf '#!/bin/bash\nexec java -jar /tmp/bundletool-all-1.18.1.jar "$@"\n' | sudo tee /usr/local/bin/bundletool > /dev/null
-          sudo chmod +x /usr/local/bin/bundletool
-          bundletool version
+      - name: Setup bundletool
+        uses: amyu/setup-bundletool@v1.1
+        with:
+          version: 1.18.1
 
       - name: Decode keystore
         if: ${{ inputs.build-apk || inputs.build-apks }}
@@ -117,7 +115,7 @@ jobs:
         if: ${{ inputs.build-apk }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
-          java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
+          bundletool build-apks \
             --bundle=crocson.aab \
             --output-format=DIRECTORY \
             --output=crocson-universal \
@@ -135,7 +133,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
 
-          java -jar /tmp/bundletool-all-1.18.1.jar build-apks \
+          bundletool build-apks \
             --bundle=crocson.aab \
             --output=crocson.apks \
             --ks=/tmp/keystore.jks \
