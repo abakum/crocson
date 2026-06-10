@@ -79,30 +79,13 @@ jobs:
         run: |
           echo "${{ secrets.RUSTORE_UPLOAD_KEYSTORE }}" | base64 -d > /tmp/rustore-upload.keystore
 
-      - name: Read version from FyneApp.toml
-        id: version
-        run: |
-          FYNEAPP_TOML="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
-          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
-          BUILD_NUMBER=$(grep -E '^\s*Build\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
-          if [ -z "$VERSION_NAME" ] || [ -z "$BUILD_NUMBER" ]; then
-            echo "ERROR: Could not extract Version or Build from FyneApp.toml"
-            cat "$FYNEAPP_TOML"
-            exit 1
-          fi
-          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "build=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION_NAME, Build: $BUILD_NUMBER"
-
       - name: fyne release — build AAB
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           fyne release --os android \
             --keystore /tmp/rustore-upload.keystore \
             --key-name "${{ secrets.RUSTORE_KEY_ALIAS }}" \
-            --keystore-pass "${{ secrets.RUSTORE_UPLOAD_KEYSTORE_PASSWORD }}" \
-            --app-version "${{ steps.version.outputs.version }}" \
-            --app-build "${{ steps.version.outputs.build }}"
+            --keystore-pass "${{ secrets.RUSTORE_UPLOAD_KEYSTORE_PASSWORD }}"
           if [ ! -f "crocson.aab" ]; then
             echo "ERROR: crocson.aab was not created"
             ls -la .
