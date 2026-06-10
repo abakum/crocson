@@ -5,13 +5,13 @@ VERSION_NAME := $(shell grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*V
 BUILD_NUMBER := $(shell grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
 DEB_FILE := crocson_$(VERSION_NAME)_amd64.deb
 
-.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui deb debi debr debp useri userr repo local relay syso apk aapt apksigner align
+.PHONY: all clean arm arm64 386 amd64 linux windows wsl darwin ios install darm emulator adb wsladb logcat atags tags wtags t windowsgui deb debi debr debp useri userr repo local relay syso apk aapt apksigner align appimage
 
 all: arm64
 
 clean:
 	go clean
-	rm -f crocson.apk crocson.exe crocson_*.deb crocson*.xy
+	rm -f crocson.apk crocson.exe crocson_*.deb crocson*.xy crocson*.AppImage
 	rm -rf crocson.app
 
 arm:
@@ -222,6 +222,10 @@ debr:
 debp:
 	@echo "Purging crocson package..."
 	@sudo dpkg -P crocson
+
+appimage: linux AppImageBuilder.sh
+	@chmod +x AppImageBuilder.sh
+	@./AppImageBuilder.sh
 
 useri: crocson.tar.xz
 	@echo "User installation from tar.xz..."

@@ -256,7 +256,23 @@ jobs:
               exit 1
           fi
 
-      # Step 9: Upload the built Linux artifacts
+      # Step 9: Build AppImage
+      - name: Build AppImage
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson || { echo "Failed to cd to project directory"; exit 1; }
+
+          echo "Building AppImage..."
+
+          chmod +x AppImageBuilder.sh
+          ./AppImageBuilder.sh
+
+          if ! ls crocson-*.AppImage 1> /dev/null 2>&1; then
+              echo "ERROR: AppImageBuilder.sh did not create AppImage"
+              ls -la .
+              exit 1
+          fi
+
+      # Step 10: Upload the built Linux artifacts
       - name: Upload Linux artifacts
         if: success() || failure()
         uses: actions/upload-artifact@v4
@@ -265,6 +281,7 @@ jobs:
           path: |
             ${{ github.workspace }}/workspace/crocson/crocson.tar.xz
             ${{ github.workspace }}/workspace/crocson/crocson_*_amd64.deb
+            ${{ github.workspace }}/workspace/crocson/crocson-*.AppImage
           retention-days: 7
           if-no-files-found: error
 

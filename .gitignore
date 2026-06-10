@@ -44,6 +44,8 @@ debug
 *.bak
 /tmp/
 *.jks
+/*.AppImage
+
 /*.idsig
 *.p12
 cmd/syso/syso

@@ -14,6 +14,10 @@ import (
 )
 
 func ensureDesktopEntry() {
+	if os.Getenv("DISPLAY") == "" {
+		return
+	}
+
 	appID := ID
 
 	desktopRel := filepath.Join("applications", appID+".desktop")
@@ -36,6 +40,11 @@ func ensureDesktopEntry() {
 	exe, err = filepath.EvalSymlinks(exe)
 	if err != nil {
 		log.Errorf("EvalSymlinks: %v", err)
+		return
+	}
+
+	if isAppImage(exe) {
+		log.Debugf("running as AppImage from %s, skip desktop entry", exe)
 		return
 	}
 
@@ -113,4 +122,8 @@ func ensureDesktopEntry() {
 	if p, err := exec.LookPath("update-desktop-database"); err == nil {
 		_ = exec.Command(p, desktopDir).Run()
 	}
+}
+
+func isAppImage(exe string) bool {
+	return strings.Contains(exe, "/.mount_") || filepath.Base(exe) == "AppRun"
 }
