@@ -18,6 +18,11 @@ on:
         required: false
         default: false
         type: boolean
+      upload-rustore:
+        description: 'Upload .aab to RuStore (draft)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -161,6 +166,44 @@ jobs:
           path: ${{ github.workspace }}/workspace/crocson/crocson.apks
           retention-days: 7
           if-no-files-found: error
+
+      - name: Read version and app ID from FyneApp.toml
+        if: ${{ inputs.upload-rustore }}
+        id: version
+        run: |
+          FYNEAPP_TOML="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          APP_ID=$(grep -E '^\s*ID\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*ID\s*=\s*"([^"]+)".*/\1/')
+          CHANGELOG="$GITHUB_WORKSPACE/workspace/crocson/metadata/ru-RU/changelogs/${VERSION_NAME}.txt"
+          if [ -f "$CHANGELOG" ]; then
+            WHATS_NEW=$(cat "$CHANGELOG")
+          else
+            WHATS_NEW="crocson v${VERSION_NAME}"
+          fi
+          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
+          echo "whats_new<<EOF" >> $GITHUB_OUTPUT
+          echo "$WHATS_NEW" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: RuStore — upload AAB (draft)
+        if: ${{ inputs.upload-rustore }}
+        id: rustore
+        uses: Suro4ek/rustore-action@v0.0.1
+        with:
+          key_id: ${{ secrets.RUSTORE_KEY_ID }}
+          private_key: ${{ secrets.RUSTORE_KEY_SECRET }}
+          application_id: '${{ steps.version.outputs.app_id }}'
+          file: '${{ github.workspace }}/workspace/crocson/crocson.aab'
+          whats_new: '${{ steps.version.outputs.whats_new }}'
+          publish_type: 'MANUAL'
+          submit: 'false'
+
+      - name: RuStore — print result
+        if: ${{ inputs.upload-rustore }}
+        run: |
+          echo "version_id=${{ steps.rustore.outputs.version_id }}"
+          echo "status=${{ steps.rustore.outputs.status }}"
 
       - name: Cleanup keystores
         if: always()
