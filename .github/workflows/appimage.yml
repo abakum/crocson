@@ -41,14 +41,12 @@ jobs:
           git commit -m "Add crocson"
           git push -u origin "${BRANCH}"
 
-          BODY=$(cat <<'BODY'
-Automated PR to add [crocson](https://github.com/abakum/crocson) to the AppImage Hub catalog.
-
-The AppImage follows standard nomenclature: `crocson-VERSION-x86_64.AppImage` on [GitHub Releases](https://github.com/abakum/crocson/releases).
-
-Includes AppStream metainfo (`com.github.abakum.crocson.appdata.xml`) with screenshots.
-BODY
-          )
+          BODY=$(printf '%s\n' \
+            'Automated PR to add [crocson](https://github.com/abakum/crocson) to the AppImage Hub catalog.' \
+            '' \
+            'The AppImage follows standard nomenclature: `crocson-VERSION-x86_64.AppImage` on [GitHub Releases](https://github.com/abakum/crocson/releases).' \
+            '' \
+            'Includes AppStream metainfo (`com.github.abakum.crocson.appdata.xml`) with screenshots.')
 
           gh pr create \
             --repo "${UPSTREAM}" \
