@@ -35,6 +35,7 @@ WH_VERSION := $(shell go list -m -f '{{.Version}}' $(WH_FORK)@master 2>/dev/null
 WW_MODULE := webwormhole.io
 WW_FORK := github.com/abakum/webwormhole
 WW_VERSION := $(shell go list -m -f '{{.Version}}' $(WW_FORK)@master 2>/dev/null)
+ANET_FORK := github.com/abakum/anet
 
 repo:
 	@if [ -z "$(CROC_VERSION)" ]; then echo "ERROR: Cannot resolve $(CROC_FORK)@main"; exit 1; fi
@@ -49,6 +50,10 @@ repo:
 	@if [ -z "$(WW_VERSION)" ]; then echo "ERROR: Cannot resolve $(WW_FORK)@master"; exit 1; fi
 	@echo "  $(WW_FORK) $(WW_VERSION)"
 	@go mod edit -replace=$(WW_MODULE)=$(WW_FORK)@$(WW_VERSION)
+	@ANET_VERSION=$$(go list -m -f '{{.Version}}' $(ANET_FORK)@main); \
+	if [ -z "$$ANET_VERSION" ]; then echo "ERROR: Cannot resolve $(ANET_FORK)@main"; exit 1; fi; \
+	echo "  $(ANET_FORK) $$ANET_VERSION"; \
+	go mod edit -replace=github.com/wlynxg/anet=$(ANET_FORK)@$$ANET_VERSION
 	@go mod tidy
 	@echo "Done."
 
@@ -58,6 +63,7 @@ local:
 	@go mod edit -replace=github.com/schollz/peerdiscovery=../peerdiscovery
 	@go mod edit -replace=github.com/psanford/wormhole-william=../wormhole-william
 	@go mod edit -replace=webwormhole.io=../webwormhole
+	@go mod edit -replace=github.com/wlynxg/anet=../anet
 	@go mod tidy
 	@echo "Done."
 

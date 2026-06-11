@@ -10,6 +10,8 @@ replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0
 
 replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc226178a1c3
 
+replace github.com/wlynxg/anet => github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23
+
 require (
 	fyne.io/fyne/v2 v2.7.4
 	github.com/BurntSushi/toml v1.5.0
