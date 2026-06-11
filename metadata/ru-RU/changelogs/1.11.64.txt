@@ -1,0 +1,2 @@
+WebDAV: туннель через webwormhole (WebRTC DataChannels) — схема relay `https:`
+Linux: сборка AppImage с AppStream metainfo

@@ -42,16 +42,20 @@
 
 - 内蔵WebDAVサーバー（HTTP/HTTPS）
 - 自己署名TLS証明書（ローカルIPに基づく決定論的生成）
-- Webブラウザでファイルを閲覧（ディレクトリ一覧）
+- Webブラウザでファイルの閲覧、アップロード（ダイアログまたはドラッグ＆ドロップ）、削除（ディレクトリ一覧）
 - GUI内のWebDAVファイルツリー
 - ホスト/ポートの選択
 - WebDAV経由の音声/動画ストリーミング再生
-- 暗号化トンネル経由でWebDAVを転送（パブリックIPなしでリモートアクセス可能）
+- 暗号化トンネル経由でWebDAVを転送（パブリックIPなしでリモートアクセス可能）:
+  - リレー [croc](https://github.com/schollz/croc/pull/1113) [fork](https://github.com/abakCroc/croc/v10)
+  - リレー [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) — スキーム `ws:` [fork](https://github.com/abakum/wormhole-william)
+  - リレー [webwormhole](https://github.com/saljam/webwormhole) — スキーム `https:` [fork](https://github.com/abakum/webwormhole)
+
 
 ## ビデオ通話
 `F-Droid: Voice & Video Chat` `FreeDesktop: Network;VideoConference` `MS Store: Social` `Google Play: Communication`
 
-- WebRTCによるP2Pビデオ通話（内蔵HTMLページ）
+- P2Pビデオ通話（内蔵HTMLページ）
 - 画面共有: ブラウザタブ、アプリケーションウィンドウ、またはデスクトップ全体
 - ビデオ通話ルーム（作成/参加/待機/終了）
 - WebSocketによるリアルタイム動画+音声配信

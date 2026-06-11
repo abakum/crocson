@@ -1,0 +1,2 @@
+WebDAV: webwormhole (WebRTC DataChannels) üzerinden tünel — röle şeması `https:`
+Linux: AppStream metainfo ile AppImage derlemesi

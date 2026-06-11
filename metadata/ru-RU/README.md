@@ -42,16 +42,20 @@
 
 - Встроенный WebDAV-сервер (HTTP/HTTPS)
 - Самоподписанный TLS-сертификат (детерминированный, по локальным IP)
-- Просмотр файлов через браузер (directory listing)
+- Браузерный просмотр, аплоад через диалог или Drag-and-drop, удаление (directory listing)
 - Дерево файлов WebDAV в GUI
 - Выбор хоста/порта
 - Потоковое воспроизведение аудио/видео через WebDAV
-- Проброс WebDAV через зашифрованный туннель (доступен удалённо без прямого IP)
+- Проброс WebDAV через зашифрованный туннель (доступен удалённо без прямого IP):
+  - посредник [croc](https://github.com/schollz/croc/pull/1113) [fork](https://github.com/abakCroc/croc/v10)
+  - посредник [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) — схема `ws:` [fork](https://github.com/abakum/wormhole-william)
+  - посредник [webwormhole](https://github.com/saljam/webwormhole) — схема `https:` [fork](https://github.com/abakum/webwormhole)
+
 
 ## Видеозвонки
 `F-Droid: Voice & Video Chat` `FreeDesktop: Network;VideoConference` `MS Store: Social` `Google Play: Communication`
 
-- Видеозвонки P2P через WebRTC (встроенная HTML-страница)
+- Видеозвонки P2P (встроенная HTML-страница)
 - Демонстрация экрана: вкладка браузера, окно приложения или весь рабочий стол
 - Комнаты видеозвонков (создание/подключение/ожидание/завершение)
 - Передача видео+аудио в реальном времени через WebSocket

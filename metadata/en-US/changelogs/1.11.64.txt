@@ -1,0 +1,2 @@
+WebDAV: tunnel via webwormhole (WebRTC DataChannels) — relay scheme `https:`
+Linux: AppImage build with AppStream metainfo

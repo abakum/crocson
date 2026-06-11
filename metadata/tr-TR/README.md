@@ -42,16 +42,20 @@
 
 - Yerleşik WebDAV sunucusu (HTTP/HTTPS)
 - Otomatik imzalı TLS sertifikası (deterministik, yerel IP'lere dayalı)
-- Web tarayıcısı üzerinden dosya gezintisi (dizin listeleme)
+- Web tarayıcısı üzerinden dosya gezintisi, yükleme (iletişim kutusu veya sürükle-bırak), silme (dizin listeleme)
 - Arayüzde WebDAV dosya ağacı
 - Ana makine/bağlantı noktası seçimi
 - WebDAV üzerinden ses/video akışı oynatma
-- Şifrelenmiş tünel üzerinden WebDAV yönlendirme (genel IP olmadan uzaktan erişilebilir)
+- Şifrelenmiş tünel üzerinden WebDAV yönlendirme (genel IP olmadan uzaktan erişilebilir):
+  - röle [croc](https://github.com/schollz/croc/pull/1113) [fork](https://github.com/abakCroc/croc/v10)
+  - röle [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) — şema `ws:` [fork](https://github.com/abakum/wormhole-william)
+  - röle [webwormhole](https://github.com/saljam/webwormhole) — şema `https:` [fork](https://github.com/abakum/webwormhole)
+
 
 ## Görüntülü Arama
 `F-Droid: Voice & Video Chat` `FreeDesktop: Network;VideoConference` `MS Store: Social` `Google Play: Communication`
 
-- WebRTC üzerinden P2P görüntülü arama (yerleşik HTML sayfası)
+- P2P görüntülü arama (yerleşik HTML sayfası)
 - Ekran paylaşımı: tarayıcı sekmesi, uygulama penceresi veya tüm masaüstü
 - Görüntülü arama odaları (oluşturma/katılma/bekleme/sonlandırma)
 - WebSocket üzerinden gerçek zamanlı video+ses iletimi

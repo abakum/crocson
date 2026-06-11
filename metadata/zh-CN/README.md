@@ -42,16 +42,20 @@
 
 - 内置 WebDAV 服务器（HTTP/HTTPS）
 - 自签名 TLS 证书（确定性，基于本地 IP）
-- 通过浏览器浏览文件（目录列表）
+- 通过浏览器浏览、上传（对话框或拖放）、删除文件（目录列表）
 - GUI 中的 WebDAV 文件树
 - 主机/端口选择
 - 通过 WebDAV 流式播放音视频
-- 通过加密隧道转发 WebDAV（无需公网 IP 即可远程访问）
+- 通过加密隧道转发 WebDAV（无需公网 IP 即可远程访问）:
+  - 中继 [croc](https://github.com/schollz/croc/pull/1113) [fork](https://github.com/abakCroc/croc/v10)
+  - 中继 [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) — 协议 `ws:` [fork](https://github.com/abakum/wormhole-william)
+  - 中继 [webwormhole](https://github.com/saljam/webwormhole) — 协议 `https:` [fork](https://github.com/abakum/webwormhole)
+
 
 ## 视频通话
 `F-Droid: Voice & Video Chat` `FreeDesktop: Network;VideoConference` `MS Store: Social` `Google Play: Communication`
 
-- 通过 WebRTC 进行 P2P 视频通话（内置 HTML 页面）
+- P2P 视频通话（内置 HTML 页面）
 - 屏幕共享：浏览器标签页、应用窗口或整个桌面
 - 视频通话房间（创建/加入/等待/结束）
 - 通过 WebSocket 实时传输视频和音频

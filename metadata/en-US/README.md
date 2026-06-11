@@ -42,16 +42,20 @@ A fork of [howeyc/crocgui](https://github.com/howeyc/crocgui/releases/tag/v1.11.
 
 - Built-in WebDAV server (HTTP/HTTPS)
 - Self-signed TLS certificate (deterministic, based on local IPs)
-- Browse files via web browser (directory listing)
+- Browse, upload (dialog or drag-and-drop), delete files via web browser (directory listing)
 - WebDAV file tree in GUI
 - Host/port selection
 - Stream audio/video playback via WebDAV
-- Forward WebDAV through encrypted tunnel (accessible remotely without public IP)
+- Forward WebDAV through encrypted tunnel (accessible remotely without public IP):
+  - relay [croc](https://github.com/schollz/croc/pull/1113) [fork](https://github.com/abakCroc/croc/v10)
+  - relay [magic-wormhole](https://github.com/magic-wormhole/magic-wormhole) — scheme `ws:` [fork](https://github.com/abakum/wormhole-william)
+  - relay [webwormhole](https://github.com/saljam/webwormhole) — scheme `https:` [fork](https://github.com/abakum/webwormhole)
+
 
 ## Video Calls
 `F-Droid: Voice & Video Chat` `FreeDesktop: Network;VideoConference` `MS Store: Social` `Google Play: Communication`
 
-- P2P video calls via WebRTC (built-in HTML page)
+- P2P video calls (built-in HTML page)
 - Screen sharing: browser tab, application window, or entire desktop
 - Video call rooms (create/join/wait/end)
 - Real-time video+audio delivery via WebSocket
