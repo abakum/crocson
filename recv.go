@@ -713,6 +713,82 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 
+		if isWebWormholeRelay(relayAddr) {
+			webdavAddr := davServer.addr
+			if webdavAddr == "" || !davServer.IsActive() {
+				fyne.Do(func() {
+					topline.SetText(lp("Use WebDAV for webwormhole relay"))
+					NewToast(w, lp("Use WebDAV for webwormhole relay")).Show()
+				})
+				return
+			}
+			showCancel()
+			allEnabled(false, cosED...)
+			if davServer.IsActive() {
+				allEnabled(true, cosDAV...)
+			}
+			if totpCheck.Checked {
+				totpProg.Hide()
+			}
+			go func() {
+				davServer.Stop()
+				var wormholeCtx context.Context
+				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
+
+				defer func() {
+					wormholeCancel = nil
+					select {
+					case <-cancelChan:
+					default:
+						close(cancelChan)
+					}
+					davServer.NotifyProxyState(false)
+					davServer.DisableTCPForwarding()
+					caffeinate(-1)
+					fyne.Do(func() {
+						cancelButton.Hide()
+						mainButton.Show()
+						allShow(false, cosSH...)
+						allEnabled(true, cosED...)
+						if totpCheck.Checked {
+							totpProg.Show()
+						}
+						reload()
+						showPage()
+						log.Warnf("NumGoroutine %d", runtime.NumGoroutine())
+					})
+					davServer.Start(webdavAddr, join(), false)
+				}()
+
+				caffeinate(1)
+
+				wt, err := startWebWormholeReceiver(wormholeCtx, secret, relayAddr, "", webdavAddr)
+				if err != nil {
+					log.Errorf("webwormhole receiver: %v", err)
+					fyne.Do(func() {
+						if wormholeCtx.Err() != nil {
+							topline.SetText(lp("Receive cancelled."))
+						} else {
+							topline.SetText(err.Error())
+						}
+					})
+					return
+				}
+				defer wt.Close()
+				fyne.Do(func() {
+					topline.SetText(lp("Connected via webwormhole"))
+					davServer.SetLocal(true)
+				})
+				davServer.NotifyProxyState(true)
+				select {
+				case <-appCtx.Done():
+				case <-cancelChan:
+				case <-wt.ctx.Done():
+				}
+			}()
+			return
+		}
+
 		if !cdLock.CompareAndSwap(0, 1) {
 			NewToast(w, lp("Cancel")+" "+lp("Send")).Show()
 			return

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 	"sync"
 
@@ -18,6 +19,15 @@ const (
 	DefaultWormholeTransit = ""
 )
 
+type tunnelInterface interface {
+	Dial(ctx context.Context, addr string) (net.Conn, error)
+	Forward(ctx context.Context, localAddr string) error
+	Serve(ctx context.Context, localAddr string) error
+	Close() error
+}
+
+var _ tunnelInterface = (*tunnel.Tunnel)(nil)
+
 func isWormholeRelay(addr string) bool {
 	return strings.HasPrefix(addr, "ws:") || strings.HasPrefix(addr, "wss:") || strings.Contains(addr, "/v")
 }
@@ -28,6 +38,7 @@ func maskSecret(p string) string {
 	}
 	return "***"
 }
+
 func resolveTransit(pass string) string {
 	if pass != "" && pass != DEFAULT_PASSPHRASE {
 		log.Debugf("wormhole transit=%s", maskSecret(pass))
@@ -64,7 +75,7 @@ func ensureMailboxURL(addr string) string {
 }
 
 type WormholeTunnel struct {
-	tunnel *tunnel.Tunnel
+	tunnel tunnelInterface
 	cancel context.CancelFunc
 	ctx    context.Context
 	wg     sync.WaitGroup
@@ -80,7 +91,7 @@ func (wt *WormholeTunnel) Close() error {
 	return err
 }
 
-func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, _ string) (string, func() (*tunnel.Tunnel, error), *WormholeTunnel, error) {
+func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitAddr, _ string) (string, func() (tunnelInterface, error), *WormholeTunnel, error) {
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	whClient := wh.Client{
@@ -94,10 +105,16 @@ func startWormholeSender(parentCtx context.Context, secret, mailboxURL, transitA
 		return "", nil, nil, fmt.Errorf("wormhole prepare tunnel: %w", err)
 	}
 
-	return code, connect, &WormholeTunnel{
-		cancel: cancel,
-		ctx:    ctx,
-	}, nil
+	return code, func() (tunnelInterface, error) {
+			t, err := connect()
+			if err != nil {
+				return nil, err
+			}
+			return t, nil
+		}, &WormholeTunnel{
+			cancel: cancel,
+			ctx:    ctx,
+		}, nil
 }
 
 func startWormholeReceiver(parentCtx context.Context, secret, mailboxURL, transitAddr, webdavAddr string) (*WormholeTunnel, error) {

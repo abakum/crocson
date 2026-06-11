@@ -809,6 +809,101 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 	mainButton = widget.NewButtonWithIcon(lp("Send"), theme.MailSendIcon(), func() {
 		fyne.Do(func() { topline.SetText("") })
+
+		relayAddr := a.Preferences().String("relay-address")
+
+		if isWebWormholeRelay(relayAddr) {
+			webdavAddr := davServer.addr
+			if webdavAddr == "" || !davServer.IsActive() {
+				fyne.Do(func() {
+					topline.SetText(lp("Use WebDAV for webwormhole relay"))
+					NewToast(w, lp("Use WebDAV for webwormhole relay")).Show()
+				})
+				return
+			}
+			showCancel()
+			fyne.Do(func() {
+				allEnabled(false, cosED...)
+				if treeButton.Icon == theme.VisibilityOffIcon() {
+					allEnabled(true, cosDAV...)
+				}
+				if totpCheck.Checked {
+					totpProg.Hide()
+				}
+				topline.SetText(lp("Have them press the Download now"))
+			})
+			go func() {
+				var wormholeCtx context.Context
+				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
+
+				defer func() {
+					wormholeCancel = nil
+					select {
+					case <-cancelChan:
+					default:
+						close(cancelChan)
+					}
+					davServer.DisableTCPForwarding()
+					caffeinate(-1)
+					fyne.Do(func() {
+						cancelButton.Hide()
+						mainButton.Show()
+						davServer.SetLocal(false)
+						if treeButton.Icon == theme.VisibilityIcon() {
+							davControl.Hide()
+						}
+						allShow(false, cosSH...)
+						allEnabled(true, cosED...)
+						if totpCheck.Checked {
+							totpProg.Show()
+						}
+						reload()
+						showPage()
+						log.Warnf("NumGoroutine %d", runtime.NumGoroutine())
+					})
+				}()
+
+				caffeinate(1)
+
+				code, connectFn, wt, err := startWebWormholeSender(wormholeCtx, relayAddr, "")
+				if err != nil {
+					log.Errorf("webwormhole sender: %v", err)
+					fyne.Do(func() {
+						if wormholeCtx.Err() != nil {
+							topline.SetText(lp("Send cancelled."))
+						} else {
+							topline.SetText(err.Error())
+						}
+					})
+					return
+				}
+				defer wt.Close()
+				fyne.Do(func() {
+					a.Preferences().SetString("secret", code)
+					setClipboard(a)
+					NewToast(w, code).Show()
+				})
+				t, err := connectFn()
+				if err != nil {
+					log.Errorf("webwormhole connect: %v", err)
+					fyne.Do(func() {
+						if wormholeCtx.Err() != nil {
+							topline.SetText(lp("Send cancelled."))
+						} else {
+							topline.SetText(err.Error())
+						}
+					})
+					return
+				}
+				wt.tunnel = t
+				log.Debugf("[webwormhole] calling Serve localAddr=%s", webdavAddr)
+				if err := wt.tunnel.Serve(wormholeCtx, webdavAddr); err != nil && wormholeCtx.Err() == nil {
+					log.Errorf("webwormhole tunnel serve: %v", err)
+				}
+			}()
+			return
+		}
+
 		if entry.Validate() != nil {
 			log.Error("no receive code entered")
 			fyne.Do(func() {
@@ -826,7 +921,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 
-		relayAddr := a.Preferences().String("relay-address")
 		if isWormholeRelay(relayAddr) {
 			secret := entry.Text
 			if totpCheck.Checked {

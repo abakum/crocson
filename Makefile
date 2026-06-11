@@ -32,6 +32,9 @@ PEER_FORK := github.com/abakum/peerdiscovery
 PEER_VERSION := $(shell go list -m -f '{{.Version}}' $(PEER_FORK)@main 2>/dev/null)
 WH_FORK := github.com/abakum/wormhole-william
 WH_VERSION := $(shell go list -m -f '{{.Version}}' $(WH_FORK)@master 2>/dev/null)
+WW_MODULE := webwormhole.io
+WW_FORK := github.com/abakum/webwormhole
+WW_VERSION := $(shell go list -m -f '{{.Version}}' $(WW_FORK)@master 2>/dev/null)
 
 repo:
 	@if [ -z "$(CROC_VERSION)" ]; then echo "ERROR: Cannot resolve $(CROC_FORK)@main"; exit 1; fi
@@ -40,9 +43,12 @@ repo:
 	@if [ -z "$(PEER_VERSION)" ]; then echo "ERROR: Cannot resolve $(PEER_FORK)@main"; exit 1; fi
 	@echo "  $(PEER_FORK) $(PEER_VERSION)"
 	@go mod edit -replace=github.com/schollz/peerdiscovery=$(PEER_FORK)@$(PEER_VERSION)
-	@if [ -z "$(WH_VERSION)" ]; then echo "ERROR: Cannot resolve $(PEER_FORK)@master"; exit 1; fi
+	@if [ -z "$(WH_VERSION)" ]; then echo "ERROR: Cannot resolve $(WH_FORK)@master"; exit 1; fi
 	@echo "  $(WH_FORK) $(WH_VERSION)"
 	@go mod edit -replace=github.com/psanford/wormhole-william=$(WH_FORK)@$(WH_VERSION)
+	@if [ -z "$(WW_VERSION)" ]; then echo "ERROR: Cannot resolve $(WW_FORK)@master"; exit 1; fi
+	@echo "  $(WW_FORK) $(WW_VERSION)"
+	@go mod edit -replace=$(WW_MODULE)=$(WW_FORK)@$(WW_VERSION)
 	@go mod tidy
 	@echo "Done."
 
@@ -51,6 +57,7 @@ local:
 	@go mod edit -replace=github.com/schollz/croc/v10=../abakCroc/croc
 	@go mod edit -replace=github.com/schollz/peerdiscovery=../peerdiscovery
 	@go mod edit -replace=github.com/psanford/wormhole-william=../wormhole-william
+	@go mod edit -replace=webwormhole.io=../webwormhole
 	@go mod tidy
 	@echo "Done."
 
