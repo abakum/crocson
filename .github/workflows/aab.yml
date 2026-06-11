@@ -167,43 +167,88 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: Read version and app ID from FyneApp.toml
+      - name: RuStore — upload AAB (draft)
         if: ${{ inputs.upload-rustore }}
-        id: version
+        id: rustore
+        env:
+          RUSTORE_KEY_ID: ${{ secrets.RUSTORE_KEY_ID }}
+          RUSTORE_PRIVATE_KEY: ${{ secrets.RUSTORE_KEY_SECRET }}
         run: |
-          FYNEAPP_TOML="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
-          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
-          APP_ID=$(grep -E '^\s*ID\s*=' "$FYNEAPP_TOML" | sed -E 's/^\s*ID\s*=\s*"([^"]+)".*/\1/')
+          set -euo pipefail
+
+          AAB="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
+          FYNEAPP="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
+
+          APP_ID=$(grep -E '^\s*ID\s*=' "$FYNEAPP" | sed -E 's/^\s*ID\s*=\s*"([^"]+)".*/\1/')
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
           CHANGELOG="$GITHUB_WORKSPACE/workspace/crocson/metadata/ru-RU/changelogs/${VERSION_NAME}.txt"
           if [ -f "$CHANGELOG" ]; then
             WHATS_NEW=$(cat "$CHANGELOG")
           else
             WHATS_NEW="crocson v${VERSION_NAME}"
           fi
-          echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
-          echo "whats_new<<EOF" >> $GITHUB_OUTPUT
-          echo "$WHATS_NEW" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: RuStore — upload AAB (draft)
-        if: ${{ inputs.upload-rustore }}
-        id: rustore
-        uses: Suro4ek/rustore-action@v0.0.1
-        with:
-          key_id: ${{ secrets.RUSTORE_KEY_ID }}
-          private_key: ${{ secrets.RUSTORE_KEY_SECRET }}
-          application_id: '${{ steps.version.outputs.app_id }}'
-          file: '${{ github.workspace }}/workspace/crocson/crocson.aab'
-          whats_new: '${{ steps.version.outputs.whats_new }}'
-          publish_type: 'MANUAL'
-          submit: 'false'
+          echo "App: $APP_ID  Version: $VERSION_NAME"
+          echo "AAB: $(ls -la "$AAB" | awk '{print $5}') bytes"
 
-      - name: RuStore — print result
-        if: ${{ inputs.upload-rustore }}
-        run: |
-          echo "version_id=${{ steps.rustore.outputs.version_id }}"
-          echo "status=${{ steps.rustore.outputs.status }}"
+          # 1. Auth — SHA512withRSA(keyId + timestamp) per RuStore docs
+          TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')
+          SIGNATURE=$(printf '%s%s' "$RUSTORE_KEY_ID" "$TIMESTAMP" \
+            | openssl dgst -sha512 -sign <(echo "$RUSTORE_PRIVATE_KEY" | base64 -d) \
+            | base64 -w0)
+
+          TOKEN=$(curl -sS -X POST https://public-api.rustore.ru/public/auth/ \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg kid "$RUSTORE_KEY_ID" \
+                     --arg ts "$TIMESTAMP" \
+                     --arg sig "$SIGNATURE" \
+                     '{keyId:$kid, timestamp:$ts, signature:$sig}')" \
+            | jq -r '.body.jwe')
+
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "ERROR: RuStore auth failed"
+            exit 1
+          fi
+          echo "Auth OK"
+
+          # 2. Create draft
+          DRAFT_RESP=$(curl -sS -X POST \
+            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version" \
+            -H 'Content-Type: application/json' \
+            -H "Public-Token: $TOKEN" \
+            -d "$(jq -n --arg wn "$WHATS_NEW" '{whatsNew:$wn, publishType:"MANUAL"}')")
+
+          echo "Draft response:"
+          echo "$DRAFT_RESP" | jq .
+
+          VERSION_ID=$(echo "$DRAFT_RESP" | jq -r '.body // empty')
+          if [ -z "$VERSION_ID" ]; then
+            VERSION_ID=$(echo "$DRAFT_RESP" | jq -r '.message' | grep -oP 'ID\s*=\s*\K\d+')
+          fi
+          if [ -z "$VERSION_ID" ]; then
+            echo "ERROR: Could not create/find draft"
+            exit 1
+          fi
+          echo "Draft ID: $VERSION_ID"
+
+          # 3. Upload AAB — curl -F per official RuStore docs
+          UPLOAD_RESP=$(curl -sS --location --request POST \
+            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version/${VERSION_ID}/aab" \
+            -H "Public-Token: $TOKEN" \
+            --form "file=@${AAB}")
+
+          echo "Upload response:"
+          echo "$UPLOAD_RESP" | jq .
+
+          CODE=$(echo "$UPLOAD_RESP" | jq -r '.code')
+          if [ "$CODE" != "OK" ]; then
+            echo "ERROR: AAB upload failed"
+            exit 1
+          fi
+          echo "AAB uploaded to draft $VERSION_ID"
+
+          echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
+          echo "status=draft" >> $GITHUB_OUTPUT
 
       - name: Cleanup keystores
         if: always()
