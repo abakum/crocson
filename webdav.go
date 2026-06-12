@@ -540,9 +540,10 @@ func generateTLSConfig(addrs ...string) (*tls.Config, error) {
 
 // Stop останавливает сервер и прокси если есть
 func (s *WebDAVServer) Stop() error {
-	broadcastClose()
-	broadcastCloseCalls()
-	time.Sleep(100 * time.Millisecond)
+	broadcastClose(func() {
+		broadcastCloseCalls()
+		time.Sleep(100 * time.Millisecond)
+	})
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

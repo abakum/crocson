@@ -4,8 +4,8 @@ Website = "https://github.com/abakum/crocson/releases"
 Icon = "res/mipmap-xxxhdpi-v4/icon.png"
 Name = "crocson"
 ID = "com.github.abakum.crocson"
-Version = "1.11.64"
-Build = 1948
+Version = "1.11.65"
+Build = 1949
 
 [Source]
 Repo = "https://github.com/abakum/crocson"
@@ -14,4 +14,4 @@ Repo = "https://github.com/abakum/crocson"
 GenericName = "GUI for croc"
 Categories = ["Network", "FileTransfer", "Telephony", "Security"]
 Comment = "A simple GUI for croc"
-Keywords = ["croc", "fyne", "p2p", "webdav", "webchat", "gui", "cli", "magic-wormhole", "qr", "media-recording", "screen-sharing"]
+Keywords = ["croc", "fyne", "p2p", "webdav", "webchat", "gui", "cli", "magic-wormhole", "webwormhole", "qr", "media-recording", "screen-sharing"]

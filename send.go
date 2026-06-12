@@ -638,7 +638,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 
 			log.Debugf("[createWebDAVTree] Opening URL: %s", fullURLStr)
-			chatOpened.Store(true) // сброс: браузер открыт вручную через дерево
+			if uid == webdavURL.String() {
+				broadcastClose(nil)
+			}
 			time.AfterFunc(100*time.Millisecond, func() {
 				OpenURL(fullURLStr)
 			})
@@ -708,7 +710,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			_, ccn, proxyURL, _ := isDAV(link.URL.String())
 			log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
 			chatURL = ccn
-			chatOpened.Store(false)
 			go func() {
 				if cancelWS != nil {
 					cancelWS()
@@ -727,8 +728,11 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				}
 
+				opened := false
 				wsRefreshRemote(wsCtx, proxyURL.String(), onRefresh, func() {
-					if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
+					if !opened && chatURL != "" {
+						opened = true
+						broadcastClose(nil)
 						log.Debugf("[ws] auto-opening browser: %s", chatURL)
 						OpenURL(chatURL)
 					}
@@ -1538,9 +1542,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					// deepLink davX: webdavX:
 					if _, ccn, _, ok := isDAV(uriString); ok {
 						log.Debugf("[intent] isDAV ccn=%q, opening manually", ccn)
-						if err := OpenURL(ccn); err == nil {
-							chatOpened.Store(true)
-						} else {
+						if err := OpenURL(ccn); err != nil {
 							log.Error(err)
 						}
 						continue

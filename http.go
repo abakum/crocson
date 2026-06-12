@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	log "github.com/schollz/logger"
@@ -109,7 +108,7 @@ func broadcastRefresh() {
 	}
 }
 
-func broadcastClose() {
+func broadcastClose(after func()) {
 	chatWSClients.mu.RLock()
 	n := len(chatWSClients.clients)
 	chatWSClients.mu.RUnlock()
@@ -122,11 +121,14 @@ func broadcastClose() {
 		return
 	}
 	chatWSClients.mu.RLock()
-	defer chatWSClients.mu.RUnlock()
 	for client := range chatWSClients.clients {
 		client.mu.Lock()
 		client.conn.WriteMessage(websocket.TextMessage, data)
 		client.mu.Unlock()
+	}
+	chatWSClients.mu.RUnlock()
+	if after != nil {
+		after()
 	}
 }
 
@@ -263,9 +265,6 @@ var chatStore = &ChatStorage{
 	messages: make([]Message, 0),
 	notifyCh: make(chan struct{}, 1),
 }
-
-// chatOpened — флаг: браузер чата уже открыт (auto или вручную)
-var chatOpened atomic.Bool
 
 // chatURL — URL для открытия чата (устанавливается в switchToWebDAVTree)
 var chatURL string

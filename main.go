@@ -456,6 +456,7 @@ func ls(path string) (files []string) {
 
 func cleanup(w fyne.Window) {
 	saveAccordionState()
+	broadcastClose(func() { time.Sleep(100 * time.Millisecond) })
 	appCancel()
 	if err := os.Chdir(join()); err == nil {
 		utils.RemoveMarkedFiles()
