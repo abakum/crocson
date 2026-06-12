@@ -60,7 +60,7 @@ const (
 	feSave
 )
 
-func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func()) {
+func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func(), onChatMessage func()) {
 	wsScheme := "ws"
 	if strings.HasPrefix(httpURL, "https") {
 		wsScheme = "wss"
@@ -122,6 +122,11 @@ func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func()) {
 				if onRefresh != nil {
 					onRefresh()
 				}
+				continue
+			}
+
+			if onChatMessage != nil {
+				onChatMessage()
 			}
 		}
 	}
@@ -705,78 +710,30 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			chatURL = ccn
 			chatOpened.Store(false)
 			go func() {
-				errCount := 0
-				resp, err := insecureHTTPClient.Get(proxyURL.String() + "/api/messages")
-				if err != nil {
-					errCount++
-					log.Debugf("[long-poll] initial fetch error (%d/3): %v", errCount, err)
-					if errCount >= 3 {
-						return
-					}
-				} else {
-					var initialMsgs []Message
-					json.NewDecoder(resp.Body).Decode(&initialMsgs)
-					resp.Body.Close()
-					lastCount := len(initialMsgs)
-					log.Debugf("[long-poll] baseline: %d messages", lastCount)
-
-					for {
-						if chatOpened.Load() {
-							return
-						}
-						select {
-						case <-appCtx.Done():
-							return
-						default:
-						}
-
-						waitResp, err := insecureHTTPClient.Get(fmt.Sprintf("%s/api/messages/wait?since=%d", proxyURL.String(), lastCount))
-						if err != nil {
-							errCount++
-							if errCount >= 3 {
-								log.Debugf("[long-poll] giving up after %d errors", errCount)
-								return
-							}
-							log.Debugf("[long-poll] error (%d/3): %v", errCount, err)
-							select {
-							case <-appCtx.Done():
-								return
-							case <-time.After(5 * time.Second):
-								continue
-							}
-						}
-						errCount = 0
-						var result struct{ Count int }
-						json.NewDecoder(waitResp.Body).Decode(&result)
-						waitResp.Body.Close()
-
-						if result.Count > lastCount {
-							lastCount = result.Count
-							if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
-								log.Debugf("[long-poll] auto-opening browser: %s", chatURL)
-								OpenURL(chatURL)
-							}
-							return
-						}
-					}
-				}
-			}()
-			if !davServer.IsActive() {
 				if cancelWS != nil {
 					cancelWS()
 				}
 				var wsCtx context.Context
 				wsCtx, cancelWS = context.WithCancel(appCtx)
-				go wsRefreshRemote(wsCtx, proxyURL.String(),
-					func() {
+
+				var onRefresh func()
+				if !davServer.IsActive() {
+					onRefresh = func() {
 						fyne.Do(func() {
 							if ft, ok := scroller.Content.(*WebDAVFileTree); ok {
 								ft.ForceRefresh()
 							}
 						})
-					},
-				)
-			}
+					}
+				}
+
+				wsRefreshRemote(wsCtx, proxyURL.String(), onRefresh, func() {
+					if chatOpened.CompareAndSwap(false, true) && chatURL != "" {
+						log.Debugf("[ws] auto-opening browser: %s", chatURL)
+						OpenURL(chatURL)
+					}
+				})
+			}()
 			scroller.Content = createWebDAVTree(proxyURL)
 			de.Bounce(ti.Content.Refresh)
 		}
