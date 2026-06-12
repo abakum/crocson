@@ -642,30 +642,8 @@ func (t *WebDAVFileTree) CheckConnection(ctx context.Context) error {
 }
 
 // Refresh обновляет дерево файлов почему-то на каждой вкладке
-func (t *WebDAVFileTree) Refresh() {
-	if at != nil {
-		if atSI := at.SelectedIndex(); atSI != SENDi {
-			// log.Debugf("[Refresh] from %d", atSI)
-			return
-		}
-	}
-	// Защита от многократных обновлений
-	if t.isRefreshing {
-		// log.Debugf("[Refresh] Already refreshing, skipping")
-		return
-	}
-	t.isRefreshing = true
-	defer func() {
-		t.isRefreshing = false
-	}()
+func (t *WebDAVFileTree) startRefresh() {
 
-	// Debounce: не обновляем если прошло менее 1s с последнего обновления
-	if !t.lastRefresh.IsZero() && time.Since(t.lastRefresh) < time.Second {
-		// log.Debugf("[Refresh] Skipping - refreshed too recently (%v ago)", time.Since(t.lastRefresh))
-		return
-	}
-
-	t.lastRefresh = time.Now()
 	// log.Debugf("[Refresh] Starting full tree refresh")
 
 	// Запускаем асинхронное обновление с timeout и singleflight
@@ -752,6 +730,41 @@ func (t *WebDAVFileTree) Refresh() {
 			return
 		}
 	}()
+}
+
+func (t *WebDAVFileTree) Refresh() {
+	if at != nil {
+		if atSI := at.SelectedIndex(); atSI != SENDi {
+			return
+		}
+	}
+	if t.isRefreshing {
+		return
+	}
+	t.isRefreshing = true
+	defer func() {
+		t.isRefreshing = false
+	}()
+
+	if !t.lastRefresh.IsZero() && time.Since(t.lastRefresh) < time.Second {
+		return
+	}
+
+	t.lastRefresh = time.Now()
+	t.startRefresh()
+}
+
+func (t *WebDAVFileTree) ForceRefresh() {
+	if at != nil {
+		if atSI := at.SelectedIndex(); atSI != SENDi {
+			return
+		}
+	}
+
+	t.requestGroup.Forget("refresh")
+	t.lastRefresh = time.Time{}
+
+	t.startRefresh()
 }
 
 // uploadHTTPClient — HTTP-клиент для загрузки файлов на WebDAV без таймаута

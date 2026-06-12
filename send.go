@@ -40,6 +40,9 @@ import (
 	"github.com/schollz/croc/v10/src/message"
 	"github.com/schollz/croc/v10/src/utils"
 	"github.com/schollz/mnemonicode"
+	"crypto/tls"
+
+	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/scrypt"
 )
 
@@ -57,6 +60,73 @@ const (
 	feSave
 )
 
+func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func()) {
+	wsScheme := "ws"
+	if strings.HasPrefix(httpURL, "https") {
+		wsScheme = "wss"
+	}
+	wsURL := strings.Replace(httpURL, "http", wsScheme, 1) + "/api/chat/ws"
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if !davServer.IsRemote() && !davServer.IsTCPForwardingActive() {
+			log.Debugf("[ws-refresh] tunnel down, stopping")
+			return
+		}
+
+		dialer := websocket.Dialer{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		conn, _, err := dialer.Dial(wsURL, nil)
+		if err != nil {
+			log.Debugf("[ws-refresh] dial error: %v", err)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(3 * time.Second):
+				continue
+			}
+		}
+		log.Debugf("[ws-refresh] connected to %s", wsURL)
+
+		connDone := make(chan struct{})
+		go func() {
+			select {
+			case <-ctx.Done():
+				conn.Close()
+			case <-connDone:
+			}
+		}()
+
+		for {
+			_, data, err := conn.ReadMessage()
+			if err != nil {
+				close(connDone)
+				conn.Close()
+				log.Debugf("[ws-refresh] read error: %v", err)
+				break
+			}
+
+			if len(data) > 0 && data[0] == '[' {
+				continue
+			}
+
+			var cmd struct{ Cmd string `json:"cmd"` }
+			if json.Unmarshal(data, &cmd) == nil && cmd.Cmd == "refresh" {
+				log.Debugf("[ws-refresh] refresh received")
+				if onRefresh != nil {
+					onRefresh()
+				}
+			}
+		}
+	}
+}
+
 func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	var (
 		cosED,
@@ -69,6 +139,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		reload      func()
 		treeOff     = func() {}
 		scRefresh   = func() {}
+		cancelWS    context.CancelFunc
 
 		boxholder = container.NewVBox()
 		scroller  = container.NewVScroll(boxholder)
@@ -690,6 +761,22 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				}
 			}()
+			if !davServer.IsActive() {
+				if cancelWS != nil {
+					cancelWS()
+				}
+				var wsCtx context.Context
+				wsCtx, cancelWS = context.WithCancel(appCtx)
+				go wsRefreshRemote(wsCtx, proxyURL.String(),
+					func() {
+						fyne.Do(func() {
+							if ft, ok := scroller.Content.(*WebDAVFileTree); ok {
+								ft.ForceRefresh()
+							}
+						})
+					},
+				)
+			}
 			scroller.Content = createWebDAVTree(proxyURL)
 			de.Bounce(ti.Content.Refresh)
 		}

@@ -2,7 +2,7 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1945"
+    android:versionCode="1947"
     android:versionName="1.11.64"
     package="com.github.abakum.crocson">
 
