@@ -9,7 +9,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -750,6 +752,208 @@ func (t *WebDAVFileTree) Refresh() {
 			return
 		}
 	}()
+}
+
+// uploadHTTPClient — HTTP-клиент для загрузки файлов на WebDAV без таймаута
+var uploadHTTPClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec // самоподписанный сертификат
+		},
+	},
+}
+
+// uploadToWebDAV загружает файл или директорию на WebDAV сервер через туннель.
+// onFileDone вызывается после каждого файла с именем и ошибкой (nil при успехе).
+func uploadToWebDAV(localPath string, targetURL *url.URL, onFileDone func(name string, err error)) error {
+	fi, err := os.Stat(localPath)
+	if err != nil {
+		return fmt.Errorf("stat %s: %w", localPath, err)
+	}
+
+	if fi.IsDir() {
+		return uploadDirToWebDAV(localPath, targetURL, onFileDone)
+	}
+	return uploadFileToWebDAV(localPath, targetURL, onFileDone)
+}
+
+func uploadFileToWebDAV(filePath string, targetURL *url.URL, onFileDone func(name string, err error)) error {
+	base := filepath.Base(filePath)
+	uploadURL := fmt.Sprintf("%s://%s%s", targetURL.Scheme, targetURL.Host,
+		path.Join("/", targetURL.Path, url.PathEscape(base)))
+
+	f, err := os.Open(filePath)
+	if err != nil {
+		if onFileDone != nil {
+			onFileDone(base, err)
+		}
+		return fmt.Errorf("open %s: %w", filePath, err)
+	}
+	defer f.Close()
+
+	req, err := http.NewRequest(http.MethodPut, uploadURL, f)
+	if err != nil {
+		if onFileDone != nil {
+			onFileDone(base, err)
+		}
+		return fmt.Errorf("create request %s: %w", base, err)
+	}
+
+	resp, err := uploadHTTPClient.Do(req)
+	if err != nil {
+		if onFileDone != nil {
+			onFileDone(base, err)
+		}
+		return fmt.Errorf("upload %s: %w", base, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		err = fmt.Errorf("upload %s: HTTP %d", base, resp.StatusCode)
+		if onFileDone != nil {
+			onFileDone(base, err)
+		}
+		return err
+	}
+
+	if onFileDone != nil {
+		onFileDone(base, nil)
+	}
+	return nil
+}
+
+func uploadDirToWebDAV(dirPath string, targetURL *url.URL, onFileDone func(name string, err error)) error {
+	base := filepath.Base(dirPath)
+	rootURL := fmt.Sprintf("%s://%s%s", targetURL.Scheme, targetURL.Host,
+		path.Join("/", targetURL.Path, url.PathEscape(base)))
+
+	if err := mkcolWebDAV(rootURL); err != nil {
+		log.Warnf("mkcol %s: %v", rootURL, err)
+	}
+
+	return filepath.Walk(dirPath, func(walkPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(dirPath, walkPath)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+
+		webdavRel := path.Join(base, filepath.ToSlash(rel))
+
+		if info.IsDir() {
+			dirURL := fmt.Sprintf("%s://%s%s", targetURL.Scheme, targetURL.Host,
+				path.Join("/", targetURL.Path, url.PathEscape(webdavRel)))
+			if mkErr := mkcolWebDAV(dirURL); mkErr != nil {
+				log.Warnf("mkcol %s: %v", dirURL, mkErr)
+			}
+			return nil
+		}
+
+		fileURL := fmt.Sprintf("%s://%s%s", targetURL.Scheme, targetURL.Host,
+			path.Join("/", targetURL.Path, url.PathEscape(webdavRel)))
+
+		f, err := os.Open(walkPath)
+		if err != nil {
+			if onFileDone != nil {
+				onFileDone(filepath.Base(walkPath), err)
+			}
+			return nil
+		}
+		defer f.Close()
+
+		req, err := http.NewRequest(http.MethodPut, fileURL, f)
+		if err != nil {
+			if onFileDone != nil {
+				onFileDone(filepath.Base(walkPath), err)
+			}
+			return nil
+		}
+
+		resp, err := uploadHTTPClient.Do(req)
+		if err != nil {
+			if onFileDone != nil {
+				onFileDone(filepath.Base(walkPath), err)
+			}
+			return nil
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			if onFileDone != nil {
+				onFileDone(filepath.Base(walkPath), fmt.Errorf("HTTP %d", resp.StatusCode))
+			}
+			return nil
+		}
+
+		if onFileDone != nil {
+			onFileDone(filepath.Base(walkPath), nil)
+		}
+		return nil
+	})
+}
+
+func mkcolWebDAV(targetURL string) error {
+	req, err := http.NewRequest("MKCOL", targetURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := uploadHTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
+func uploadFromURC(source fyne.URIReadCloser, targetURL *url.URL, onFileDone func(name string, err error)) {
+	if source == nil {
+		if onFileDone != nil {
+			onFileDone("", fmt.Errorf("nil source"))
+		}
+		return
+	}
+	defer source.Close()
+
+	name := uriBase(source.URI())
+	if name == "" || name == "/" {
+		name = "file"
+	}
+	uploadURL := fmt.Sprintf("%s://%s%s", targetURL.Scheme, targetURL.Host,
+		path.Join("/", targetURL.Path, url.PathEscape(name)))
+
+	req, err := http.NewRequest(http.MethodPut, uploadURL, source)
+	if err != nil {
+		if onFileDone != nil {
+			onFileDone(name, err)
+		}
+		return
+	}
+
+	resp, err := uploadHTTPClient.Do(req)
+	if err != nil {
+		if onFileDone != nil {
+			onFileDone(name, err)
+		}
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		if onFileDone != nil {
+			onFileDone(name, fmt.Errorf("HTTP %d", resp.StatusCode))
+		}
+		return
+	}
+
+	if onFileDone != nil {
+		onFileDone(name, nil)
+	}
 }
 
 // GetNodeURL возвращает URL для заданного узла

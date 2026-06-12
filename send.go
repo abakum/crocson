@@ -62,7 +62,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		cosED,
 		cosSH,
 		cosDAV,
-		cosDAVremote []fyne.CanvasObject
+		cosDAVremote,
+		cosPickers []fyne.CanvasObject
 		removeEntry func(fpath string, fe *fyne.Container, del bool)
 		showPage    func()
 		reload      func()
@@ -824,6 +825,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			showCancel()
 			fyne.Do(func() {
 				allEnabled(false, cosED...)
+				if davServer.IsRemote() {
+					allEnabled(true, cosPickers...)
+				}
 				if treeButton.Icon == theme.VisibilityOffIcon() {
 					allEnabled(true, cosDAV...)
 				}
@@ -946,6 +950,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			showCancel()
 			fyne.Do(func() {
 				allEnabled(false, cosED...)
+				if davServer.IsRemote() {
+					allEnabled(true, cosPickers...)
+				}
 				if treeButton.Icon == theme.VisibilityOffIcon() {
 					allEnabled(true, cosDAV...)
 				}
@@ -1205,6 +1212,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			fyne.Do(func() {
 
 				allEnabled(false, cosED...)
+				if davServer.IsRemote() {
+					allEnabled(true, cosPickers...)
+				}
 				if treeButton.Icon == theme.VisibilityOffIcon() {
 					allEnabled(true, cosDAV...)
 				}
@@ -1492,6 +1502,52 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						continue
 					}
 
+					if davServer.IsRemote() && link.URL != nil {
+						u, err := storage.ParseURI(uriString)
+						if err != nil {
+							log.Errorf("parse %s: %v", uriString, err)
+							continue
+						}
+						_, _, proxyURL, _ := isDAV(link.URL.String())
+						if proxyURL == nil {
+							continue
+						}
+						onUploaded := func(name string, ferr error) {
+							fyne.Do(func() {
+								if ferr != nil {
+									topline.SetText(fmt.Sprintf("upload %s: %v", name, ferr))
+								} else {
+									NewToast(w, "Uploaded "+name).Show()
+									topline.SetText("Uploaded " + name)
+								}
+							})
+						}
+
+						if u.Scheme() == "file" {
+							go func() {
+								if err := uploadToWebDAV(u.Path(), proxyURL, onUploaded); err != nil {
+									log.Errorf("upload %s: %v", u.Path(), err)
+								}
+								scRefresh()
+							}()
+							continue
+						}
+
+						if IsDirectory(u) {
+							continue
+						}
+						source, err := Reader(u)
+						if err != nil {
+							log.Errorf("reader: %v", err)
+							continue
+						}
+						go uploadFromURC(source, proxyURL, func(name string, ferr error) {
+							onUploaded(name, ferr)
+							scRefresh()
+						})
+						continue
+					}
+
 					if entry.Disabled() {
 						log.Debug("Sending")
 						log.Debug("doneProcessIntent")
@@ -1688,6 +1744,35 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			if len(uris) == 0 {
 				return
 			}
+			if davServer.IsRemote() && link.URL != nil {
+				_, _, proxyURL, _ := isDAV(link.URL.String())
+				if proxyURL == nil {
+					return
+				}
+				go func() {
+					for _, uri := range uris {
+						p := uri.Path()
+						err := uploadToWebDAV(p, proxyURL, func(name string, ferr error) {
+							fyne.Do(func() {
+								if ferr != nil {
+									topline.SetText(fmt.Sprintf("upload %s: %v", name, ferr))
+								} else {
+									NewToast(w, "Uploaded "+name).Show()
+									topline.SetText("Uploaded " + name)
+								}
+							})
+						})
+						if err != nil {
+							log.Errorf("upload %s: %v", p, err)
+							fyne.Do(func() {
+								topline.SetText(fmt.Sprintf("upload %s: %v", filepath.Base(p), err))
+							})
+						}
+					}
+					scRefresh()
+				}()
+				return
+			}
 			if entry.Disabled() {
 				log.Debug("Sending")
 				return
@@ -1741,9 +1826,27 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		source.Close()
+
+		if davServer.IsRemote() && link.URL != nil {
+			_, _, proxyURL, _ := isDAV(link.URL.String())
+			if proxyURL != nil {
+				go uploadToWebDAV(src, proxyURL, func(name string, ferr error) {
+					fyne.Do(func() {
+						if ferr != nil {
+							topline.SetText(fmt.Sprintf("upload %s: %v", name, ferr))
+						} else {
+							NewToast(w, "Uploaded "+name).Show()
+							topline.SetText("Uploaded " + name)
+						}
+					})
+					scRefresh()
+				})
+			}
+		}
 	})
-	cosED = append(cosED, addClipButton)
+	cosPickers = append(cosPickers, addClipButton)
 	cosDAV = append(cosDAV, addClipButton)
+	cosDAVremote = append(cosDAVremote, addClipButton)
 
 	addFileButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {
 		if supported, err := IsFilePickerSupported(); err != nil {
@@ -1770,6 +1873,25 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				return
 			}
 			u := source.URI()
+
+			if davServer.IsRemote() && link.URL != nil {
+				_, _, proxyURL, _ := isDAV(link.URL.String())
+				if proxyURL != nil {
+					go uploadFromURC(source, proxyURL, func(name string, ferr error) {
+						fyne.Do(func() {
+							if ferr != nil {
+								topline.SetText(fmt.Sprintf("upload %s: %v", name, ferr))
+							} else {
+								NewToast(w, "Uploaded "+name).Show()
+								topline.SetText("Uploaded " + name)
+							}
+						})
+						scRefresh()
+					})
+					return
+				}
+			}
+
 			name := uriBase(u)
 			dst := join(name)
 			// fe := addEntry(dst, nil)
@@ -1809,8 +1931,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			})
 		}, w)
 	})
-	cosED = append(cosED, addFileButton)
+	cosPickers = append(cosPickers, addFileButton)
 	cosDAV = append(cosDAV, addFileButton)
+	cosDAVremote = append(cosDAVremote, addFileButton)
 
 	addFolderButton := widget.NewButtonWithIcon("", theme.FolderNewIcon(), func() {
 		folderOpen := func(u fyne.ListableURI, e error) {
@@ -1822,6 +1945,48 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				log.Errorf("folder selection: %s", e)
 				return
 			}
+
+			if davServer.IsRemote() && link.URL != nil {
+				_, _, proxyURL, _ := isDAV(link.URL.String())
+				if proxyURL != nil {
+					onUploaded := func(name string, ferr error) {
+						fyne.Do(func() {
+							if ferr != nil {
+								topline.SetText(fmt.Sprintf("upload %s: %v", name, ferr))
+							} else {
+								NewToast(w, "Uploaded "+name).Show()
+								topline.SetText("Uploaded " + name)
+							}
+						})
+					}
+					go func() {
+						var walkDir func(fyne.URI)
+						walkDir = func(current fyne.URI) {
+							if IsDirectory(current) {
+								children, err := List(current)
+								if err != nil {
+									log.Errorf("list %s: %v", current, err)
+									return
+								}
+								for _, child := range children {
+									walkDir(child)
+								}
+								return
+							}
+							source, err := Reader(current)
+							if err != nil {
+								log.Errorf("reader %s: %v", current, err)
+								return
+							}
+							uploadFromURC(source, proxyURL, onUploaded)
+						}
+						walkDir(u)
+						scRefresh()
+					}()
+					return
+				}
+			}
+
 			name := uriBase(u)
 			dst := join(name)
 			fe := addEntry(dst, func(d *widget.Button, p *widget.ProgressBar, l *widget.Label) {
@@ -1894,8 +2059,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		ShowFolderOpen(folderOpen, w)
 	})
-	cosED = append(cosED, addFolderButton)
+	cosPickers = append(cosPickers, addFolderButton)
 	cosDAV = append(cosDAV, addFolderButton)
+	cosDAVremote = append(cosDAVremote, addFolderButton)
 
 	reDir = widget.NewButtonWithIcon("", theme.UploadIcon(), func() {
 		if treeButton.Icon == theme.VisibilityIcon() {
