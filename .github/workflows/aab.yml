@@ -73,7 +73,7 @@ jobs:
       - name: Setup bundletool
         uses: amyu/setup-bundletool@v1.1
         with:
-          version: 1.18.1
+          version: 1.18.3
 
       - name: Decode keystore
         if: ${{ inputs.build-apk || inputs.build-apks }}
@@ -246,6 +246,13 @@ jobs:
             exit 1
           fi
           echo "AAB uploaded to draft $VERSION_ID"
+
+          # 4. Verify — GET version status
+          VERIFY_RESP=$(curl -sS \
+            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version?ids=${VERSION_ID}" \
+            -H "Public-Token: $TOKEN")
+          echo "Draft verification:"
+          echo "$VERIFY_RESP" | jq '.body.content[0]'
 
           echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
           echo "status=draft" >> $GITHUB_OUTPUT
