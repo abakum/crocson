@@ -132,6 +132,77 @@ func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func(), onCh
 	}
 }
 
+// wsChat — выделенный WS-клиент для автооткрытия браузера по чату.
+// Подключается к <httpURL>/api/chat/ws локально (отправитель) или через туннель (получатель),
+// не зависит от wsRefreshRemote (который только для refresh дерева).
+func wsChat(ctx context.Context, httpURL string, onMessage func()) {
+	wsScheme := "ws"
+	if strings.HasPrefix(httpURL, "https") {
+		wsScheme = "wss"
+	}
+	wsURL := strings.Replace(httpURL, "http", wsScheme, 1) + "/api/chat/ws"
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if !davServer.IsActive() && !davServer.IsTCPForwardingActive() {
+			log.Debugf("[ws-chat] server down, stopping")
+			return
+		}
+
+		dialer := websocket.Dialer{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		conn, _, err := dialer.Dial(wsURL, nil)
+		if err != nil {
+			log.Debugf("[ws-chat] dial error: %v", err)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(3 * time.Second):
+				continue
+			}
+		}
+		log.Debugf("[ws-chat] connected to %s", wsURL)
+
+		connDone := make(chan struct{})
+		go func() {
+			select {
+			case <-ctx.Done():
+				conn.Close()
+			case <-connDone:
+			}
+		}()
+
+		for {
+			_, data, err := conn.ReadMessage()
+			if err != nil {
+				close(connDone)
+				conn.Close()
+				log.Debugf("[ws-chat] read error: %v", err)
+				break
+			}
+
+			if len(data) > 0 && data[0] == '[' {
+				continue
+			}
+
+			var cmd struct{ Cmd string `json:"cmd"` }
+			if json.Unmarshal(data, &cmd) == nil && (cmd.Cmd == "refresh" || cmd.Cmd == "close") {
+				continue
+			}
+
+			if onMessage != nil {
+				onMessage()
+			}
+		}
+	}
+}
+
 func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	var (
 		cosED,
@@ -144,8 +215,12 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		reload      func()
 		treeOff     = func() {}
 		scRefresh   = func() {}
-		cancelWS    context.CancelFunc
+		cancelWS context.CancelFunc
 
+		cancelChatWS context.CancelFunc
+	)
+
+	var (
 		boxholder = container.NewVBox()
 		scroller  = container.NewVScroll(boxholder)
 
@@ -639,7 +714,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 			log.Debugf("[createWebDAVTree] Opening URL: %s", fullURLStr)
 			time.AfterFunc(100*time.Millisecond, func() {
-				OpenURL(fullURLStr)
+				if err := OpenURL(fullURLStr); err != nil {
+					log.Errorf("[createWebDAVTree] OpenURL %s: %v", fullURLStr, err)
+				}
 			})
 			ft.Unselect(uid)
 		}
@@ -699,6 +776,31 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	port := widget.NewEntry()
 
 	// Функция для переключения на WebDAV дерево
+	startChatWS := func(httpURL string) {
+		if httpURL == "" {
+			return
+		}
+		if !davServer.IsActive() && !davServer.IsTCPForwardingActive() {
+			return
+		}
+		if cancelChatWS != nil {
+			cancelChatWS()
+		}
+
+		var ctx context.Context
+		ctx, cancelChatWS = context.WithCancel(appCtx)
+
+		go wsChat(ctx, httpURL, func() {
+			if chatURL != "" {
+				if err := OpenURL(chatURL); err != nil {
+					log.Errorf("[ws-chat] OpenURL %s: %v", chatURL, err)
+				} else {
+					log.Debugf("[ws-chat] auto-opening browser: %s", chatURL)
+				}
+			}
+		})
+	}
+
 	switchToWebDAVTree := func() {
 		if link.URL == nil {
 			return
@@ -714,6 +816,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				var wsCtx context.Context
 				wsCtx, cancelWS = context.WithCancel(appCtx)
 
+				startChatWS(proxyURL.String())
+
 				var onRefresh func()
 				if !davServer.IsActive() {
 					onRefresh = func() {
@@ -725,14 +829,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				}
 
-				opened := false
-				wsRefreshRemote(wsCtx, proxyURL.String(), onRefresh, func() {
-					if !opened && chatURL != "" {
-						opened = true
-						log.Debugf("[ws] auto-opening browser: %s", chatURL)
-						OpenURL(chatURL)
-					}
-				})
+				wsRefreshRemote(wsCtx, proxyURL.String(), onRefresh, nil)
 			}()
 			scroller.Content = createWebDAVTree(proxyURL)
 			de.Bounce(ti.Content.Refresh)
