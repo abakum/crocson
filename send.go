@@ -638,9 +638,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 
 			log.Debugf("[createWebDAVTree] Opening URL: %s", fullURLStr)
-			if uid == webdavURL.String() {
-				broadcastClose(nil)
-			}
 			time.AfterFunc(100*time.Millisecond, func() {
 				OpenURL(fullURLStr)
 			})
@@ -732,7 +729,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				wsRefreshRemote(wsCtx, proxyURL.String(), onRefresh, func() {
 					if !opened && chatURL != "" {
 						opened = true
-						broadcastClose(nil)
 						log.Debugf("[ws] auto-opening browser: %s", chatURL)
 						OpenURL(chatURL)
 					}

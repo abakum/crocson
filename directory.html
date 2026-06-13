@@ -340,6 +340,20 @@
 			sessionStorage.setItem('chatSessionId', currentUserId);
 		}
 
+		// --- Дедупликация: один таб на браузер (localStorage изолирован по origin) ---
+		var DIR_TABS_KEY = 'dirTabs';
+		function resetDirTabs() { localStorage.removeItem(DIR_TABS_KEY); }
+		(function () {
+			var myN = parseInt(localStorage.getItem(DIR_TABS_KEY) || '0', 10) + 1;
+			localStorage.setItem(DIR_TABS_KEY, String(myN));
+			// Пришёл новее таб (счётчик стал больше моего) → закрыть этот старый таб.
+			window.addEventListener('storage', function (e) {
+				if (e.key === DIR_TABS_KEY && parseInt(e.newValue || '0', 10) > myN) {
+					window.close();
+				}
+			});
+		})();
+
 		const chatMessages = document.getElementById('chatMessages');
 		const chatInput = document.getElementById('chatInput');
 		const chatSendBtn = document.getElementById('chatSendBtn');
@@ -442,12 +456,12 @@
 						chatMessages.innerHTML = '';
 						data.forEach(function(m) {
 							if (m.cmd === 'refresh') return;
-							if (m.cmd === 'close') { window.close(); return; }
+							if (m.cmd === 'close') { resetDirTabs(); window.close(); return; }
 							displayMessage(m);
 						});
 					} else {
 						if (data.cmd === 'refresh') { refreshFileTable(); return; }
-						if (data.cmd === 'close') { window.close(); return; }
+						if (data.cmd === 'close') { resetDirTabs(); window.close(); return; }
 						displayMessage(data);
 					}
 				} catch(e) {
