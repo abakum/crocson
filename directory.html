@@ -333,11 +333,16 @@
 	</div>
 
 	<script>
-		// Получаем уникальный идентификатор для текущего пользователя
-		let currentUserId = sessionStorage.getItem('chatSessionId');
-		if (!currentUserId) {
-			currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
-			sessionStorage.setItem('chatSessionId', currentUserId);
+		// Роль пира: local — свой браузер (без туннеля), remote — через туннель.
+		// ?peer=local добавляет только отправитель при открытии своих вкладок.
+		// sessionStorage сохраняет роль при навигации по каталогам (относительные
+		// ссылки теряют query-параметр), но роль детерминирована, поэтому все вкладки
+		// отправителя дают local, а вкладки получателя — remote.
+		let currentUserId = sessionStorage.getItem('chatPeerRole');
+		if (!currentUserId || (currentUserId !== 'local' && currentUserId !== 'remote')) {
+			var peerParam = new URLSearchParams(location.search).get('peer');
+			currentUserId = (peerParam === 'local') ? 'local' : 'remote';
+			sessionStorage.setItem('chatPeerRole', currentUserId);
 		}
 
 		// --- Дедупликация: один таб на браузер (localStorage изолирован по origin) ---

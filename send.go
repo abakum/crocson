@@ -714,7 +714,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 			log.Debugf("[createWebDAVTree] Opening URL: %s", fullURLStr)
 			time.AfterFunc(100*time.Millisecond, func() {
-				if err := OpenURL(fullURLStr); err != nil {
+				if err := OpenURL(markLocalPeer(fullURLStr)); err != nil {
 					log.Errorf("[createWebDAVTree] OpenURL %s: %v", fullURLStr, err)
 				}
 			})
@@ -760,8 +760,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				// без псевдоссылок в файловом менеджере
 				err = OpenURL(root)
 			} else {
-				// с псевдоссылками в через вебдав
-				err = OpenDAV(link.URL.String())
+			// с псевдоссылками в через вебдав
+			err = OpenDAV(markLocalPeer(link.URL.String()))
 			}
 			if err == nil {
 				return
@@ -826,8 +826,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		if davServer.IsActive() || davServer.IsTCPForwardingActive() || davServer.IsRemote() {
 			_, ccn, proxyURL, _ := isDAV(link.URL.String())
-			log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
-			chatURL = ccn
+		log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
+		chatURL = markLocalPeer(ccn)
 			go func() {
 				if cancelWS != nil {
 					cancelWS()
@@ -1667,7 +1667,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					// deepLink davX: webdavX:
 					if _, ccn, _, ok := isDAV(uriString); ok {
 						log.Debugf("[intent] isDAV ccn=%q, opening manually", ccn)
-						if err := OpenURL(ccn); err != nil {
+						if err := OpenURL(markLocalPeer(ccn)); err != nil {
 							log.Error(err)
 						}
 						continue
@@ -2917,6 +2917,24 @@ func wHandle(w fyne.Window) string {
 func isWSL() bool {
 	// WSL_DISTRO_NAME устанавливается в WSL и содержит имя дистрибутива
 	return os.Getenv("WSL_DISTRO_NAME") != ""
+}
+
+// markLocalPeer помечает собственную вкладку как local (peer=local).
+// Маркер ставится только на устройстве-отправителе; на получателе (davServer.IsRemote())
+// URL возвращается без маркера, т.к. код дерева/чата в send.go работает в обеих ролях
+// и без guard'а помечал бы и вкладки получателя.
+func markLocalPeer(rawURL string) string {
+	if davServer.IsRemote() {
+		return rawURL
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	q.Set("peer", "local")
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 func defWeb(sch string, s bool, h, p, path string) (host string, u url.URL) {
