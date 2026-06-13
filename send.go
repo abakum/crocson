@@ -788,9 +788,16 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		var ctx context.Context
-		ctx, cancelChatWS = context.WithCancel(appCtx)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(appCtx)
+		cancelChatWS = cancel
 
+		var fired bool
 		go wsChat(ctx, httpURL, func() {
+			if fired {
+				return
+			}
+			fired = true
 			if chatURL != "" {
 				if err := OpenURL(chatURL); err != nil {
 					log.Errorf("[ws-chat] OpenURL %s: %v", chatURL, err)
@@ -798,7 +805,19 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					log.Debugf("[ws-chat] auto-opening browser: %s", chatURL)
 				}
 			}
+			cancel()
 		})
+	}
+
+	// stopWS отменяет оба WS-слушателя (wsChat и wsRefreshRemote).
+	// Вызывается при завершении/прерывании сеанса.
+	stopWS := func() {
+		if cancelWS != nil {
+			cancelWS()
+		}
+		if cancelChatWS != nil {
+			cancelChatWS()
+		}
 	}
 
 	switchToWebDAVTree := func() {
@@ -900,11 +919,12 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				go switchToWebDAVTree()
 				allEnabled(true, cosDAVremote...)
 				showPage()
-			} else {
-				if treeButton.Icon == theme.VisibilityIcon() {
-					davControl.Hide()
-				}
+		} else {
+			stopWS()
+			if treeButton.Icon == theme.VisibilityIcon() {
+				davControl.Hide()
 			}
+		}
 		})
 	})
 
@@ -952,6 +972,15 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	mainButton = widget.NewButtonWithIcon(lp("Send"), theme.MailSendIcon(), func() {
 		fyne.Do(func() { topline.SetText("") })
 
+		// В режиме WebDAV запускаем wsChat на отправителе, чтобы входящие
+		// сообщения получателя авто-открывали браузер.
+		if treeButton.Icon == theme.VisibilityOffIcon() && davServer.IsActive() {
+			if _, ccn, proxyURL, ok := isDAV(link.URL.String()); ok {
+				chatURL = ccn
+				startChatWS(proxyURL.String())
+			}
+		}
+
 		relayAddr := a.Preferences().String("relay-address")
 
 		if isWebWormholeRelay(relayAddr) {
@@ -988,8 +1017,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					default:
 						close(cancelChan)
 					}
-					davServer.DisableTCPForwarding()
-					caffeinate(-1)
+				davServer.DisableTCPForwarding()
+				stopWS()
+				caffeinate(-1)
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1113,8 +1143,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					default:
 						close(cancelChan)
 					}
-					davServer.DisableTCPForwarding()
-					caffeinate(-1)
+				davServer.DisableTCPForwarding()
+				stopWS()
+				caffeinate(-1)
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1380,8 +1411,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				defer func() {
 					ctc()
 					// Конец
-					davServer.DisableTCPForwarding()
-					caffeinate(-1)
+				davServer.DisableTCPForwarding()
+				stopWS()
+				caffeinate(-1)
 					ticker.Stop()
 					fyne.Do(func() {
 						mainButton.Show()
