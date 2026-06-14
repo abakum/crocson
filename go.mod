@@ -6,7 +6,7 @@ replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-2026
 
 replace github.com/psanford/wormhole-william => github.com/abakum/wormhole-william v0.0.0-20260529222605-d6c525669d4e
 
-replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20251222054903-bda39395085f
+replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20260614170419-7a998a1dc036
 
 replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc226178a1c3
 

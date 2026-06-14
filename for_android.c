@@ -78,6 +78,27 @@ jint callInt(JNIEnv* env, jobject context, const char* method) {
     return result;
 }
 
+jint callBoolean(JNIEnv* env, jobject context, const char* method) {
+    jclass cls = (*env)->GetObjectClass(env, context);
+    if (cls == NULL) { LogE("GetObjectClass failed for callBoolean(%s)", method); return -1; }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, method, "()Z");
+    if (mid == NULL) {
+        LogE("static method not found: %s", method);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    jboolean result = (*env)->CallStaticBooleanMethod(env, cls, mid);
+    if ((*env)->ExceptionCheck(env)) {
+        LogE("exception in %s", method);
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, cls);
+        return -1;
+    }
+    (*env)->DeleteLocalRef(env, cls);
+    return result ? 1 : 0;
+}
+
 char* callStringString(JNIEnv* env, jobject context, const char* method, const char* strArg) {
     jclass cls = (*env)->GetObjectClass(env, context);
     if (cls == NULL) { LogE("GetObjectClass failed for callStringString(%s)", method); return NULL; }

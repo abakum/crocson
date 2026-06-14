@@ -846,8 +846,16 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			cdLock.Store(0)
 			return
 		}
-		log.SetLevel(debugString(a))
-		log.Debug("croc client created")
+	log.SetLevel(debugString(a))
+	log.Debug("croc client created")
+
+	// Hold a WifiManager.MulticastLock while local peer discovery runs so the
+	// wifi driver delivers inbound multicast datagrams. Required only on
+	// Android; no-op on other platforms. croc discovers peers during Receive
+	// when local is not disabled.
+	if !opt.DisableLocal {
+		acquireMulticastLock()
+	}
 
 		if a.Preferences().Bool("remember") {
 			p := NewPreferences(a.Preferences())
@@ -873,12 +881,15 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		// progress
 		go func() {
 			ticker := time.NewTicker(time.Millisecond * 100)
-			caffeinate(1)
+			caffeinated := false
 			defer func() {
+				releaseMulticastLock()
 				ctc()
 				// Конец
 				davServer.DisableTCPForwarding()
-				caffeinate(-1)
+				if caffeinated {
+					caffeinate(-1)
+				}
 				ticker.Stop()
 				if longCdLock {
 					log.Debugf("CROC_CD_LOCK %v", longCdLock)
@@ -939,11 +950,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							log.Infof("enabled port forwarding")
 						}
 					}
-					if client.Step2FileInfoTransferred {
-						if once {
-							// Начало приёма
-							once = false
-							toplineW.SetText(lp("Receiving file"))
+				if client.Step2FileInfoTransferred {
+					if once {
+						// Начало приёма
+						once = false
+						caffeinated = true
+						caffeinate(1)
+						toplineW.SetText(lp("Receiving file"))
 
 							for i, fi := range client.FilesToTransfer {
 								if isMobile || asMobile {

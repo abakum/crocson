@@ -1009,6 +1009,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			go func() {
 				var wormholeCtx context.Context
 				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
+				caffeinated := false
 
 				defer func() {
 					wormholeCancel = nil
@@ -1019,7 +1020,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				davServer.DisableTCPForwarding()
 				stopWS()
-				caffeinate(-1)
+				if caffeinated {
+					caffeinate(-1)
+				}
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1037,8 +1040,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						log.Warnf("NumGoroutine %d", runtime.NumGoroutine())
 					})
 				}()
-
-				caffeinate(1)
 
 				code, connectFn, wt, err := startWebWormholeSender(wormholeCtx, relayAddr, "")
 				if err != nil {
@@ -1071,6 +1072,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					return
 				}
 				wt.tunnel = t
+				caffeinated = true
+				caffeinate(1)
 				log.Debugf("[webwormhole] calling Serve localAddr=%s", webdavAddr)
 				if err := wt.tunnel.Serve(wormholeCtx, webdavAddr); err != nil && wormholeCtx.Err() == nil {
 					log.Errorf("webwormhole tunnel serve: %v", err)
@@ -1135,6 +1138,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			go func() {
 				var wormholeCtx context.Context
 				wormholeCtx, wormholeCancel = context.WithCancel(appCtx)
+				caffeinated := false
 
 				defer func() {
 					wormholeCancel = nil
@@ -1145,7 +1149,9 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				davServer.DisableTCPForwarding()
 				stopWS()
-				caffeinate(-1)
+				if caffeinated {
+					caffeinate(-1)
+				}
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1163,8 +1169,6 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						log.Warnf("NumGoroutine %d", runtime.NumGoroutine())
 					})
 				}()
-
-				caffeinate(1)
 
 				code, connectFn, wt, err := startWormholeSender(wormholeCtx, secret, mailboxURL, transitAddr, webdavAddr)
 				if err != nil {
@@ -1199,6 +1203,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					return
 				}
 				wt.tunnel = t
+				caffeinated = true
+				caffeinate(1)
 				log.Debugf("[wormhole] calling Serve localAddr=%s", webdavAddr)
 				if err := wt.tunnel.Serve(wormholeCtx, webdavAddr); err != nil && wormholeCtx.Err() == nil {
 					log.Errorf("wormhole tunnel serve: %v", err)
@@ -1407,13 +1413,15 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			// progress
 			go func() {
 				ticker := time.NewTicker(time.Millisecond * 100)
-				caffeinate(1)
+				caffeinated := false
 				defer func() {
 					ctc()
 					// Конец
 				davServer.DisableTCPForwarding()
 				stopWS()
-				caffeinate(-1)
+				if caffeinated {
+					caffeinate(-1)
+				}
 					ticker.Stop()
 					fyne.Do(func() {
 						mainButton.Show()
@@ -1467,6 +1475,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						if once && hashed(client) {
 							// Начало передачи
 							once = false
+							caffeinated = true
+							caffeinate(1)
 							for _, fi := range client.FilesToTransfer {
 								log.Debugf("fi %+v", fi)
 								path := filepath.Join(fi.FolderSource, fi.Name)

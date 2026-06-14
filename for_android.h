@@ -7,6 +7,7 @@ void LogD(const char* message);
 jint callVoid(JNIEnv* env, jobject context, const char* method);
 jint callVoidString(JNIEnv* env, jobject context, const char* method, const char* strArg);
 jint callInt(JNIEnv* env, jobject context, const char* method);
+jint callBoolean(JNIEnv* env, jobject context, const char* method);
 char* callStringString(JNIEnv* env, jobject context, const char* method, const char* strArg);
 jint callBooleanString(JNIEnv* env, jobject context, const char* method, const char* strArg);
 char* callStringString2(JNIEnv* env, jobject context, const char* method, const char* strArg1, const char* strArg2);

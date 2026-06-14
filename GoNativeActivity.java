@@ -10,6 +10,7 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.content.ClipData;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -190,6 +191,42 @@ public class GoNativeActivity extends NativeActivity {
             Log.d(TAG, "Java: Foreground service stopped");
         } catch (Exception e) {
             Log.e(TAG, "Java: stopCrocsonService failed: " + e.getMessage());
+        }
+    }
+
+    private static WifiManager.MulticastLock multicastLock;
+
+    static boolean acquireMulticastLock() {
+        try {
+            if (multicastLock != null && multicastLock.isHeld()) {
+                return true;
+            }
+            if (goNativeActivity == null) {
+                return false;
+            }
+            WifiManager wm = (WifiManager) goNativeActivity.getSystemService(Context.WIFI_SERVICE);
+            if (wm == null) {
+                return false;
+            }
+            multicastLock = wm.createMulticastLock("croc");
+            multicastLock.setReferenceCounted(false);
+            multicastLock.acquire();
+            return true;
+        } catch (Throwable t) {
+            Log.e(TAG, "acquireMulticastLock failed", t);
+            return false;
+        }
+    }
+
+    static boolean releaseMulticastLock() {
+        try {
+            if (multicastLock != null && multicastLock.isHeld()) {
+                multicastLock.release();
+            }
+            return true;
+        } catch (Throwable t) {
+            Log.e(TAG, "releaseMulticastLock failed", t);
+            return false;
         }
     }
 

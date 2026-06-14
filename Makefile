@@ -26,6 +26,7 @@ arm64:
 amd64:
 	fyne package -os android/amd64 --release --sign
 
+export GOPRIVATE := github.com/abakum/*,github.com/abakCroc/*
 CROC_FORK := github.com/abakCroc/croc/v10
 CROC_VERSION := $(shell go list -m -f '{{.Version}}' $(CROC_FORK)@main 2>/dev/null)
 PEER_FORK := github.com/abakum/peerdiscovery

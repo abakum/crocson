@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -27,6 +28,11 @@ import (
 )
 
 var errJNI = errors.New("JNI call failed")
+
+var (
+	fgStopMu    sync.Mutex
+	fgStopTimer *time.Timer
+)
 
 func callVoid(method string) error {
 	return driver.RunNative(func(ctx interface{}) error {
@@ -74,6 +80,25 @@ func callInt(method string) (int, error) {
 			return fmt.Errorf("callInt(%s): %w", method, errJNI)
 		}
 		result = int(r)
+		return nil
+	})
+	return result, err
+}
+
+func callBoolean(method string) (bool, error) {
+	var result bool
+	err := driver.RunNative(func(ctx interface{}) error {
+		ac, ok := ctx.(*driver.AndroidContext)
+		if !ok {
+			return errJNI
+		}
+		cMethod := C.CString(method)
+		defer C.free(unsafe.Pointer(cMethod))
+		r := C.callBoolean((*C.JNIEnv)(unsafe.Pointer(ac.Env)), (C.jobject)(unsafe.Pointer(ac.Ctx)), cMethod)
+		if r < 0 {
+			return fmt.Errorf("callBoolean(%s): %w", method, errJNI)
+		}
+		result = r > 0
 		return nil
 	})
 	return result, err
@@ -546,13 +571,34 @@ func caffeinate(i int32) int32 {
 	}
 
 	if old <= 0 && newVal > 0 {
+		fgStopMu.Lock()
+		if fgStopTimer != nil {
+			fgStopTimer.Stop()
+			fgStopTimer = nil
+		}
+		fgStopMu.Unlock()
 		startForegroundService()
 	} else if old > 0 && newVal <= 0 {
-		stopForegroundService()
+		fgStopMu.Lock()
+		if fgStopTimer != nil {
+			fgStopTimer.Stop()
+		}
+		if i == 0 {
+			fgStopTimer = nil
+			fgStopMu.Unlock()
+			stopForegroundService()
+		} else {
+			fgStopTimer = time.AfterFunc(fgStopDelay, func() {
+				stopForegroundService()
+			})
+			fgStopMu.Unlock()
+		}
 	}
 
 	return newVal
 }
+
+const fgStopDelay = 3 * time.Second
 
 func SleepAllowed() bool {
 	return atomic.LoadInt32(&sleepCounter) <= 0
@@ -572,6 +618,40 @@ func stopForegroundService() {
 		return
 	}
 	log.Debugf("Foreground service stopped")
+}
+
+// acquireMulticastLock holds a WifiManager.MulticastLock so that the wifi
+// driver delivers inbound multicast datagrams to the app. Required for croc's
+// local peer discovery (peerdiscovery) on Android. No-op on other platforms.
+// Returns true on success; logs failures on the Go side.
+func acquireMulticastLock() bool {
+	ok, err := callBoolean("acquireMulticastLock")
+	if err != nil {
+		log.Errorf("acquireMulticastLock JNI failed: %v", err)
+		return false
+	}
+	if !ok {
+		log.Warn("acquireMulticastLock failed (WifiManager unavailable or security exception)")
+		return false
+	}
+	log.Debug("MulticastLock acquired")
+	return true
+}
+
+// releaseMulticastLock releases the previously acquired MulticastLock.
+// Returns true on success; logs failures on the Go side.
+func releaseMulticastLock() bool {
+	ok, err := callBoolean("releaseMulticastLock")
+	if err != nil {
+		log.Errorf("releaseMulticastLock JNI failed: %v", err)
+		return false
+	}
+	if !ok {
+		log.Warn("releaseMulticastLock failed")
+		return false
+	}
+	log.Debug("MulticastLock released")
+	return true
 }
 
 func MimeType(uri fyne.URI) string {

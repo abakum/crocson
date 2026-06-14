@@ -293,3 +293,10 @@ func OpenURL(s string) error {
 	}
 	return fyne.CurrentApp().OpenURL(u)
 }
+
+// acquireMulticastLock is a no-op on non-Android platforms: only Android
+// blocks inbound multicast unless a WifiManager.MulticastLock is held.
+func acquireMulticastLock() bool { return true }
+
+// releaseMulticastLock is a no-op on non-Android platforms.
+func releaseMulticastLock() bool { return true }
