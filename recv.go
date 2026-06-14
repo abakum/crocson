@@ -700,7 +700,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					davServer.Start(webdavAddr, join(), false)
 				}()
 				fyne.Do(func() {
-					topline.SetText(lp("Connected via wormhole"))
+					topline.SetText(lp("Connected via magic-wormhole"))
 					davServer.SetLocal(true)
 				})
 				davServer.NotifyProxyState(true)

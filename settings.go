@@ -157,13 +157,13 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	relayConnectEntry := widget.NewEntryWithData(relayConnectBinding)
 
 	disableLocalBinding := binding.BindPreferenceBool("disable-local", a.Preferences())
-	disableLocalCheck := widget.NewCheckWithData(lp("Send only via relay"), disableLocalBinding)
+	disableLocalCheck := widget.NewCheckWithData(lp("Disable local relay when sending"), disableLocalBinding)
 
 	testingBinding := binding.BindPreferenceBool("testing", a.Preferences())
 	testingCheck := widget.NewCheckWithData(lp("Ask the sender for their address"), testingBinding)
 
 	onlyLocalBinding := binding.BindPreferenceBool("force-local", a.Preferences())
-	onlyLocalCheck := widget.NewCheckWithData(lp("Connect to local senders only"), onlyLocalBinding)
+	onlyLocalCheck := widget.NewCheckWithData(lp("Force to use only local connections"), onlyLocalBinding)
 
 	gitIgnoreBinding := binding.BindPreferenceBool("git", a.Preferences())
 	gitIgnoreCheck := widget.NewCheckWithData(".gitignore", gitIgnoreBinding)

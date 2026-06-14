@@ -342,6 +342,42 @@
             "message": "Transfer Options",
             "translation": "Обмен",
             "position": "crocson/settings.go:466:29"
+        },
+        {
+            "id": "Disable local relay when sending",
+            "message": "Disable local relay when sending",
+            "translation": "Не давать локально",
+            "position": "crocson/settings.go:160:49"
+        },
+        {
+            "id": "Force to use only local connections",
+            "message": "Force to use only local connections",
+            "translation": "Без внешнего посредника",
+            "position": "crocson/settings.go:166:46"
+        },
+        {
+            "id": "Connected via magic-wormhole",
+            "message": "Connected via magic-wormhole",
+            "translation": "Подключено через magic-wormhole",
+            "position": "crocson/recv.go:703:24"
+        },
+        {
+            "id": "Connected via webwormhole",
+            "message": "Connected via webwormhole",
+            "translation": "Подключено через webwormhole",
+            "position": "crocson/recv.go:779:24"
+        },
+        {
+            "id": "Use WebDAV for magic-wormhole relay",
+            "message": "Use WebDAV for magic-wormhole relay",
+            "translation": "Используйте WebDAV для релея magic-wormhole",
+            "position": "crocson/recv.go:642:24"
+        },
+        {
+            "id": "Use WebDAV for webwormhole relay",
+            "message": "Use WebDAV for webwormhole relay",
+            "translation": "Используйте WebDAV для релея webwormhole",
+            "position": "crocson/recv.go:720:24"
         }
     ]
 }
