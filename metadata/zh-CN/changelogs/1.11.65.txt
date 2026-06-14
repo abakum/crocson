@@ -1,0 +1,8 @@
+WebDAV: 通过对话框和拖放从接收方上传文件和目录到发送方
+WebDAV: 文件树无延迟刷新
+聊天：收到消息时无延迟自动打开浏览器
+聊天：根据对端角色（local/remote）去重浏览器标签页
+Android: 新增 CHANGE_WIFI_MULTICAST_STATE 用于本地对端发现。「强制仅使用本地连接」开关现已生效
+Android: 修复服务重启导致应用崩溃
+CI: 通过公开 API 直接上传 AAB 到 RuStore，bundletool 1.18.3
+本地化：修复

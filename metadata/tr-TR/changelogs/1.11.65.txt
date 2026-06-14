@@ -1,0 +1,8 @@
+WebDAV: alıcıdan gönderene dosya ve dizin yükleme — diyaloglar ve sürükle&bırak ile
+WebDAV: dosya ağacının gecikmesiz yenilenmesi
+Sohbet: gelen mesajda tarayıcının gecikmesiz otomatik açılması
+Sohbet: eş rolünü dikkate alan tarayıcı sekmesi tekilleme — local/remote
+Android: yerel eş keşfi için CHANGE_WIFI_MULTICAST_STATE eklendi. "yalnızca yerel bağlantıları kullanmaya zorla" anahtarı artık çalışıyor
+Android: uygulama servis yeniden başlatma nedeniyle artık çökmyor
+CI: RuStore'a doğrudan AAB yüklemesi (genel API), bundletool 1.18.3
+Yerelleştirmeler: düzeltmeler

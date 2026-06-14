@@ -1,0 +1,8 @@
+WebDAV: upload files and directories from receiver to sender via dialogs and drag&drop
+WebDAV: file tree refresh without delay
+Chat: browser auto-open on incoming message without delay
+Chat: browser tab deduplication accounting for peer role — local/remote
+Android: added CHANGE_WIFI_MULTICAST_STATE for local peer discovery. Settings~"Force to use only local connections" toggle now works
+Android: app no longer crashes due to service restart
+CI: direct AAB upload to RuStore via public API, bundletool 1.18.3
+Localizations: fixes
