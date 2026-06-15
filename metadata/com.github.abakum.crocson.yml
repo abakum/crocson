@@ -15,7 +15,7 @@ Repo: https://github.com/abakum/crocson
 Builds:
   - versionName: 1.11.65
     versionCode: 1950
-    commit: 89eb354d32e27978ae6e08bfb1981e6e16c48b20
+    commit: 0204a21182212c50f84634c299c8ad36367c7128
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -42,7 +42,7 @@ Builds:
 
   - versionName: 1.11.65
     versionCode: 1951
-    commit: 89eb354d32e27978ae6e08bfb1981e6e16c48b20
+    commit: 0204a21182212c50f84634c299c8ad36367c7128
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -69,7 +69,7 @@ Builds:
 
   - versionName: 1.11.65
     versionCode: 1952
-    commit: 89eb354d32e27978ae6e08bfb1981e6e16c48b20
+    commit: 0204a21182212c50f84634c299c8ad36367c7128
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -96,7 +96,7 @@ Builds:
 
   - versionName: 1.11.65
     versionCode: 1953
-    commit: 89eb354d32e27978ae6e08bfb1981e6e16c48b20
+    commit: 0204a21182212c50f84634c299c8ad36367c7128
     sudo:
       - apt-get update
       - apt-get install -y golang-go
