@@ -25,3 +25,6 @@ func hideConsole() {}
 func CanCreateSymlinks() bool {
 	return false
 }
+
+// fixRecordingFile — no-op на мобильных платформах (ffmpeg недоступен).
+func fixRecordingFile(root, fileName string) {}
