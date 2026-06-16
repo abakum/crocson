@@ -186,6 +186,9 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	sendCheck.OnChanged(on)
 
 	hostBinding := binding.BindPreferenceString("host", a.Preferences())
+	publicIPBinding := binding.BindPreferenceString("public-ip", a.Preferences())
+	publicIPEntry := widget.NewEntryWithData(publicIPBinding)
+	publicIPEntry.SetPlaceHolder(PUBLICIP)
 	prev := OFF
 
 	ctx, ctc := context.WithCancel(appCtx)
@@ -371,10 +374,12 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	// 4. Секция Network Local
 	networkForm := widget.NewForm(
 		widget.NewFormItem("host", hostSelect),
+		widget.NewFormItem("public-ip", publicIPEntry),
 		widget.NewFormItem("no-local", disableLocalCheck),
 		widget.NewFormItem("testing", testingCheck),
 		widget.NewFormItem("local", onlyLocalCheck),
 		widget.NewFormItem("multicast", widget.NewEntryWithData(binding.BindPreferenceString("multicast-address", a.Preferences()))),
+		widget.NewFormItem("version", widget.NewCheckWithData(lp("Check new desktop version"), binding.BindPreferenceBool("check-version", a.Preferences()))),
 	)
 
 	// 5. Секция Storage Options

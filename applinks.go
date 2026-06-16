@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"slices"
 	"strconv"
@@ -17,7 +19,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/schollz/croc/v10/src/tcp"
-	"github.com/schollz/croc/v10/src/utils"
 	log "github.com/schollz/logger"
 	"github.com/skip2/go-qrcode"
 )
@@ -519,22 +520,28 @@ func setClipboard(a fyne.App) (text string) {
 		// Если включен локальный посредник
 		log.Debugf("host %s", host)
 		relayAddress = host
-		if publicIP, err := utils.PublicIP(); err == nil {
-			log.Debugf("public IP %s", publicIP)
-			ports := a.Preferences().String("relay-ports")
-			if ports == "" {
-				ports = strconv.Itoa(DEFAULT_PORT)
-			} else {
-				ports = strings.Split(ports, ",")[0]
+		if !a.Preferences().Bool("force-local") {
+			ipURL := a.Preferences().String("public-ip")
+			if ipURL == "" {
+				ipURL = PUBLICIP
 			}
-			address := net.JoinHostPort(publicIP, ports)
-			if err := tcp.PingServer(address); err == nil {
-				// Если виден снаружи
-				relayAddress = publicIP
-				log.Infof("croc IP %s", relayAddress)
-			} else {
-				// Оставляем локальный IP
-				log.Debugf("could not ping: %+v", err)
+			if publicIP, err := publicIP(ipURL); err == nil {
+				log.Debugf("public IP %s", publicIP)
+				ports := a.Preferences().String("relay-ports")
+				if ports == "" {
+					ports = strconv.Itoa(DEFAULT_PORT)
+				} else {
+					ports = strings.Split(ports, ",")[0]
+				}
+				address := net.JoinHostPort(publicIP, ports)
+				if err := tcp.PingServer(address); err == nil {
+					// Если виден снаружи
+					relayAddress = publicIP
+					log.Infof("croc IP %s", relayAddress)
+				} else {
+					// Оставляем локальный IP
+					log.Debugf("could not ping: %+v", err)
+				}
 			}
 		}
 	}
@@ -549,6 +556,34 @@ func setClipboard(a fyne.App) (text string) {
 		// a.Preferences().String("connect"),
 	)
 	a.Clipboard().SetContent(text)
+	return
+}
+
+// publicIP returns the public IP address by querying the given url.
+func publicIP(url string) (ip string, err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("publicIP: %s: %s", url, resp.Status)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	ip = strings.TrimSpace(buf.String())
+	// На случай captive-порталов/HTML-ответов: берём первую строку и проверяем,
+	// что это действительно IP.
+	if line, _, _ := strings.Cut(ip, "\n"); line != "" {
+		ip = strings.TrimSpace(line)
+	}
+	if net.ParseIP(ip) == nil {
+		err = fmt.Errorf("publicIP: %s: not an IP: %q", url, ip)
+		ip = ""
+	}
 	return
 }
 

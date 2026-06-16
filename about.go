@@ -116,6 +116,10 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	)
 	OnSelectedTab[ABOUTi] = func() {
 		go func() {
+			if !a.Preferences().Bool("check-version") {
+				log.Debug("skip version check: check-version disabled")
+				return
+			}
 			latestVersion, err := Latest(FORKto, CS)
 			currentVersion := fmt.Sprintf("v%s", ve)
 			log.Debugf("%s %s %v", currentVersion, latestVersion, err)
