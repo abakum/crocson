@@ -823,6 +823,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		opt.RelayPassword, opt.RelayAddress, opt.RelayAddress6, _,
 			comm.Socks5Proxy, comm.HttpProxy = def(a)
+		opt.OnlyLocal = a.Preferences().Bool("force-local") || opt.RelayAddress == "" && opt.RelayAddress6 == ""
 
 		switch {
 		case strings.HasPrefix(opt.RelayAddress, "0"):

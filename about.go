@@ -97,7 +97,11 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	})
 	appInfo.Hidden = !isAndroid
 
-	ti := container.NewTabItemWithIcon("", theme.InfoIcon(), //lp("About")
+	title := ""
+	if isAndroid {
+		title = CS
+	}
+	ti := container.NewTabItemWithIcon(title, theme.InfoIcon(), //lp("About")
 		container.NewVScroll(container.NewVBox(
 			appInfo,
 			container.New(&tightVBoxLayout{},
