@@ -2,11 +2,11 @@ module crocson
 
 go 1.25.0
 
-replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260516175057-ad797732d729
+replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260615111532-7535bc765564
 
 replace github.com/psanford/wormhole-william => github.com/abakum/wormhole-william v0.0.0-20260529222605-d6c525669d4e
 
-replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20260614170419-7a998a1dc036
+replace github.com/schollz/peerdiscovery => github.com/abakum/peerdiscovery v0.0.0-20260616111543-2dd6ea38394c
 
 replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc226178a1c3
 
