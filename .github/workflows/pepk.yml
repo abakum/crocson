@@ -2,6 +2,15 @@ name: PEPK Export
 
 on:
   workflow_dispatch:
+    inputs:
+      store:
+        description: 'Целевой магазин'
+        required: true
+        default: 'rustore'
+        type: choice
+        options:
+          - rustore
+          - appgallery
 
 jobs:
   pepk:
@@ -27,6 +36,15 @@ jobs:
           git -C /tmp/tap checkout FETCH_HEAD
           cp /tmp/tap/rustore/pepk.jar rustore/pepk.jar
 
+      - name: Set encryption key
+        id: key
+        run: |
+          if [ "${{ inputs.store }}" = "appgallery" ]; then
+            echo "encryption_key=${{ secrets.APPGALLERY_ENCRYPTION_KEY }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "encryption_key=${{ secrets.RUSTORE_ENCRYPTION_KEY }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run pepk.jar
         run: |
           java -jar rustore/pepk.jar \
@@ -34,16 +52,19 @@ jobs:
             --alias="${{ secrets.ANDROID_KEY_ALIAS }}" \
             --keystore-pass="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
             --output=pepk_out.zip \
-            --encryptionkey="${{ secrets.RUSTORE_ENCRYPTION_KEY }}" \
+            --encryptionkey="${{ steps.key.outputs.encryption_key }}" \
             --include-cert
 
-      - name: Upload rustore signing artifacts
+      - name: Stage upload.pem
+        run: cp rustore/upload.pem upload.pem
+
+      - name: Upload signing artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rustore-signing
+          name: ${{ inputs.store }}-signing
           path: |
             pepk_out.zip
-            rustore/upload.pem
+            upload.pem
           retention-days: 7
 
       - name: Cleanup
