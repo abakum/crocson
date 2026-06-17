@@ -1,0 +1,4 @@
+Android: crocson title on the About tab
+Settings: toggle to enable version checking when opening the crocson tab
+Settings: configurable public IP lookup URL
+Receiver: local-only mode when no relay address configured

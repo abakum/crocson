@@ -1,0 +1,4 @@
+Android: crocson başlığı Hakkında sekmesinde
+Ayarlar: crocson sekmesine geçişte sürüm kontrolünü açma anahtarı
+Ayarlar: yapılandırılabilir genel IP sorgu URL'si
+Alıcı: aktarıcı adresi yoksa yalnızca yerel mod
