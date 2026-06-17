@@ -216,7 +216,7 @@ jobs:
             "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version" \
             -H 'Content-Type: application/json' \
             -H "Public-Token: $TOKEN" \
-            -d "$(jq -n --arg wn "$WHATS_NEW" '{whatsNew:$wn, publishType:"MANUAL"}')")
+            -d "$(jq -n --arg wn "$WHATS_NEW" '{whatsNew:$wn, publishType:"INSTANTLY"}')")
 
           echo "Draft response:"
           echo "$DRAFT_RESP" | jq .
@@ -247,7 +247,25 @@ jobs:
           fi
           echo "AAB uploaded to draft $VERSION_ID"
 
-          # 4. Verify — GET version status
+          # 4. Send draft to moderation
+          PERM_FILE="$GITHUB_WORKSPACE/workspace/crocson/metadata/ru-RU/permissions.txt"
+          COMMIT_RESP=$(curl -sS -X POST \
+            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version/${VERSION_ID}/commit" \
+            -H "Public-Token: $TOKEN")
+          echo "Commit response:"
+          echo "$COMMIT_RESP" | jq .
+
+          COMMIT_CODE=$(echo "$COMMIT_RESP" | jq -r '.code')
+          if [ "$COMMIT_CODE" != "OK" ]; then
+            echo "ERROR: send-to-moderation (commit) failed"
+            echo "----- permissions.txt (для ручного заполнения поля 'Чувствительные разрешения' в консоли RuStore) -----"
+            [ -f "$PERM_FILE" ] && cat "$PERM_FILE" || echo "(файл $PERM_FILE не найден)"
+            echo "--------------------------------------------------------------------------------------------------------"
+            exit 1
+          fi
+          echo "Draft $VERSION_ID sent to moderation"
+
+          # 5. Verify — GET version status
           VERIFY_RESP=$(curl -sS \
             "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version?ids=${VERSION_ID}" \
             -H "Public-Token: $TOKEN")
@@ -255,7 +273,7 @@ jobs:
           echo "$VERIFY_RESP" | jq '.body.content[0]'
 
           echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
-          echo "status=draft" >> $GITHUB_OUTPUT
+          echo "status=sent_to_moderation" >> $GITHUB_OUTPUT
 
       - name: Cleanup keystores
         if: always()
