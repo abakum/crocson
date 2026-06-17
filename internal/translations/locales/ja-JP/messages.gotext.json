@@ -378,6 +378,12 @@
             "message": "Use WebDAV for webwormhole relay",
             "translation": "webwormhole リレーに WebDAV を使用",
             "position": "crocson/recv.go:720:24"
+        },
+        {
+            "id": "Check new desktop version",
+            "message": "Check new desktop version",
+            "translation": "デスクトップの新バージョンを確認",
+            "position": "crocson/settings.go:382:64"
         }
     ]
 }

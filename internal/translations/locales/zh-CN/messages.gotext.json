@@ -22,7 +22,7 @@
         {
             "id": "If a browser opens then:",
             "message": "If a browser opens then:",
-            "translation": "If a browser opens then:",
+            "translation": "如果浏览器打开，则：",
             "position": "crocson/applinks.go:317:30"
         },
         {
@@ -378,6 +378,12 @@
             "message": "Use WebDAV for webwormhole relay",
             "translation": "为 webwormhole 中继使用 WebDAV",
             "position": "crocson/recv.go:720:24"
+        },
+        {
+            "id": "Check new desktop version",
+            "message": "Check new desktop version",
+            "translation": "检查桌面新版本",
+            "position": "crocson/settings.go:382:64"
         }
     ]
 }
