@@ -135,7 +135,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	relaySocks5Binding := binding.BindPreferenceString("socks5", a.Preferences())
 	relayConnectBinding := binding.BindPreferenceString("connect", a.Preferences())
 
-	relayControls, relayUpdate := createRelaySelector(a, w,
+	relayControls, relayUpdate, applyRelayValues := createRelaySelector(a, w,
 		relayAddressBinding,
 		relay6Binding,
 		relayPortsBinding,
@@ -189,56 +189,94 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	publicIPBinding := binding.BindPreferenceString("public-ip", a.Preferences())
 	publicIPEntry := widget.NewEntryWithData(publicIPBinding)
 	publicIPEntry.SetPlaceHolder(PUBLICIP)
-	prev := OFF
 
 	ctx, ctc := context.WithCancel(appCtx)
+	// relayGeneration отличает «свою» горутину релея от устаревшей:
+	// при перезапуске/остановке счётчик инкрементируется, и колбэк завершившейся
+	// старой горутины не сбрасывает hostSelect.
+	relayGeneration := 0
+	// runningPorts/runningPass — параметры, на которых крутится текущий релей
+	// (для сравнения при смене профиля: рестарт только если они изменились).
+	runningPorts := ""
+	runningPass := ""
+	prev := OFF
 	var hostSelect *Select
-	hostSelect = NewSelect(hostSelectOptions(OFF), func(next string) {
-		if next == prev {
-			return
-		}
-		hostBinding.Set(next)
-		if next == OFF {
-			prev = OFF
-			ctc()
-			return
-		}
-		if prev != OFF {
-			hostSelect.SetSelected(OFF) // рекурсия
-			return
-		}
+
+	// startRelay запускает локальный релей на host:ports с паролем pass.
+	startRelay := func(pass, host, ports string) {
+		relayGeneration++
+		gen := relayGeneration
 		ctx, ctc = context.WithCancel(appCtx)
-		var pass, host, ports string
-		relay := getRelayByAddress(a, next)
-		if relay.Name == "" {
-			pass = DEFAULT_PASSPHRASE
-			host = next
-			ports = ports0
-		} else {
-			setRelayName(a, relay.Name)
-			relayUpdate()
-			pass = relay.Password
-			host = relay.Address
-			ports = relay.Ports
-		}
 		prev = host
-		disableLocalBinding.Set(true)
-		disableLocalCheck.Refresh()
+		runningPorts = ports
+		runningPass = pass
+		NewToast(w, host+":"+ports).Show()
 		go func() {
-			var err error
-			err = relayRunCtx(ctx, w, pass, host, ports)
+			err := relayRunCtx(ctx, w, pass, host, ports)
 			log.Debugf("relayRun: %v", err)
 			// netstat -tlnp|grep crocson
 			// ss -tlnp|grep crocson
 			// netstat -a -n -p tcp |find ":90"
 			fyne.Do(func() {
-				hostSelect.SetSelected(OFF) // рекурсия
+				if gen != relayGeneration {
+					// Уже перезапустились/остановились более свежим стартом —
+					// не трогаем селектор, иначе собьём новый релей.
+					return
+				}
+				hostSelect.SetSelected(OFF) // рекурсия -> stopRelay
 				// hostSelect.Refresh()
 				if err != nil {
 					NewToast(w, err.Error()).Show()
 				}
 			})
 		}()
+	}
+
+	// stopRelay останавливает текущий релей и показывает тост.
+	stopRelay := func() {
+		relayGeneration++
+		ctc()
+		prev = OFF
+		NewToast(w, lp("Relay")+" "+lp("Cancel")).Show()
+	}
+
+	hostSelect = NewSelect(hostSelectOptions(OFF), func(next string) {
+		if next == prev {
+			return
+		}
+		hostBinding.Set(next)
+		if next == OFF {
+			stopRelay()
+			return
+		}
+		if prev != OFF {
+			hostSelect.SetSelected(OFF) // рекурсия (стоп), затем юзер выберет снова
+			return
+		}
+		// Подбираем профиль по адресу посредника (relay.Address == next).
+		relay := getRelayByAddress(a, next)
+		if relay.Name != "" {
+			// Применяем все поля профиля в форму.
+			applyRelayValues(relay)
+		}
+		// ports/pass всегда читаем из формы — единый путь.
+		ports, _ := relayPortsBinding.Get()
+		pass, _ := relayPasswordBinding.Get()
+		if strings.TrimSpace(ports) == "" {
+			ports = ports0
+		}
+		if strings.TrimSpace(pass) == "" {
+			pass = DEFAULT_PASSPHRASE
+		}
+		startRelay(pass, next, ports)
+		if relay.Name != "" {
+			// Делаем применённый профиль текущим (обновляем Name/relaySelect).
+			// После startRelay: хук onRelayProfileApplied, если сработает от
+			// relaySelect.SetSelected внутри relayUpdate, увидит совпадение
+			// ports/pass с running и уйдёт без рестарта.
+			setRelayName(a, relay.Name)
+			relayUpdate()
+		}
 	})
 	hostSelect.BeforePopup = func() {
 		hostSelect.Options = hostSelectOptions(OFF)
@@ -249,6 +287,40 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		s = OFF
 	}
 	hostSelect.SetSelected(s)
+
+	// restartRelayIfRunning вызывается хуком onRelayProfileApplied при ручной
+	// смене/сохранении профиля. Останавливает релей, если адрес профиля перестал
+	// совпадать с host; иначе перезапускает, только если ports/pass изменились.
+	restartRelayIfRunning := func() {
+		host, _ := hostBinding.Get()
+		if host == "" || host == OFF {
+			return
+		}
+		addr, _ := relayAddressBinding.Get()
+		if addr != "" && cleanAddress(addr) != host {
+			// Активный профиль больше не соответствует забинженному хосту —
+			// останавливаем локальный релей (каскад через OFF: стоп + тост + сброс host).
+			hostSelect.SetSelected(OFF)
+			return
+		}
+		ports, _ := relayPortsBinding.Get()
+		pass, _ := relayPasswordBinding.Get()
+		if strings.TrimSpace(ports) == "" {
+			ports = ports0
+		}
+		if strings.TrimSpace(pass) == "" {
+			pass = DEFAULT_PASSPHRASE
+		}
+		if ports == runningPorts && pass == runningPass {
+			return
+		}
+		// Рестарт без тоста остановки — только тост старта из startRelay.
+		relayGeneration++
+		ctc()
+		prev = OFF
+		startRelay(pass, host, ports)
+	}
+	onRelayProfileApplied = restartRelayIfRunning
 
 	// Массив элементов для управления состоянием
 	cosED := []fyne.CanvasObject{

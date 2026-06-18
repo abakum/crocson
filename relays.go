@@ -16,6 +16,23 @@ import (
 
 var relayUpdateUI func()
 
+// onRelayProfileApplied вызывается при ручной смене/сохранении профиля релея
+// (relaySelect.OnChanged, addRelay). Выставляется в settings.go в
+// restartRelayIfRunning. Не вызывается из updateRelaySelector, чтобы
+// инициализация/refresh не давали спурных рестартов.
+var onRelayProfileApplied func()
+
+// cleanAddress отрезает суффикс :port, если после ':' идёт число.
+func cleanAddress(addr string) string {
+	if idx := strings.LastIndex(addr, ":"); idx != -1 {
+		portPart := addr[idx+1:]
+		if _, err := strconv.Atoi(portPart); err == nil {
+			return addr[:idx]
+		}
+	}
+	return addr
+}
+
 // addCurrentRelay сохраняет текущие настройки посредника из preferences в список профилей
 func addCurrentRelay(a fyne.App) {
 	name := strings.TrimSpace(a.Preferences().String("new-relay"))
@@ -120,7 +137,7 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 	portsBinding,
 	passwordBinding,
 	socks5Binding,
-	connectBinding binding.String) (relayControls *fyne.Container, updateRelaySelector func()) {
+	connectBinding binding.String) (relayControls *fyne.Container, updateRelaySelector func(), applyRelay func(relay Relay)) {
 
 	var (
 		relaySelect *widget.Select
@@ -135,6 +152,7 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 		socks5Binding.Set(relay.Socks5)
 		connectBinding.Set(relay.Connect)
 	}
+	applyRelay = updateRelayValues
 	// Функция для обновления комбобокса из актуальных данных
 	updateRelaySelector = func() {
 		relays := getRelays(a)
@@ -175,6 +193,9 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 			if relay, index := relayByName(getRelays(a), selection); index >= 0 {
 				updateRelayValues(relay)
 				setRelayName(a, selection)
+				if onRelayProfileApplied != nil {
+					onRelayProfileApplied()
+				}
 			}
 		}
 	})
@@ -223,6 +244,9 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 		nameEntry.SetText("")
 		NewToast(w, "Ok").Show()
 		// setClipboard("", a)
+		if onRelayProfileApplied != nil {
+			onRelayProfileApplied()
+		}
 	}
 
 	// Обработка нажатия Enter в поле ввода
@@ -301,17 +325,6 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 
 func getRelayByAddress(a fyne.App, targetAddress string) (relay Relay) {
 	relays := getRelays(a)
-
-	// Внутренняя функция для очистки адреса от порта
-	cleanAddress := func(addr string) string {
-		if idx := strings.LastIndex(addr, ":"); idx != -1 {
-			portPart := addr[idx+1:]
-			if _, err := strconv.Atoi(portPart); err == nil {
-				return addr[:idx]
-			}
-		}
-		return addr
-	}
 
 	// Очищаем targetAddress от порта
 	cleanTargetAddress := cleanAddress(targetAddress)

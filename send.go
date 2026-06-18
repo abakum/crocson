@@ -1361,8 +1361,15 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			RelayPorts := ""
 			opt.RelayPassword, opt.RelayAddress, opt.RelayAddress6, RelayPorts,
 				comm.Socks5Proxy, comm.HttpProxy = def(a)
-			opt.RelayPorts = strings.Split(RelayPorts, ",")
-			opt.OnlyLocal = a.Preferences().Bool("force-local") || opt.RelayAddress == "" && opt.RelayAddress6 == ""
+		opt.RelayPorts = strings.Split(RelayPorts, ",")
+		opt.OnlyLocal = a.Preferences().Bool("force-local") || opt.RelayAddress == "" && opt.RelayAddress6 == ""
+		// При включённом локальном релее (host) croc не должен поднимать свой
+		// встроенный local-relay (setupLocalRelay биндит те же RelayPorts ->
+		// EADDRINUSE). Поэтому форсируем DisableLocal=true только при send
+		// (no-local в croc — флаг команды send). Чекбокс/pref не трогаем.
+		if host := a.Preferences().String("host"); host != "" && host != OFF {
+			opt.DisableLocal = true
+		}
 
 			var sendErr error
 
@@ -2912,6 +2919,28 @@ func def(a fyne.App) (p, r, r6, ps, s, h string) {
 	ps = defs(a.Preferences().String("relay-ports"), ports0)
 	s = defs(socks5, a.Preferences().String("socks5"))
 	h = defs(connect, a.Preferences().String("connect"))
+	// ensurePort вшивает meeting-порт (первый из relay-ports) в адрес релея,
+	// если тот без порта. croc берёт meeting-порт именно из RelayAddress и при
+	// отсутствии дефолит его до 9009 — поэтому кастомные порты (напр. 18909)
+	// без этого игнорировались бы. Аналогично тому, как сам croc вшивает :9009
+	// в DEFAULT_RELAY через net.JoinHostPort. pref и ссылка остаются без порта.
+	ensurePort := func(addr string) string {
+		if addr == "" || strings.HasPrefix(addr, "0") {
+			// пусто или прямой IP-режим ("0...") — порт не добавляем
+			return addr
+		}
+		if _, _, err := net.SplitHostPort(addr); err == nil {
+			// уже с портом
+			return addr
+		}
+		meeting := strings.TrimSpace(strings.SplitN(ps, ",", 2)[0])
+		if meeting == "" {
+			return addr
+		}
+		return net.JoinHostPort(addr, meeting)
+	}
+	r = ensurePort(r)
+	r6 = ensurePort(r6)
 	return
 }
 
