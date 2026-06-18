@@ -23,6 +23,11 @@ on:
         required: false
         default: false
         type: boolean
+      upload-appgallery:
+        description: 'Upload .aab to AppGallery (draft)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -275,6 +280,70 @@ jobs:
           echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
           echo "status=sent_to_moderation" >> $GITHUB_OUTPUT
 
-      - name: Cleanup keystores
+      - name: AppGallery — upload AAB (draft)
+        if: ${{ inputs.upload-appgallery }}
+        env:
+          AGC_CLIENT_ID: ${{ secrets.APPGALLERY_CLIENT_ID }}
+          AGC_CLIENT_SECRET: ${{ secrets.APPGALLERY_CLIENT_SECRET }}
+          AGC_APP_ID: ${{ secrets.APPGALLERY_APP_ID }}
+        run: |
+          set -euo pipefail
+
+          AGC_BASE="https://connect-api.cloud.huawei.com/api"
+          AAB="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
+          [ -f "$AAB" ] || { echo "ERROR: $AAB not found"; exit 1; }
+
+          FILE_NAME=$(basename "$AAB")
+          CONTENT_LENGTH=$(stat -c %s "$AAB")
+
+          # 1. Token
+          TOKEN=$(curl -sS -X POST "$AGC_BASE/oauth2/v1/token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg ci "$AGC_CLIENT_ID" --arg cs "$AGC_CLIENT_SECRET" \
+                 '{grant_type:"client_credentials", client_id:$ci, client_secret:$cs}')" \
+            | jq -r '.access_token')
+          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || { echo "ERROR: AGC auth failed"; exit 1; }
+          echo "AGC auth OK"
+
+          # 2. Upload URL for OBS
+          UPLOAD_INFO=$(curl -sS -X GET \
+            "$AGC_BASE/publish/v2/upload-url/for-obs?appId=$AGC_APP_ID&fileName=$FILE_NAME&contentLength=$CONTENT_LENGTH" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "client_id: $AGC_CLIENT_ID" \
+            -H "Content-Type: application/json")
+          echo "Upload-info response:"
+          echo "$UPLOAD_INFO" | jq .
+          UPLOAD_URL=$(echo "$UPLOAD_INFO" | jq -r '.urlInfo.url')
+          [ "$UPLOAD_URL" != "null" ] || { echo "ERROR: get upload-url failed"; exit 1; }
+
+          # 3. Upload file to OBS (PUT with returned signed headers)
+          HTTP_CODE=$(curl -sS -o /tmp/agc_put.out -w '%{http_code}' -X PUT "$UPLOAD_URL" \
+            -H "Authorization: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."Authorization"')" \
+            -H "x-amz-content-sha256: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."x-amz-content-sha256"')" \
+            -H "x-amz-date: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."x-amz-date"')" \
+            -H "Host: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."Host"')" \
+            -H "user-agent: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."user-agent"')" \
+            -H "Content-Type: $(echo "$UPLOAD_INFO" | jq -r '.urlInfo.headers."Content-Type"')" \
+            --data-binary @"$AAB")
+          echo "OBS PUT http_code=$HTTP_CODE"
+          cat /tmp/agc_put.out
+          [ "$HTTP_CODE" = "200" ] || { echo "ERROR: AGC AAB upload to OBS failed"; exit 1; }
+
+          # 4. Commit (register uploaded file as version draft)
+          FILE_DEST_URL=$(echo "$UPLOAD_URL" | sed -E 's|https://[^/]+/||')
+          COMMIT_RESP=$(curl -sS -X PUT \
+            "$AGC_BASE/publish/v2/app-file-info?appId=$AGC_APP_ID" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "client_id: $AGC_CLIENT_ID" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg fn "$FILE_NAME" --arg url "$FILE_DEST_URL" \
+                 '{fileType:5, files:[{fileName:$fn, fileDestUrl:$url}]}')")
+          echo "Commit response:"
+          echo "$COMMIT_RESP" | jq .
+          RET_CODE=$(echo "$COMMIT_RESP" | jq -r '.ret.code')
+          [ "$RET_CODE" = "0" ] || { echo "ERROR: AGC commit (app-file-info) failed"; exit 1; }
+          echo "AAB uploaded & committed to AppGallery as draft (NOT submitted for moderation)"
+
+      - name: Cleanup
         if: always()
-        run: rm -f /tmp/keystore.jks /tmp/rustore-upload.keystore
+        run: rm -f /tmp/keystore.jks /tmp/rustore-upload.keystore /tmp/agc_put.out
