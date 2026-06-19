@@ -6,14 +6,15 @@ import (
 	"embed"
 	"encoding/json"
 	"net"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
 
 	"github.com/schollz/croc/v10/src/croc"
-	"github.com/schollz/croc/v10/src/utils"
 	log "github.com/schollz/logger"
 	"github.com/schollz/pake/v3"
+	"github.com/wlynxg/anet"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
@@ -699,20 +700,19 @@ func restoreAccordionState() {
 func localIPs() ([]string, error) {
 	var ips []string
 
-	interfaces, err := net.Interfaces()
+	interfaces, err := anet.Interfaces()
 	if err != nil {
-		if ip := utils.LocalIP(); ip != "" {
+		// Не удалось получить список интерфейсов: определяем локальный IP
+		// через UDP-dial к хосту из public-ip (порт 443 для https, 80 для http).
+		// UDP-dial не отправляет пакет, а лишь резолвит маршрут и даёт
+		// локальный адрес исходящего интерфейса.
+		ipURL := fyne.CurrentApp().Preferences().String("public-ip")
+		if ipURL == "" {
+			ipURL = PUBLICIP
+		}
+		if ip := localIPByDial(ipURL); ip != "" {
 			return []string{ip}, nil
 		}
-		// log.Errorf("interfaces %v", err)
-		// conn, err := net.Dial("udp4", net.JoinHostPort(DEFAULT_RELAY, strconv.Itoa(DEFAULT_PORT)))
-		// if err != nil {
-		// 	return ips, err
-		// }
-		// defer conn.Close()
-		// localAddr := conn.LocalAddr().(*net.UDPAddr)
-		// ips = append(ips, localAddr.IP.String())
-		// return ips, nil
 		return ips, err
 	}
 
@@ -722,7 +722,7 @@ func localIPs() ([]string, error) {
 			continue
 		}
 
-		addrs, err := iface.Addrs()
+		addrs, err := anet.InterfaceAddrsByInterface(&iface)
 		if err != nil {
 			log.Errorf("Addrs %v", err)
 			continue
@@ -751,6 +751,42 @@ func localIPs() ([]string, error) {
 	}
 
 	return ips, nil
+}
+
+// localIPByDial определяет локальный адрес исходящего интерфейса через
+// UDP-dial к хосту, извлечённому из rawURL. Порт выбирается по схеме
+// (https → 443, иначе 80); если в URL уже указан порт, он сохраняется.
+// UDP-dial не отправляет пакет — он лишь резолвит маршрут до назначения
+// и возвращает LocalAddr выбранного интерфейса.
+func localIPByDial(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		log.Errorf("localIPByDial: parse %q: %v", rawURL, err)
+		return ""
+	}
+	host := u.Hostname()
+	if host == "" {
+		return ""
+	}
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+	conn, err := net.Dial("udp", net.JoinHostPort(host, port))
+	if err != nil {
+		log.Errorf("localIPByDial: dial %s:%s: %v", host, port, err)
+		return ""
+	}
+	defer conn.Close()
+	addr, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok {
+		return ""
+	}
+	return addr.IP.String()
 }
 
 // Функция для обновления опций селекта

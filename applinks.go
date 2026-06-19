@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -559,6 +560,10 @@ func setClipboard(a fyne.App) (text string) {
 	return
 }
 
+// ipv4Re находит IPv4-адрес в произвольном теле ответа (текст/HTML/JSON),
+// отсеивая значения вроде 999.1.1.1.
+var ipv4Re = regexp.MustCompile(`(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}`)
+
 // publicIP returns the public IP address by querying the given url.
 func publicIP(url string) (ip string, err error) {
 	resp, err := http.Get(url)
@@ -574,14 +579,17 @@ func publicIP(url string) (ip string, err error) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-	ip = strings.TrimSpace(buf.String())
-	// На случай captive-порталов/HTML-ответов: берём первую строку и проверяем,
-	// что это действительно IP.
-	if line, _, _ := strings.Cut(ip, "\n"); line != "" {
-		ip = strings.TrimSpace(line)
+	body := buf.String()
+
+	// Ищем первый IPv4 во всём теле ответа: это надёжнее, чем брать первую
+	// строку, т.к. сервис может обернуть IP в HTML/JSON или ответом будет
+	// captive-портал.
+	if m := ipv4Re.FindString(body); m != "" {
+		ip = strings.TrimSpace(m)
 	}
+
 	if net.ParseIP(ip) == nil {
-		err = fmt.Errorf("publicIP: %s: not an IP: %q", url, ip)
+		err = fmt.Errorf("publicIP: %s: not an IP in response: %q", url, body)
 		ip = ""
 	}
 	return
