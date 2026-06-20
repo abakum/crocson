@@ -17,355 +17,97 @@
             "id": "Click the Deep Link above to test",
             "message": "Click the Deep Link above to test",
             "translation": "点击上方的Deep Link进行测试",
-            "position": "crocson/applinks.go:312:30"
+            "position": "crocson/applinks.go:342:30"
         },
         {
             "id": "If a browser opens then:",
             "message": "If a browser opens then:",
             "translation": "如果浏览器打开，则：",
-            "position": "crocson/applinks.go:317:30"
+            "position": "crocson/applinks.go:347:30"
         },
         {
             "id": "Allow",
             "message": "Allow",
             "translation": "允许",
-            "position": "crocson/applinks.go:322:44"
+            "position": "crocson/applinks.go:357:44"
         },
         {
             "id": "Use",
             "message": "Use",
             "translation": "使用",
-            "position": "crocson/applinks.go:343:21"
+            "position": "crocson/applinks.go:378:21"
         },
         {
             "id": "on page",
             "message": "on page",
             "translation": "在页面",
-            "position": "crocson/applinks.go:345:21"
+            "position": "crocson/applinks.go:380:21"
         },
         {
             "id": "to",
             "message": "to",
             "translation": "以",
-            "position": "crocson/applinks.go:347:21"
+            "position": "crocson/applinks.go:382:21"
         },
         {
             "id": "Scan QRs",
             "message": "Scan QRs",
             "translation": "扫描二维码",
-            "position": "crocson/applinks.go:351:33"
+            "position": "crocson/applinks.go:418:34"
         },
         {
             "id": "with:",
             "message": "with:",
             "translation": "使用：",
-            "position": "crocson/applinks.go:391:53"
+            "position": "crocson/applinks.go:418:53"
         },
         {
             "id": "Export full log",
             "message": "Export full log",
             "translation": "导出完整日志",
-            "position": "crocson/log.go:219:45"
+            "position": "crocson/log.go:217:45"
         },
         {
             "id": "Saved all files to",
             "message": "Saved all files to",
             "translation": "所有文件已保存至",
-            "position": "crocson/log.go:272:7"
+            "position": "crocson/log.go:270:7"
         },
         {
             "id": "App closed. Tap to start.",
             "message": "App closed. Tap to start.",
             "translation": "应用已关闭。点击启动。",
-            "position": "crocson/main.go:344:16"
+            "position": "crocson/main.go:405:16"
         },
         {
             "id": "Cancel",
             "message": "Cancel",
             "translation": "取消",
-            "position": "crocson/recv.go:65:44"
+            "position": "crocson/recv.go:82:44"
         },
         {
             "id": "Wait for them before pressing Download",
             "message": "Wait for them before pressing Download",
             "translation": "在按\"下载\"之前等待他们",
-            "position": "crocson/recv.go:84:31"
+            "position": "crocson/recv.go:104:31"
         },
         {
             "id": "Relay",
             "message": "Relay",
             "translation": "中继",
-            "position": "crocson/recv.go:111:33"
+            "position": "crocson/recv.go:133:33"
         },
         {
             "id": "Download",
             "message": "Download",
             "translation": "下载",
-            "position": "crocson/recv.go:571:42"
+            "position": "crocson/recv.go:600:42"
         },
         {
             "id": "Secret must be longer than 5 characters",
             "message": "Secret must be longer than 5 characters",
             "translation": "密码必须长于5个字符",
-            "position": "crocson/recv.go:574:18"
-        },
-        {
-            "id": "Send",
-            "message": "Send",
-            "translation": "发送",
-            "position": "crocson/recv.go:579:35"
-        },
-        {
-            "id": "Receive cancelled.",
-            "message": "Receive cancelled.",
-            "translation": "接收已取消。",
-            "position": "crocson/recv.go:699:34"
-        },
-        {
-            "id": "Receiving file",
-            "message": "Receiving file",
-            "translation": "正在接收文件",
-            "position": "crocson/recv.go:722:27"
-        },
-        {
-            "id": "Send cancelled.",
-            "message": "Send cancelled.",
-            "translation": "发送已取消。",
-            "position": "crocson/recv.go:797:36"
-        },
-        {
-            "id": "Received",
-            "message": "Received",
-            "translation": "已接收",
-            "position": "crocson/recv.go:804:46"
-        },
-        {
-            "id": "Receive",
-            "message": "Receive",
-            "translation": "接收",
-            "position": "crocson/recv.go:1089:38"
-        },
-        {
-            "id": "Empty name",
-            "message": "Empty name",
-            "translation": "名称为空",
-            "position": "crocson/relays.go:165:18"
-        },
-        {
-            "id": "Last item of list",
-            "message": "Last item of list",
-            "translation": "列表最后一项",
-            "position": "crocson/relays.go:236:18"
-        },
-        {
-            "id": "Pick a file to send",
-            "message": "Pick a file to send",
-            "translation": "选择要发送的文件",
-            "position": "crocson/send.go:103:31"
-        },
-        {
-            "id": "Have them not press the Download yet",
-            "message": "Have them not press the Download yet",
-            "translation": "让他们先不要按\"下载\"",
-            "position": "crocson/send.go:716:24"
-        },
-        {
-            "id": "Have them press the Download now",
-            "message": "Have them press the Download now",
-            "translation": "现在让他们按\"下载\"",
-            "position": "crocson/send.go:782:28"
-        },
-        {
-            "id": "Sending file",
-            "message": "Sending file",
-            "translation": "正在发送文件",
-            "position": "crocson/send.go:793:57"
-        },
-        {
-            "id": "Sent file",
-            "message": "Sent file",
-            "translation": "已发送文件",
-            "position": "crocson/send.go:843:47"
-        },
-        {
-            "id": "Allow access to read",
-            "message": "Allow access to read",
-            "translation": "允许读取权限",
-            "position": "crocson/send.go:1027:23"
-        },
-        {
-            "id": "Hide",
-            "message": "Hide",
-            "translation": "隐藏",
-            "position": "crocson/settings.go:121:34"
-        },
-        {
-            "id": "Send only via relay",
-            "message": "Send only via relay",
-            "translation": "仅通过中继发送",
-            "position": "crocson/settings.go:160:49"
-        },
-        {
-            "id": "Ask the sender for their address",
-            "message": "Ask the sender for their address",
-            "translation": "向发送者询问地址",
-            "position": "crocson/settings.go:163:44"
-        },
-        {
-            "id": "Connect to local senders only",
-            "message": "Connect to local senders only",
-            "translation": "仅连接本地发送者",
-            "position": "crocson/settings.go:166:46"
-        },
-        {
-            "id": "Overwrite",
-            "message": "Overwrite",
-            "translation": "覆盖",
-            "position": "crocson/settings.go:172:46"
-        },
-        {
-            "id": "Restore",
-            "message": "Restore",
-            "translation": "恢复",
-            "position": "crocson/settings.go:315:44"
-        },
-        {
-            "id": "Language",
-            "message": "Language",
-            "translation": "语言",
-            "position": "crocson/settings.go:334:24"
-        },
-        {
-            "id": "Theme",
-            "message": "Theme",
-            "translation": "主题",
-            "position": "crocson/settings.go:335:24"
-        },
-        {
-            "id": "Font",
-            "message": "Font",
-            "translation": "字体",
-            "position": "crocson/settings.go:336:24"
-        },
-        {
-            "id": "Logo",
-            "message": "Logo",
-            "translation": "徽标",
-            "position": "crocson/settings.go:337:24"
-        },
-        {
-            "id": "Configs",
-            "message": "Configs",
-            "translation": "配置集",
-            "position": "crocson/settings.go:342:24"
-        },
-        {
-            "id": "Config",
-            "message": "Config",
-            "translation": "配置",
-            "position": "crocson/settings.go:347:24"
-        },
-        {
-            "id": "Value may be file with value",
-            "message": "Value may be file with value",
-            "translation": "值可能包含文件路径",
-            "position": "crocson/settings.go:358:21"
-        },
-        {
-            "id": "If value like 0IP then it used as --ip IP",
-            "message": "If value like 0IP then it used as --ip IP",
-            "translation": "如果值为 0IP 则用作 --ip IP",
-            "position": "crocson/settings.go:368:24"
-        },
-        {
-            "id": "Name",
-            "message": "Name",
-            "translation": "名称",
-            "position": "crocson/settings.go:372:24"
-        },
-        {
-            "id": "UnZip files",
-            "message": "UnZip files",
-            "translation": "UnZip 文件",
-            "position": "crocson/settings.go:426:8"
-        },
-        {
-            "id": "Zip folders",
-            "message": "Zip folders",
-            "translation": "Zip 文件夹",
-            "position": "crocson/settings.go:428:9"
-        },
-        {
-            "id": "File path CSV parts",
-            "message": "File path CSV parts",
-            "translation": "文件路径 CSV 部分",
-            "position": "crocson/settings.go:438:16"
-        },
-        {
-            "id": "Disable Multiplexing",
-            "message": "Disable Multiplexing",
-            "translation": "禁用多路复用",
-            "position": "crocson/settings.go:446:60"
-        },
-        {
-            "id": "Disable Compression",
-            "message": "Disable Compression",
-            "translation": "禁用压缩",
-            "position": "crocson/settings.go:447:63"
-        },
-        {
-            "id": "speed e.g. 500k",
-            "message": "speed e.g. 500k",
-            "translation": "速度 (例如: 500k)",
-            "position": "crocson/settings.go:452:16"
-        },
-        {
-            "id": "Appearance",
-            "message": "Appearance",
-            "translation": "外观",
-            "position": "crocson/settings.go:461:29"
-        },
-        {
-            "id": "Network Local",
-            "message": "Network Local",
-            "translation": "本地网络",
-            "position": "crocson/settings.go:464:29"
-        },
-        {
-            "id": "Storage Options",
-            "message": "Storage Options",
-            "translation": "存储选项",
-            "position": "crocson/settings.go:465:29"
-        },
-        {
-            "id": "Transfer Options",
-            "message": "Transfer Options",
-            "translation": "传输选项",
-            "position": "crocson/settings.go:466:29"
-        },
-        {
-            "id": "Disable local relay when sending",
-            "message": "Disable local relay when sending",
-            "translation": "发送时禁用本地中继",
-            "position": "crocson/settings.go:160:49"
-        },
-        {
-            "id": "Force to use only local connections",
-            "message": "Force to use only local connections",
-            "translation": "强制仅使用本地连接",
-            "position": "crocson/settings.go:166:46"
-        },
-        {
-            "id": "Connected via magic-wormhole",
-            "message": "Connected via magic-wormhole",
-            "translation": "通过 magic-wormhole 连接",
-            "position": "crocson/recv.go:703:24"
-        },
-        {
-            "id": "Connected via webwormhole",
-            "message": "Connected via webwormhole",
-            "translation": "通过 webwormhole 连接",
-            "position": "crocson/recv.go:779:24"
+            "position": "crocson/recv.go:613:23"
         },
         {
             "id": "Use WebDAV for magic-wormhole relay",
@@ -374,16 +116,262 @@
             "position": "crocson/recv.go:642:24"
         },
         {
+            "id": "Receive cancelled.",
+            "message": "Receive cancelled.",
+            "translation": "接收已取消。",
+            "position": "crocson/recv.go:691:26"
+        },
+        {
+            "id": "Connected via magic-wormhole",
+            "message": "Connected via magic-wormhole",
+            "translation": "通过 magic-wormhole 连接",
+            "position": "crocson/recv.go:703:24"
+        },
+        {
             "id": "Use WebDAV for webwormhole relay",
             "message": "Use WebDAV for webwormhole relay",
             "translation": "为 webwormhole 中继使用 WebDAV",
             "position": "crocson/recv.go:720:24"
         },
         {
+            "id": "Connected via webwormhole",
+            "message": "Connected via webwormhole",
+            "translation": "通过 webwormhole 连接",
+            "position": "crocson/recv.go:779:24"
+        },
+        {
+            "id": "Change directory",
+            "message": "Change directory",
+            "translation": "更改目录",
+            "position": "crocson/recv.go:793:18"
+        },
+        {
+            "id": "Receiving file",
+            "message": "Receiving file",
+            "translation": "正在接收文件",
+            "position": "crocson/recv.go:960:26"
+        },
+        {
+            "id": "Send cancelled.",
+            "message": "Send cancelled.",
+            "translation": "发送已取消。",
+            "position": "crocson/recv.go:1035:36"
+        },
+        {
+            "id": "Received",
+            "message": "Received",
+            "translation": "已接收",
+            "position": "crocson/recv.go:1042:46"
+        },
+        {
+            "id": "Receive",
+            "message": "Receive",
+            "translation": "接收",
+            "position": "crocson/recv.go:1288:38"
+        },
+        {
+            "id": "Empty name",
+            "message": "Empty name",
+            "translation": "名称为空",
+            "position": "crocson/relays.go:215:18"
+        },
+        {
+            "id": "Last item of list",
+            "message": "Last item of list",
+            "translation": "列表最后一项",
+            "position": "crocson/relays.go:289:18"
+        },
+        {
+            "id": "Pick a file to send",
+            "message": "Pick a file to send",
+            "translation": "选择要发送的文件",
+            "position": "crocson/send.go:283:31"
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "发送",
+            "position": "crocson/send.go:972:42"
+        },
+        {
+            "id": "Have them press the Download now",
+            "message": "Have them press the Download now",
+            "translation": "现在让他们按\"下载\"",
+            "position": "crocson/send.go:1007:23"
+        },
+        {
+            "id": "Have them not press the Download yet",
+            "message": "Have them not press the Download yet",
+            "translation": "让他们先不要按\"下载\"",
+            "position": "crocson/send.go:1456:24"
+        },
+        {
+            "id": "Sending file",
+            "message": "Sending file",
+            "translation": "正在发送文件",
+            "position": "crocson/send.go:1541:57"
+        },
+        {
+            "id": "Sent file",
+            "message": "Sent file",
+            "translation": "已发送文件",
+            "position": "crocson/send.go:1593:47"
+        },
+        {
+            "id": "Hide",
+            "message": "Hide",
+            "translation": "隐藏",
+            "position": "crocson/settings.go:122:34"
+        },
+        {
+            "id": "Disable local relay when sending",
+            "message": "Disable local relay when sending",
+            "translation": "发送时禁用本地中继",
+            "position": "crocson/settings.go:161:49"
+        },
+        {
+            "id": "Ask the sender for their address",
+            "message": "Ask the sender for their address",
+            "translation": "向发送者询问地址",
+            "position": "crocson/settings.go:164:44"
+        },
+        {
+            "id": "Force to use only local connections",
+            "message": "Force to use only local connections",
+            "translation": "强制仅使用本地连接",
+            "position": "crocson/settings.go:167:46"
+        },
+        {
+            "id": "Overwrite",
+            "message": "Overwrite",
+            "translation": "覆盖",
+            "position": "crocson/settings.go:173:46"
+        },
+        {
+            "id": "Restore",
+            "message": "Restore",
+            "translation": "恢复",
+            "position": "crocson/settings.go:354:44"
+        },
+        {
+            "id": "Language",
+            "message": "Language",
+            "translation": "语言",
+            "position": "crocson/settings.go:373:24"
+        },
+        {
+            "id": "Theme",
+            "message": "Theme",
+            "translation": "主题",
+            "position": "crocson/settings.go:374:24"
+        },
+        {
+            "id": "Font",
+            "message": "Font",
+            "translation": "字体",
+            "position": "crocson/settings.go:375:24"
+        },
+        {
+            "id": "Logo",
+            "message": "Logo",
+            "translation": "徽标",
+            "position": "crocson/settings.go:376:24"
+        },
+        {
+            "id": "Configs",
+            "message": "Configs",
+            "translation": "配置集",
+            "position": "crocson/settings.go:381:24"
+        },
+        {
+            "id": "Config",
+            "message": "Config",
+            "translation": "配置",
+            "position": "crocson/settings.go:386:24"
+        },
+        {
+            "id": "Value may be file with value",
+            "message": "Value may be file with value",
+            "translation": "值可能包含文件路径",
+            "position": "crocson/settings.go:397:21"
+        },
+        {
+            "id": "If value like 0IP then it used as --ip IP",
+            "message": "If value like 0IP then it used as --ip IP",
+            "translation": "如果值为 0IP 则用作 --ip IP",
+            "position": "crocson/settings.go:407:24"
+        },
+        {
+            "id": "Name",
+            "message": "Name",
+            "translation": "名称",
+            "position": "crocson/settings.go:411:24"
+        },
+        {
             "id": "Check new desktop version",
             "message": "Check new desktop version",
             "translation": "检查桌面新版本",
-            "position": "crocson/settings.go:382:64"
+            "position": "crocson/settings.go:463:59"
+        },
+        {
+            "id": "UnZip files",
+            "message": "UnZip files",
+            "translation": "UnZip 文件",
+            "position": "crocson/settings.go:467:8"
+        },
+        {
+            "id": "Zip folders",
+            "message": "Zip folders",
+            "translation": "Zip 文件夹",
+            "position": "crocson/settings.go:469:9"
+        },
+        {
+            "id": "File path CSV parts",
+            "message": "File path CSV parts",
+            "translation": "文件路径 CSV 部分",
+            "position": "crocson/settings.go:479:16"
+        },
+        {
+            "id": "Disable Multiplexing",
+            "message": "Disable Multiplexing",
+            "translation": "禁用多路复用",
+            "position": "crocson/settings.go:487:60"
+        },
+        {
+            "id": "Disable Compression",
+            "message": "Disable Compression",
+            "translation": "禁用压缩",
+            "position": "crocson/settings.go:488:63"
+        },
+        {
+            "id": "speed e.g. 500k",
+            "message": "speed e.g. 500k",
+            "translation": "速度 (例如: 500k)",
+            "position": "crocson/settings.go:493:16"
+        },
+        {
+            "id": "Appearance",
+            "message": "Appearance",
+            "translation": "外观",
+            "position": "crocson/settings.go:502:29"
+        },
+        {
+            "id": "Network Local",
+            "message": "Network Local",
+            "translation": "本地网络",
+            "position": "crocson/settings.go:505:29"
+        },
+        {
+            "id": "Storage Options",
+            "message": "Storage Options",
+            "translation": "存储选项",
+            "position": "crocson/settings.go:506:29"
+        },
+        {
+            "id": "Transfer Options",
+            "message": "Transfer Options",
+            "translation": "传输选项",
+            "position": "crocson/settings.go:507:29"
         }
     ]
 }

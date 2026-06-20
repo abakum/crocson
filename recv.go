@@ -790,7 +790,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		if !cdLock.CompareAndSwap(0, 1) {
-			NewToast(w, lp("Cancel")+" "+lp("Send")).Show()
+			NewToast(w, lp("Change directory")+" ⛔").Show()
 			return
 		}
 		// cdLocked

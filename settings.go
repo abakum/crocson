@@ -211,7 +211,8 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		prev = host
 		runningPorts = ports
 		runningPass = pass
-		NewToast(w, host+":"+ports).Show()
+		firstPort := strings.Split(defs(ports, ports0), ",")[0]
+		NewToast(w, "☑ "+net.JoinHostPort(host, firstPort)).Show()
 		go func() {
 			err := relayRunCtx(ctx, w, pass, host, ports)
 			log.Debugf("relayRun: %v", err)
@@ -237,8 +238,15 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	stopRelay := func() {
 		relayGeneration++
 		ctc()
+		host := prev
+		ports := runningPorts
 		prev = OFF
-		NewToast(w, lp("Relay")+" "+lp("Cancel")).Show()
+		firstPort := strings.Split(defs(ports, ports0), ",")[0]
+		if host != OFF && host != "" && firstPort != "" {
+			NewToast(w, "☐ "+net.JoinHostPort(host, firstPort)).Show()
+		} else {
+			NewToast(w, "☐").Show()
+		}
 	}
 
 	hostSelect = NewSelect(hostSelectOptions(OFF), func(next string) {

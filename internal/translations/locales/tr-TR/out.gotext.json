@@ -17,49 +17,49 @@
             "id": "Click the Deep Link above to test",
             "message": "Click the Deep Link above to test",
             "translation": "Test etmek için yukarıdaki Deep Link'e tıklayın",
-            "position": "crocson/applinks.go:341:30"
+            "position": "crocson/applinks.go:342:30"
         },
         {
             "id": "If a browser opens then:",
             "message": "If a browser opens then:",
             "translation": "Bir tarayıcı açılırsa:",
-            "position": "crocson/applinks.go:346:30"
+            "position": "crocson/applinks.go:347:30"
         },
         {
             "id": "Allow",
             "message": "Allow",
             "translation": "İzin verin",
-            "position": "crocson/applinks.go:356:44"
+            "position": "crocson/applinks.go:357:44"
         },
         {
             "id": "Use",
             "message": "Use",
             "translation": "Kullan",
-            "position": "crocson/applinks.go:377:21"
+            "position": "crocson/applinks.go:378:21"
         },
         {
             "id": "on page",
             "message": "on page",
             "translation": "sayfasındaki",
-            "position": "crocson/applinks.go:379:21"
+            "position": "crocson/applinks.go:380:21"
         },
         {
             "id": "to",
             "message": "to",
             "translation": "ile",
-            "position": "crocson/applinks.go:381:21"
+            "position": "crocson/applinks.go:382:21"
         },
         {
             "id": "Scan QRs",
             "message": "Scan QRs",
             "translation": "QR kodları okumak için",
-            "position": "crocson/applinks.go:417:34"
+            "position": "crocson/applinks.go:418:34"
         },
         {
             "id": "with:",
             "message": "with:",
             "translation": ":",
-            "position": "crocson/applinks.go:417:53"
+            "position": "crocson/applinks.go:418:53"
         },
         {
             "id": "Export full log",
@@ -140,10 +140,10 @@
             "position": "crocson/recv.go:779:24"
         },
         {
-            "id": "Send",
-            "message": "Send",
-            "translation": "Gönder",
-            "position": "crocson/recv.go:793:35"
+            "id": "Change directory",
+            "message": "Change directory",
+            "translation": "Dizin değiştir",
+            "position": "crocson/recv.go:793:18"
         },
         {
             "id": "Receiving file",
@@ -173,19 +173,25 @@
             "id": "Empty name",
             "message": "Empty name",
             "translation": "İsim boş",
-            "position": "crocson/relays.go:194:18"
+            "position": "crocson/relays.go:215:18"
         },
         {
             "id": "Last item of list",
             "message": "Last item of list",
             "translation": "Listenin son öğesi",
-            "position": "crocson/relays.go:265:18"
+            "position": "crocson/relays.go:289:18"
         },
         {
             "id": "Pick a file to send",
             "message": "Pick a file to send",
             "translation": "Gönderilecek dosyayı seçin",
             "position": "crocson/send.go:283:31"
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Gönder",
+            "position": "crocson/send.go:972:42"
         },
         {
             "id": "Have them press the Download now",
@@ -197,175 +203,175 @@
             "id": "Have them not press the Download yet",
             "message": "Have them not press the Download yet",
             "translation": "Henüz İndir'e basmasınlar",
-            "position": "crocson/send.go:1449:24"
+            "position": "crocson/send.go:1456:24"
         },
         {
             "id": "Sending file",
             "message": "Sending file",
             "translation": "Dosya gönderiliyor",
-            "position": "crocson/send.go:1534:57"
+            "position": "crocson/send.go:1541:57"
         },
         {
             "id": "Sent file",
             "message": "Sent file",
             "translation": "Dosya gönderildi",
-            "position": "crocson/send.go:1586:47"
+            "position": "crocson/send.go:1593:47"
         },
         {
             "id": "Hide",
             "message": "Hide",
             "translation": "Gizle",
-            "position": "crocson/settings.go:121:34"
+            "position": "crocson/settings.go:122:34"
         },
         {
             "id": "Disable local relay when sending",
             "message": "Disable local relay when sending",
             "translation": "gönderirken yerel röleyi devre dışı bırak",
-            "position": "crocson/settings.go:160:49"
+            "position": "crocson/settings.go:161:49"
         },
         {
             "id": "Ask the sender for their address",
             "message": "Ask the sender for their address",
             "translation": "Göndericiden adresini iste",
-            "position": "crocson/settings.go:163:44"
+            "position": "crocson/settings.go:164:44"
         },
         {
             "id": "Force to use only local connections",
             "message": "Force to use only local connections",
             "translation": "yalnızca yerel bağlantıları kullanmaya zorla",
-            "position": "crocson/settings.go:166:46"
+            "position": "crocson/settings.go:167:46"
         },
         {
             "id": "Overwrite",
             "message": "Overwrite",
             "translation": "Üzerine Yaz",
-            "position": "crocson/settings.go:172:46"
+            "position": "crocson/settings.go:173:46"
         },
         {
             "id": "Restore",
             "message": "Restore",
             "translation": "Geri Yükle",
-            "position": "crocson/settings.go:273:44"
+            "position": "crocson/settings.go:354:44"
         },
         {
             "id": "Language",
             "message": "Language",
             "translation": "Dil",
-            "position": "crocson/settings.go:292:24"
+            "position": "crocson/settings.go:373:24"
         },
         {
             "id": "Theme",
             "message": "Theme",
             "translation": "Tema",
-            "position": "crocson/settings.go:293:24"
+            "position": "crocson/settings.go:374:24"
         },
         {
             "id": "Font",
             "message": "Font",
             "translation": "Yazı Tipi",
-            "position": "crocson/settings.go:294:24"
+            "position": "crocson/settings.go:375:24"
         },
         {
             "id": "Logo",
             "message": "Logo",
             "translation": "Amblem",
-            "position": "crocson/settings.go:295:24"
+            "position": "crocson/settings.go:376:24"
         },
         {
             "id": "Configs",
             "message": "Configs",
             "translation": "Yapılandırmalar",
-            "position": "crocson/settings.go:300:24"
+            "position": "crocson/settings.go:381:24"
         },
         {
             "id": "Config",
             "message": "Config",
             "translation": "Yapılandırma",
-            "position": "crocson/settings.go:305:24"
+            "position": "crocson/settings.go:386:24"
         },
         {
             "id": "Value may be file with value",
             "message": "Value may be file with value",
             "translation": "Değer dosya yolu içerebilir",
-            "position": "crocson/settings.go:316:21"
+            "position": "crocson/settings.go:397:21"
         },
         {
             "id": "If value like 0IP then it used as --ip IP",
             "message": "If value like 0IP then it used as --ip IP",
             "translation": "0IP gibi bir değer --ip IP olarak kullanılır",
-            "position": "crocson/settings.go:326:24"
+            "position": "crocson/settings.go:407:24"
         },
         {
             "id": "Name",
             "message": "Name",
             "translation": "İsim",
-            "position": "crocson/settings.go:330:24"
+            "position": "crocson/settings.go:411:24"
         },
         {
             "id": "Check new desktop version",
             "message": "Check new desktop version",
             "translation": "Yeni masaüstü sürümünü denetle",
-            "position": "crocson/settings.go:382:59"
+            "position": "crocson/settings.go:463:59"
         },
         {
             "id": "UnZip files",
             "message": "UnZip files",
             "translation": "UnZip Dosyaları",
-            "position": "crocson/settings.go:386:8"
+            "position": "crocson/settings.go:467:8"
         },
         {
             "id": "Zip folders",
             "message": "Zip folders",
             "translation": "Zip Klasörleri",
-            "position": "crocson/settings.go:388:9"
+            "position": "crocson/settings.go:469:9"
         },
         {
             "id": "File path CSV parts",
             "message": "File path CSV parts",
             "translation": "Dosya Yolu CSV Parçaları",
-            "position": "crocson/settings.go:398:16"
+            "position": "crocson/settings.go:479:16"
         },
         {
             "id": "Disable Multiplexing",
             "message": "Disable Multiplexing",
             "translation": "Çoğullamayı Devre Dışı Bırak",
-            "position": "crocson/settings.go:406:60"
+            "position": "crocson/settings.go:487:60"
         },
         {
             "id": "Disable Compression",
             "message": "Disable Compression",
             "translation": "Sıkıştırmayı Devre Dışı Bırak",
-            "position": "crocson/settings.go:407:63"
+            "position": "crocson/settings.go:488:63"
         },
         {
             "id": "speed e.g. 500k",
             "message": "speed e.g. 500k",
             "translation": "hız (örn: 500k)",
-            "position": "crocson/settings.go:412:16"
+            "position": "crocson/settings.go:493:16"
         },
         {
             "id": "Appearance",
             "message": "Appearance",
             "translation": "Görünüm",
-            "position": "crocson/settings.go:421:29"
+            "position": "crocson/settings.go:502:29"
         },
         {
             "id": "Network Local",
             "message": "Network Local",
             "translation": "Yerel Ağ",
-            "position": "crocson/settings.go:424:29"
+            "position": "crocson/settings.go:505:29"
         },
         {
             "id": "Storage Options",
             "message": "Storage Options",
             "translation": "Depolama Seçenekleri",
-            "position": "crocson/settings.go:425:29"
+            "position": "crocson/settings.go:506:29"
         },
         {
             "id": "Transfer Options",
             "message": "Transfer Options",
             "translation": "Transfer Seçenekleri",
-            "position": "crocson/settings.go:426:29"
+            "position": "crocson/settings.go:507:29"
         }
     ]
 }

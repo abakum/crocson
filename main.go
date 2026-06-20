@@ -85,7 +85,7 @@ const (
 	OFF                     = "..."
 	ALL                     = "0.0.0.0"
 	LOCAL                   = "127.0.0.1"
-	PUBLICIP                = HTTPS + "://ipv4.icanhazip.com"
+	PUBLICIP                = HTTPS + "://ip.ya.ru"
 )
 
 const (

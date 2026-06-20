@@ -1271,7 +1271,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 				}
 			} else {
-				NewToast(w, lp("Cancel")+" "+lp("Download")).Show()
+				NewToast(w, lp("Change directory")+" ⛔").Show()
 				return
 			}
 		}
