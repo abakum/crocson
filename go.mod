@@ -2,7 +2,7 @@ module crocson
 
 go 1.25.0
 
-replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260615111532-7535bc765564
+replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260620152501-af68d8f69a5a
 
 replace github.com/psanford/wormhole-william => github.com/abakum/wormhole-william v0.0.0-20260529222605-d6c525669d4e
 
@@ -25,6 +25,7 @@ require (
 	github.com/schollz/pake/v3 v3.1.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/ulikunitz/xz v0.5.12
+	github.com/wlynxg/anet v0.0.5
 	golang.org/x/crypto v0.50.0
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
@@ -97,7 +98,6 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tscholl2/siec v0.0.0-20240310163802-c2c6f6198406 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
-	github.com/wlynxg/anet v0.0.5 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	golang.org/x/image v0.24.0 // indirect
 	golang.org/x/term v0.42.0 // indirect

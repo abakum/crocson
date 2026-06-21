@@ -701,7 +701,7 @@ func CanList(u fyne.URI) (bool, error) {
 func uriBase(uri fyne.URI) string {
 	name, err := callStringString("getFileName", uri.String())
 	if err == nil && name != "" {
-		return name
+		return sanitizeFileName(name)
 	}
 	return base(uri.Path())
 }

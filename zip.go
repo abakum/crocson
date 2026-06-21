@@ -264,7 +264,7 @@ func unzipDirectoryWithCustomCopy(destination string, source string, c *fyne.Con
 
 	// Первый проход: создаем структуру директорий и сохраняем времена модификации
 	for _, f := range archive.File {
-		filePath := filepath.Join(destination, f.Name)
+		filePath := filepath.Join(destination, sanitizeFileName(f.Name))
 		sanitizedPath := filepath.Clean(filePath)
 
 		// Предотвращаем уязвимость обхода пути
@@ -314,7 +314,7 @@ func unzipDirectoryWithCustomCopy(destination string, source string, c *fyne.Con
 
 	// 3. Итерируемся по файлам в архиве и извлекаем их
 	for _, f := range archive.File {
-		filePath := filepath.Join(destination, f.Name)
+		filePath := filepath.Join(destination, sanitizeFileName(f.Name))
 		log.Debugf("Unzipping file %s", filePath)
 
 		sanitizedPath := filepath.Clean(filePath)

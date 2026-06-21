@@ -19,7 +19,7 @@ import (
 var lifecycleFromJava chan string
 
 func uriBase(uri fyne.URI) string {
-	return uri.Name()
+	return sanitizeFileName(uri.Name())
 }
 
 func IsFilePickerSupported() (bool, error) { return !noDialogs, nil }

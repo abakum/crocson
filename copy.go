@@ -8,11 +8,28 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
 	log "github.com/schollz/logger"
 )
+
+// sanitizeName strips invisible/non-graphic/non-print runes (ZWSP U+200B,
+// ZWNJ U+200C, ZWJ U+200D, BOM U+FEFF, control characters) from a filename.
+// These characters commonly appear in names produced by iOS Voice Memos /
+// Telegram exports and break croc's ValidFileName validation. All other
+// characters (CJK, Cyrillic, emoji, spaces, '.', '-', '_') are preserved.
+func sanitizeFileName(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if unicode.IsGraphic(r) && unicode.IsPrint(r) {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
 
 func Rename(src, dst string) error {
 	if noRename {
@@ -21,7 +38,6 @@ func Rename(src, dst string) error {
 	if _, err := os.Stat(src); err != nil {
 		return err
 	}
-
 	// Check that dst is not a subdirectory of src
 	srcAbs, err := filepath.Abs(src)
 	if err != nil {
