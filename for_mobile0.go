@@ -21,6 +21,14 @@ func Child(parent fyne.URI, component string) (child fyne.URI, cleanup func(), e
 	return
 }
 
+func DownloadDir() (fyne.URI, error) {
+	downloads := xdg.UserDirs.Download
+	if downloads == "" {
+		return nil, fmt.Errorf("failed to get Downloads directory")
+	}
+	return storage.NewFileURI(downloads), nil
+}
+
 func ChildDownload(component string) (child fyne.URI, cleanup func(), err error) {
 	cleanup = func() {}
 

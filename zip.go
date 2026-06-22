@@ -42,8 +42,24 @@ func zipDirectoryWithOverallProgress(destination string, source string, c *fyne.
 		return err
 	}
 
-	// 3. Создаем файл назначения
-	file, err := os.Create(destination)
+	// 3. Создаем файл назначения во временный .part и переименуем в финальный
+	// .zip только после успешного завершения обхода. Иначе reload() (recv.go)
+	// видит .zip и считает каталог уже заархивированным, удаляя исходные файлы
+	// до того, как обход их прочитает.
+	partFile := destination + ".part"
+	ok := false
+	defer func() {
+		if ok {
+			if rerr := os.Rename(partFile, destination); rerr != nil {
+				log.Errorf("rename %s %s: %v", partFile, destination, rerr)
+				err = rerr
+			}
+		} else if _, statErr := os.Stat(partFile); statErr == nil {
+			os.Remove(partFile)
+		}
+	}()
+
+	file, err := os.Create(partFile)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -237,6 +253,7 @@ func zipDirectoryWithOverallProgress(destination string, source string, c *fyne.
 
 	// 6. Восстанавливаем GUI (скрываем прогресс-бар)
 	restore()
+	ok = true // успешное завершение — финализатор переименует .part в .zip
 	log.Debugf("Zip creation completed")
 	return nil
 }

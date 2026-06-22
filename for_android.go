@@ -970,6 +970,12 @@ func Child(parent fyne.URI, component string) (child fyne.URI, cleanup func(), e
 	return
 }
 
+// DownloadDir на Android неприменим: каталоги сохраняются как .zip через
+// createFileInDownloads, поэтому здесь возвращается ошибка.
+func DownloadDir() (fyne.URI, error) {
+	return nil, fmt.Errorf("DownloadDir not applicable on android")
+}
+
 // --- download ---
 
 func CreateFileInDownloads(fileName, mimeType string) (string, error) {

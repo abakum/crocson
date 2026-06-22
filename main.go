@@ -47,6 +47,7 @@ const (
 	SCHOLLZ      = "schollz"
 	TOTP         = "TOTP-" + CROC_SECRET
 	DOTZIP       = ".zip"
+	PART         = ".part"
 	DOTTXT       = ".txt"
 
 	Ghisler                = "content://com.ghisler.files/"

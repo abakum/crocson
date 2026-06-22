@@ -130,6 +130,11 @@ func CreateFileInDownloads(fileName, mimeType string) (string, error) {
 	return result, nil
 }
 
+// DownloadDir на iOS неприменим: каталоги сохраняются как .zip.
+func DownloadDir() (fyne.URI, error) {
+	return nil, fmt.Errorf("DownloadDir not applicable on ios")
+}
+
 // ChildDownload создает файл и возвращает его для последующего наполнения данными
 func ChildDownload(component string) (child fyne.URI, cleanup func(), err error) {
 	cleanup = func() {}

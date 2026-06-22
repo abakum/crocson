@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -379,9 +380,123 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	} //addEntry
 
 	//
+	// coveredBy сообщает, лежит ли path внутри одной из directory-записей.
+	coveredBy := func(path string, dirs []string) bool {
+		p := filepath.Clean(path)
+		for _, d := range dirs {
+			d = filepath.Clean(d)
+			if p == d {
+				continue
+			}
+			if strings.HasPrefix(p, d+string(filepath.Separator)) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// relFromRoot — путь относительно корня корзины (сохраняет структуру каталогов).
+	relFromRoot := func(src string) string {
+		rel, err := filepath.Rel(join(), src)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			return filepath.Base(src)
+		}
+		return rel
+	}
+
+	// saveEntryDesktop копирует каталог (деревом) или отдельный файл в назначение
+	// (каталогпикер или Download), сохраняя путь относительно корня корзины.
+	saveEntryDesktop := func(srcDir string, lu fyne.ListableURI, fe *fyne.Container, done func(ok bool)) {
+		var destDir string
+		if lu != nil {
+			destDir = lu.Path()
+		} else {
+			du, derr := DownloadDir()
+			if derr != nil {
+				log.Errorf("DownloadDir: %v", derr)
+				done(false)
+				return
+			}
+			destDir = du.Path()
+		}
+		// Путь назначения = назначение + относительный путь от корня корзины,
+		// так сохраняется структура каталогов и для каталога, и для файла внутри него
+		dstPath := filepath.Join(destDir, relFromRoot(srcDir))
+		// copyFiles делает MkdirAll только для каталога-источника, поэтому для
+		// отдельного файла создаём родительский каталог заранее
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0700); err != nil {
+			log.Errorf("MkdirAll %s: %v", filepath.Dir(dstPath), err)
+			done(false)
+			return
+		}
+		var (
+			wg     sync.WaitGroup
+			failed atomic.Bool
+		)
+		go func() {
+			err := copyFiles(storage.NewFileURI(srcDir), dstPath, func(u fyne.URI, dstPath string) error {
+				src := u.Path()
+				rel, rerr := filepath.Rel(join(), src)
+				if rerr != nil {
+					rel = src
+				}
+				feCopy := addEntry(src, func(d *widget.Button, p *widget.ProgressBar, s *widget.Button, l *widget.Label) {
+					l.SetText(rel)
+				})
+				wg.Add(1)
+				CopyFileProgress(src, dstPath, feCopy, func(err error) {
+					defer wg.Done()
+					if err != nil {
+						failed.Store(true)
+						log.Errorf("copy %s %s: %v", src, dstPath, err)
+						removeEntry(src, feCopy, false)
+						return
+					}
+					log.Debugf("copy %s %s", src, dstPath)
+					// только UI: исходный файл удалит RemoveAll(srcDir) после
+					// завершения всех копий, чтобы не было гонки с открытыми дескрипторами
+					removeEntry(src, feCopy, false)
+				})
+				return nil
+			})
+			if err != nil {
+				failed.Store(true)
+				log.Errorf("copyFiles %s: %v", srcDir, err)
+			}
+			// все wg.Add выполняются синхронно внутри copyFiles в этой же горутине,
+			// поэтому к моменту Wait они все уже сделаны
+			wg.Wait()
+			done(!failed.Load())
+		}()
+	}
+
 	dialogFileSave = func(src string, parent fyne.Window, textDialog bool) {
 		fe, ok := load(&fileentries, src)
 		if !ok {
+			return
+		}
+		// Десктоп: каталог или файл внутри каталога — каталогпикер с сохранением структуры
+		if !(isMobile || asMobile) && (isLinkDir(src) || filepath.Dir(relFromRoot(src)) != ".") {
+			ShowFolderOpen(func(lu fyne.ListableURI, err error) {
+				if err != nil {
+					log.Errorf("folder selection: %v", err)
+					return
+				}
+				if lu == nil {
+					log.Debug("folder selection canceled")
+					return
+				}
+				saveEntryDesktop(src, lu, fe, func(ok bool) {
+					if ok {
+						removeEntry(src, fe, true)
+						fyne.Do(func() {
+							if mapEmpty(&fileentries) {
+								topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+							}
+						})
+					}
+				})
+			}, parent)
 			return
 		}
 		child := filepath.Base(src)
@@ -557,7 +672,8 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			name := n[i]
 			if name == "" ||
 				path == fpath || // если не удалось удалить то не показываю
-				name == crocRemovalFile {
+				name == crocRemovalFile ||
+				strings.HasSuffix(strings.ToLower(path), PART) { // временный .part не показываем
 				continue
 			}
 			for _, prefix := range prefixs {
@@ -580,11 +696,16 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		forEachFileEntry(&fileentries, func(path string, fe *fyne.Container) {
+			del := true
 			switch {
 			case exists[path]:
 				return
 			case inZip[path]:
 				log.Debugf("removeEntry zipped %s", path)
+			case strings.HasSuffix(strings.ToLower(path), PART):
+				// только UI: .part может ещё писаться зипом, файл не трогаем
+				log.Debugf("removeEntry part %s", path)
+				del = false
 			default:
 				if _, err := os.Stat(path); err != nil {
 					log.Debugf("removeEntry %s: %v", path, err)
@@ -592,7 +713,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					return
 				}
 			}
-			removeEntry(path, fe, true)
+			removeEntry(path, fe, del)
 		})
 		broadcastRefresh()
 	}
@@ -1068,11 +1189,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	cosDAV = append(cosDAV, downloadButton)
 
 	filesSave = func(lu fyne.ListableURI, err error) {
-		var (
-			u  fyne.URI
-			cl = func() {}
-		)
-
 		if err != nil {
 			log.Errorf("folder selection: %v", err)
 		} else if lu == nil {
@@ -1080,111 +1196,133 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 
+		// Соберём directory-записи, чтобы пропускать вложенные в них файлы
+		var dirEntries []string
 		forEachFileEntry(&fileentries, func(src string, fe *fyne.Container) {
-			child := filepath.Base(src)
-			if (isMobile || asMobile) && isLinkDir(src) {
-				child += DOTZIP
+			if isLinkDir(src) {
+				dirEntries = append(dirEntries, src)
 			}
+		})
 
-			if lu != nil {
-				u, cl, err = ChildViaMediaStore(lu, child)
-				if err != nil {
-					u, cl, err = Child(lu, child)
-					if err != nil {
-						log.Errorf("%s/%s: %v", lu, child, err)
-						u, cl, err = ChildDownload(child)
-					}
-				}
-			} else {
-				u, cl, err = ChildDownload(child)
-				if p, err := storage.Parent(u); err == nil {
-					lu, err = storage.ListerForURI(p)
-					if err != nil {
-						// lastLU = lu
-						a.Preferences().SetString(LastFolder, lu.String())
-					}
-				}
-			}
-			if err != nil {
-				log.Errorf("Downloads/%s: %v", child, err)
+		forEachFileEntry(&fileentries, func(src string, fe *fyne.Container) {
+			// Файл внутри сохраняемого каталога — пропускаем (уйдёт вместе с каталогом)
+			if !isLinkDir(src) && coveredBy(src, dirEntries) {
 				return
 			}
 
-			dst := u.Path()
 			if !(isMobile || asMobile) {
-				// Десктоп
-				fi, err := os.Stat(src)
-				if err != nil {
-					log.Errorf("stat %s: %v", src, err)
-					return
-				}
-				err = Rename(src, dst)
-				if err == nil {
-					log.Debugf("move %s %s", src, dst)
-					removeEntry(src, fe, true)
-					fyne.Do(func() {
-						if mapEmpty(&fileentries) {
-							// dir := filepath.Dir(dst)
-							topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+				// === Десктоп ===
+				if isLinkDir(src) {
+					// Каталог — копируем деревом в назначение
+					saveEntryDesktop(src, lu, fe, func(ok bool) {
+						if ok {
+							removeEntry(src, fe, true)
+							fyne.Do(func() {
+								if mapEmpty(&fileentries) {
+									if lu != nil {
+										topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+									} else {
+										topline.SetText(lp("Saved all files to") + " Download")
+									}
+								}
+							})
 						}
 					})
 					return
 				}
-				log.Warnf("move %s %s: %v", src, dst, err)
-				root := src
-				go func() {
-					log.Debugf("copyFiles: %v",
-						copyFiles(storage.NewFileURI(root), dst, func(u fyne.URI, dstPath string) error {
-							// fyne.Do(func() {})
-							feCopy := fe
-							src := u.Path()
-							if fi.IsDir() {
-								// Создаю временный прогрессбар
-								rel, err := filepath.Rel(join(), src)
-								if err != nil {
-									rel = src
-								}
-								feCopy = addEntry(src, func(d *widget.Button, p *widget.ProgressBar, s *widget.Button, l *widget.Label) {
-									l.SetText(rel)
-								})
+				// Обычный файл — с относительным путём (сохраняем структуру каталогов)
+				child := relFromRoot(src)
+				var (
+					u   fyne.URI
+					uerr error
+				)
+				if lu != nil {
+					u, _, uerr = Child(lu, child)
+				} else {
+					u, _, uerr = ChildDownload(child)
+				}
+				if uerr != nil {
+					log.Errorf("%s: %v", child, uerr)
+					return
+				}
+				dst := u.Path()
+				if _, err := os.Stat(src); err != nil {
+					log.Errorf("stat %s: %v", src, err)
+					return
+				}
+				if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+					log.Errorf("MkdirAll %s: %v", filepath.Dir(dst), err)
+					return
+				}
+				finishFile := func() {
+					fyne.Do(func() {
+						if mapEmpty(&fileentries) {
+							if lu != nil {
+								topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+							} else {
+								topline.SetText(lp("Saved all files to") + " Download")
 							}
-							CopyFileProgress(src, dstPath, feCopy, func(err error) {
-								if err != nil {
-									log.Errorf("copy %s %s: %v", src, dstPath, err)
-									removeEntry(src, feCopy, false)
-									return
-								}
-
-								if _, err := os.Stat(dstPath); err != nil {
-									// не сохранилось
-									log.Errorf("stat %s: %v", dstPath, err)
-								} else {
-									// сохранилось, удаляем
-									log.Debugf("copy %s %s", src, dstPath)
-									removeEntry(src, feCopy, true)
-									if feCopy != fe {
-										if os.Remove(filepath.Dir(src)) == nil {
-											_, err := os.Stat(root)
-											exists := err == nil
-											if !exists || os.Remove(root) == nil {
-												if feRoot, ok := load(&fileentries, root); ok {
-													removeEntry(root, feRoot, false)
-												}
-											}
-										}
-									}
-								}
-							})
-							return nil
-						}))
+						}
+					})
+				}
+				if err := Rename(src, dst); err == nil {
+					log.Debugf("move %s %s", src, dst)
+					removeEntry(src, fe, true)
+					finishFile()
+					return
+				}
+				log.Warnf("move %s %s: %v", src, dst, err)
+				go func() {
+					CopyFileProgress(src, dst, fe, func(err error) {
+						if err != nil {
+							log.Errorf("copy %s %s: %v", src, dst, err)
+							return
+						}
+						log.Debugf("copy %s %s", src, dst)
+						removeEntry(src, fe, true)
+						finishFile()
+					})
 				}()
 				return
 			}
 
-			destination, err := storage.Writer(u)
-			if err != nil {
+			// === Мобильные ===
+			child := filepath.Base(src)
+			if isLinkDir(src) {
+				child += DOTZIP
+			}
+			var (
+				u    fyne.URI
+				cl   = func() {}
+				uerr error
+			)
+			if lu != nil {
+				u, cl, uerr = ChildViaMediaStore(lu, child)
+				if uerr != nil {
+					u, cl, uerr = Child(lu, child)
+					if uerr != nil {
+						log.Errorf("%s/%s: %v", lu, child, uerr)
+						u, cl, uerr = ChildDownload(child)
+					}
+				}
+			} else {
+				u, cl, uerr = ChildDownload(child)
+				if p, perr := storage.Parent(u); perr == nil {
+					lu, perr = storage.ListerForURI(p)
+					if perr != nil {
+						a.Preferences().SetString(LastFolder, lu.String())
+					}
+				}
+			}
+			if uerr != nil {
+				log.Errorf("Downloads/%s: %v", child, uerr)
+				return
+			}
+
+			destination, werr := storage.Writer(u)
+			if werr != nil {
 				cl()
-				log.Errorf("writer %s: %v", u, err)
+				log.Errorf("writer %s: %v", u, werr)
 				return
 			}
 
@@ -1202,7 +1340,6 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					removeEntry(src, fe, true)
 
 					if mapEmpty(&fileentries) {
-						// Финиш
 						name := uriBase(destination.URI())
 						parent := strings.TrimSuffix(destination.URI().String(), name)
 						fyne.Do(func() {
