@@ -1,0 +1,6 @@
+Masaüstü: dosya kaydederken dizin yapısını koru
+Android: zip arşivine kaydetme düzeltildi
+Alıcı: dosya adlarındaki görünmez karakterleri temizle
+Aktarıcı: çift başlatma ve yerel aktarıcıyla çakışma düzeltildi
+Ağ: genel IP algılama güvenilirliği iyileştirildi
+Android: yerel IP algılama güvenilirliği iyileştirildi

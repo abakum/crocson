@@ -1,0 +1,6 @@
+Desktop: preserve directory structure when saving files
+Android: fixed saving to zip archive
+Receiver: strip invisible characters from file names
+Relay: fixed double start and conflict with local relay
+Network: improved reliability of public IP detection
+Android: improved reliability of local IP detection
