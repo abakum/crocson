@@ -16,7 +16,7 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
             android:label="crocson"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Light"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
             android:resizeableActivity="true">
             
             <meta-data
@@ -102,10 +102,11 @@
         <package android:name="com.microsoft.emmx" />            <!-- Microsoft Edge -->
 
         <package android:name="org.mozilla.firefox" />
+        <package android:name="com.huawei.browser" />
     </queries>
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />

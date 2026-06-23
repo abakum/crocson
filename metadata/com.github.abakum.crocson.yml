@@ -23,7 +23,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@a364650bbf751e073c10cb3dbfb6f6e38f0d66ba
+      - abakum-fyne-tools@42ed49e021d08a7060bd2ef8cc1f2ebcf1333066
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -50,7 +50,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-arm64.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@a364650bbf751e073c10cb3dbfb6f6e38f0d66ba
+      - abakum-fyne-tools@42ed49e021d08a7060bd2ef8cc1f2ebcf1333066
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -77,7 +77,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-386.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@a364650bbf751e073c10cb3dbfb6f6e38f0d66ba
+      - abakum-fyne-tools@42ed49e021d08a7060bd2ef8cc1f2ebcf1333066
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
@@ -104,7 +104,7 @@ Builds:
     binary: https://github.com/abakum/crocson/releases/download/v%v/crocson-amd64.apk
     srclibs:
       - go@go1.25.0
-      - abakum-fyne-tools@a364650bbf751e073c10cb3dbfb6f6e38f0d66ba
+      - abakum-fyne-tools@42ed49e021d08a7060bd2ef8cc1f2ebcf1333066
     prebuild: sed -i 's/^Build = .*/Build = $$VERCODE$$/' FyneApp.toml
     build:
       - pushd $$go$$/src
