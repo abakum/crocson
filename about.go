@@ -18,6 +18,14 @@ import (
 //go:embed metadata/en-US/full_description.txt metadata/ja-JP/full_description.txt metadata/ru-RU/full_description.txt metadata/tr-TR/full_description.txt metadata/zh-CN/full_description.txt metadata/en-US/images/featureGraphic.png
 var metadata embed.FS
 
+// privacyCheck is the consent checkbox shown on the About tab.
+// privacyCheckSync refreshes its checked state from the preference, disabling
+// the OnChanged handler while setting to avoid re-entrancy.
+var (
+	privacyCheck     *widget.Check
+	privacyCheckSync func()
+)
+
 //go:embed LICENSE
 var crocsonLicense string
 
@@ -27,7 +35,7 @@ var thirdPartyLicenses string
 //go:embed FyneApp.toml
 var fyneApp string
 
-func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
+func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	longdescbytes, _ := metadata.ReadFile(fmt.Sprintf("metadata/%s/full_description.txt", langCode))
 	longdesc := string(longdescbytes)
 	longdesc = strings.ReplaceAll(longdesc, "<b>", "")
@@ -82,6 +90,28 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	crocHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s", GH, SCHOLLZ, CROC), nil)
 	crocHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/latest", HTTPS, GH, SCHOLLZ, CROC))
 
+	privacyCheck = widget.NewCheck("", nil)
+
+	var onPrivacyChanged func(bool)
+	onPrivacyChanged = func(_ bool) {
+		// Любая смена состояния чекбокса открывает диалог согласия.
+		showPrivacyConsent(a, w, func(accepted bool) {
+			if accepted {
+				a.Preferences().SetBool(privacyAcceptedKey, true)
+				privacyCheckSync()
+			} else {
+				revokeConsent(w)
+			}
+		})
+	}
+	privacyCheckSync = func() {
+		privacyCheck.OnChanged = nil
+		privacyCheck.SetChecked(a.Preferences().Bool(privacyAcceptedKey))
+		privacyCheck.OnChanged = onPrivacyChanged
+	}
+	privacyCheck.OnChanged = onPrivacyChanged
+	privacyCheckSync()
+
 	fromHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s v%s_%d", GH, FORKfrom, CROCGUI, FORKfromVersion, FORKfromBuild), nil)
 	fromHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/tag/v%s", HTTPS, GH, FORKfrom, CROCGUI, FORKfromVersion))
 
@@ -97,6 +127,9 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 	})
 	appInfo.Hidden = !isAndroid
 
+	privacyRow := container.NewHBox(
+		widget.NewLabel(lp("Accept")), privacyCheck, widget.NewLabel(lp("of Privacy Policy")))
+
 	title := ""
 	if isAndroid {
 		title = CS
@@ -109,12 +142,16 @@ func aboutTabItem(a fyne.App, _ fyne.Window) *container.TabItem {
 				fromHyperlink,
 				oldHyperlink,
 				newHyperlink,
+				privacyRow,
 			),
 			aboutInfo,
 			licenseToggle,
 		)),
 	)
 	OnSelectedTab[ABOUTi] = func() {
+		if privacyCheckSync != nil {
+			privacyCheckSync()
+		}
 		go func() {
 			if !a.Preferences().Bool("check-version") {
 				log.Debug("skip version check: check-version disabled")

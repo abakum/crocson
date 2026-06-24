@@ -87,6 +87,7 @@ const (
 	ALL                     = "0.0.0.0"
 	LOCAL                   = "127.0.0.1"
 	PUBLICIP                = HTTPS + "://ip.ya.ru"
+	PrivacyPolicyURL        = HTTPS + "://" + GHP + "/croc/privacy-policy.html"
 )
 
 const (
@@ -404,6 +405,8 @@ func main() {
 	refreshWindow(a, w)
 	w.Resize(size)
 	AppClosed = lp("App closed. Tap to start.")
+
+	showPrivacyConsentOnStart(a, w)
 
 	w.ShowAndRun()
 }
