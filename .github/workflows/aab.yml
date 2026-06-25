@@ -297,12 +297,19 @@ jobs:
           CONTENT_LENGTH=$(stat -c %s "$AAB")
 
           # 1. Token
-          TOKEN=$(curl -sS -X POST "$AGC_BASE/oauth2/v1/token" \
+          [ -n "$AGC_CLIENT_ID" ]     || { echo "ERROR: APPGALLERY_CLIENT_ID secret is empty"; exit 1; }
+          [ -n "$AGC_CLIENT_SECRET" ] || { echo "ERROR: APPGALLERY_CLIENT_SECRET secret is empty"; exit 1; }
+          [ -n "$AGC_APP_ID" ]        || { echo "ERROR: APPGALLERY_APP_ID secret is empty"; exit 1; }
+          TOKEN_RESP=$(curl -sS -X POST "$AGC_BASE/oauth2/v1/token" \
             -H 'Content-Type: application/json' \
             -d "$(jq -n --arg ci "$AGC_CLIENT_ID" --arg cs "$AGC_CLIENT_SECRET" \
-                 '{grant_type:"client_credentials", client_id:$ci, client_secret:$cs}')" \
-            | jq -r '.access_token')
-          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || { echo "ERROR: AGC auth failed"; exit 1; }
+                 '{grant_type:"client_credentials", client_id:$ci, client_secret:$cs}')")
+          TOKEN=$(echo "$TOKEN_RESP" | jq -r '.access_token // empty')
+          if [ -z "$TOKEN" ]; then
+            echo "ERROR: AGC auth failed. Response:"
+            echo "$TOKEN_RESP" | jq .
+            exit 1
+          fi
           echo "AGC auth OK"
 
           # 2. Upload URL for OBS
