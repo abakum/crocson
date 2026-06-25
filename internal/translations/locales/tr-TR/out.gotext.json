@@ -5,13 +5,19 @@
             "id": "License Info",
             "message": "License Info",
             "translation": "Lisans Bilgileri",
-            "position": "crocson/about.go:72:38"
+            "position": "crocson/about.go:80:38"
         },
         {
             "id": "App info",
             "message": "App info",
             "translation": "Uygulama bilgisi",
-            "position": "crocson/about.go:95:40"
+            "position": "crocson/about.go:125:40"
+        },
+        {
+            "id": "I agree to the Privacy Policy",
+            "message": "I agree to the Privacy Policy",
+            "translation": "Gizlilik Politikası'nı kabul ediyorum",
+            "position": "crocson/about.go:131:21"
         },
         {
             "id": "Click the Deep Link above to test",
@@ -77,97 +83,103 @@
             "id": "App closed. Tap to start.",
             "message": "App closed. Tap to start.",
             "translation": "Uygulama kapandı. Başlatmak için dokunun.",
-            "position": "crocson/main.go:405:16"
+            "position": "crocson/main.go:407:16"
+        },
+        {
+            "id": "Accept",
+            "message": "Accept",
+            "translation": "Kabul Et",
+            "position": "crocson/privacy.go:106:39"
         },
         {
             "id": "Cancel",
             "message": "Cancel",
             "translation": "İptal",
-            "position": "crocson/recv.go:82:44"
+            "position": "crocson/recv.go:83:44"
         },
         {
             "id": "Wait for them before pressing Download",
             "message": "Wait for them before pressing Download",
             "translation": "İndir'e basmadan önce onları bekleyin",
-            "position": "crocson/recv.go:104:31"
+            "position": "crocson/recv.go:105:31"
         },
         {
             "id": "Relay",
             "message": "Relay",
             "translation": "Röle",
-            "position": "crocson/recv.go:133:33"
+            "position": "crocson/recv.go:134:33"
         },
         {
             "id": "Download",
             "message": "Download",
             "translation": "İndir",
-            "position": "crocson/recv.go:600:42"
+            "position": "crocson/recv.go:721:42"
         },
         {
             "id": "Secret must be longer than 5 characters",
             "message": "Secret must be longer than 5 characters",
             "translation": "Gizli anahtar 5 karakterden uzun olmalıdır",
-            "position": "crocson/recv.go:613:23"
+            "position": "crocson/recv.go:734:23"
         },
         {
             "id": "Use WebDAV for magic-wormhole relay",
             "message": "Use WebDAV for magic-wormhole relay",
             "translation": "magic-wormhole rölesi için WebDAV kullan",
-            "position": "crocson/recv.go:642:24"
+            "position": "crocson/recv.go:763:24"
         },
         {
             "id": "Receive cancelled.",
             "message": "Receive cancelled.",
             "translation": "Alma iptal edildi.",
-            "position": "crocson/recv.go:691:26"
+            "position": "crocson/recv.go:812:26"
         },
         {
             "id": "Connected via magic-wormhole",
             "message": "Connected via magic-wormhole",
             "translation": "magic-wormhole üzerinden bağlandı",
-            "position": "crocson/recv.go:703:24"
+            "position": "crocson/recv.go:824:24"
         },
         {
             "id": "Use WebDAV for webwormhole relay",
             "message": "Use WebDAV for webwormhole relay",
             "translation": "webwormhole rölesi için WebDAV kullan",
-            "position": "crocson/recv.go:720:24"
+            "position": "crocson/recv.go:841:24"
         },
         {
             "id": "Connected via webwormhole",
             "message": "Connected via webwormhole",
             "translation": "webwormhole üzerinden bağlandı",
-            "position": "crocson/recv.go:779:24"
+            "position": "crocson/recv.go:900:24"
         },
         {
             "id": "Change directory",
             "message": "Change directory",
             "translation": "Dizin değiştir",
-            "position": "crocson/recv.go:793:18"
+            "position": "crocson/recv.go:914:18"
         },
         {
             "id": "Receiving file",
             "message": "Receiving file",
             "translation": "Dosya alınıyor",
-            "position": "crocson/recv.go:960:26"
+            "position": "crocson/recv.go:1081:26"
         },
         {
             "id": "Send cancelled.",
             "message": "Send cancelled.",
             "translation": "Gönderme iptal edildi.",
-            "position": "crocson/recv.go:1035:36"
+            "position": "crocson/recv.go:1156:36"
         },
         {
             "id": "Received",
             "message": "Received",
             "translation": "Alındı",
-            "position": "crocson/recv.go:1042:46"
+            "position": "crocson/recv.go:1163:46"
         },
         {
             "id": "Receive",
             "message": "Receive",
             "translation": "Al",
-            "position": "crocson/recv.go:1288:38"
+            "position": "crocson/recv.go:1425:38"
         },
         {
             "id": "Empty name",
