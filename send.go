@@ -27,6 +27,8 @@ import (
 
 	log "github.com/schollz/logger"
 
+	"crypto/tls"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -40,7 +42,6 @@ import (
 	"github.com/schollz/croc/v10/src/message"
 	"github.com/schollz/croc/v10/src/utils"
 	"github.com/schollz/mnemonicode"
-	"crypto/tls"
 
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/scrypt"
@@ -116,7 +117,9 @@ func wsRefreshRemote(ctx context.Context, httpURL string, onRefresh func(), onCh
 				continue
 			}
 
-			var cmd struct{ Cmd string `json:"cmd"` }
+			var cmd struct {
+				Cmd string `json:"cmd"`
+			}
 			if json.Unmarshal(data, &cmd) == nil && cmd.Cmd == "refresh" {
 				log.Debugf("[ws-refresh] refresh received")
 				if onRefresh != nil {
@@ -191,7 +194,9 @@ func wsChat(ctx context.Context, httpURL string, onMessage func()) {
 				continue
 			}
 
-			var cmd struct{ Cmd string `json:"cmd"` }
+			var cmd struct {
+				Cmd string `json:"cmd"`
+			}
 			if json.Unmarshal(data, &cmd) == nil && (cmd.Cmd == "refresh" || cmd.Cmd == "close") {
 				continue
 			}
@@ -215,7 +220,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		reload      func()
 		treeOff     = func() {}
 		scRefresh   = func() {}
-		cancelWS context.CancelFunc
+		cancelWS    context.CancelFunc
 
 		cancelChatWS context.CancelFunc
 	)
@@ -760,8 +765,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				// без псевдоссылок в файловом менеджере
 				err = OpenURL(root)
 			} else {
-			// с псевдоссылками в через вебдав
-			err = OpenDAV(markLocalPeer(link.URL.String()))
+				// с псевдоссылками в через вебдав
+				err = OpenDAV(markLocalPeer(link.URL.String()))
 			}
 			if err == nil {
 				return
@@ -826,8 +831,8 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		if davServer.IsActive() || davServer.IsTCPForwardingActive() || davServer.IsRemote() {
 			_, ccn, proxyURL, _ := isDAV(link.URL.String())
-		log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
-		chatURL = markLocalPeer(ccn)
+			log.Debugf("[switchToWebDAVTree] ccn=%q proxyURL=%q", ccn, proxyURL)
+			chatURL = markLocalPeer(ccn)
 			go func() {
 				if cancelWS != nil {
 					cancelWS()
@@ -919,12 +924,12 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				go switchToWebDAVTree()
 				allEnabled(true, cosDAVremote...)
 				showPage()
-		} else {
-			stopWS()
-			if treeButton.Icon == theme.VisibilityIcon() {
-				davControl.Hide()
+			} else {
+				stopWS()
+				if treeButton.Icon == theme.VisibilityIcon() {
+					davControl.Hide()
+				}
 			}
-		}
 		})
 	})
 
@@ -1018,11 +1023,11 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					default:
 						close(cancelChan)
 					}
-				davServer.DisableTCPForwarding()
-				stopWS()
-				if caffeinated {
-					caffeinate(-1)
-				}
+					davServer.DisableTCPForwarding()
+					stopWS()
+					if caffeinated {
+						caffeinate(-1)
+					}
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1147,11 +1152,11 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					default:
 						close(cancelChan)
 					}
-				davServer.DisableTCPForwarding()
-				stopWS()
-				if caffeinated {
-					caffeinate(-1)
-				}
+					davServer.DisableTCPForwarding()
+					stopWS()
+					if caffeinated {
+						caffeinate(-1)
+					}
 					fyne.Do(func() {
 						cancelButton.Hide()
 						mainButton.Show()
@@ -1361,15 +1366,15 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			RelayPorts := ""
 			opt.RelayPassword, opt.RelayAddress, opt.RelayAddress6, RelayPorts,
 				comm.Socks5Proxy, comm.HttpProxy = def(a)
-		opt.RelayPorts = strings.Split(RelayPorts, ",")
-		opt.OnlyLocal = a.Preferences().Bool("force-local") || opt.RelayAddress == "" && opt.RelayAddress6 == ""
-		// При включённом локальном релее (host) croc не должен поднимать свой
-		// встроенный local-relay (setupLocalRelay биндит те же RelayPorts ->
-		// EADDRINUSE). Поэтому форсируем DisableLocal=true только при send
-		// (no-local в croc — флаг команды send). Чекбокс/pref не трогаем.
-		if host := a.Preferences().String("host"); host != "" && host != OFF {
-			opt.DisableLocal = true
-		}
+			opt.RelayPorts = strings.Split(RelayPorts, ",")
+			opt.OnlyLocal = a.Preferences().Bool("force-local") || opt.RelayAddress == "" && opt.RelayAddress6 == ""
+			// При включённом локальном релее (host) croc не должен поднимать свой
+			// встроенный local-relay (setupLocalRelay биндит те же RelayPorts ->
+			// EADDRINUSE). Поэтому форсируем DisableLocal=true только при send
+			// (no-local в croc — флаг команды send). Чекбокс/pref не трогаем.
+			if host := a.Preferences().String("host"); host != "" && host != OFF {
+				opt.DisableLocal = true
+			}
 
 			var sendErr error
 
@@ -1424,11 +1429,11 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				defer func() {
 					ctc()
 					// Конец
-				davServer.DisableTCPForwarding()
-				stopWS()
-				if caffeinated {
-					caffeinate(-1)
-				}
+					davServer.DisableTCPForwarding()
+					stopWS()
+					if caffeinated {
+						caffeinate(-1)
+					}
 					ticker.Stop()
 					fyne.Do(func() {
 						mainButton.Show()
@@ -1687,6 +1692,14 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						if err := OpenURL(markLocalPeer(ccn)); err != nil {
 							log.Error(err)
 						}
+						continue
+					}
+
+					// A web (http/https) URI that is neither a relay deep link nor a DAV
+					// link is an ordinary web page (e.g. the privacy policy). Ignore it
+					// instead of treating it as a file to send.
+					if wu, werr := storage.ParseURI(uriString); werr == nil && (wu.Scheme() == HTTP || wu.Scheme() == HTTPS) {
+						log.Debugf("[intent] ignore web uri %s", uriString)
 						continue
 					}
 

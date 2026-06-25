@@ -2,8 +2,8 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1965"
-    android:versionName="1.11.68"
+    android:versionCode="1970"
+    android:versionName="1.11.69"
     package="com.github.abakum.crocson">
 
     <application
@@ -42,7 +42,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https"
                     android:host="abakum.github.io"
-                    android:pathPattern="/croc.*" />                
+                    android:path="/croc" />                
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
