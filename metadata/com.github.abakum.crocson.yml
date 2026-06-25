@@ -13,9 +13,9 @@ RepoType: git
 Repo: https://github.com/abakum/crocson
 
 Builds:
-  - versionName: 1.11.67
-    versionCode: 1960
-    commit: 4b27727ec6388bd1c9fd70c097d68abde57b1c43
+  - versionName: 1.11.68
+    versionCode: 1965
+    commit: c061d9de76fc8cff854ff2828f5e83229244ae69
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -40,9 +40,9 @@ Builds:
       - fyne package -os android/arm --release --sign
     ndk: r27d
 
-  - versionName: 1.11.67
-    versionCode: 1961
-    commit: 4b27727ec6388bd1c9fd70c097d68abde57b1c43
+  - versionName: 1.11.68
+    versionCode: 1966
+    commit: c061d9de76fc8cff854ff2828f5e83229244ae69
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -67,9 +67,9 @@ Builds:
       - fyne package -os android/arm64 --release --sign
     ndk: r27d
 
-  - versionName: 1.11.67
-    versionCode: 1962
-    commit: 4b27727ec6388bd1c9fd70c097d68abde57b1c43
+  - versionName: 1.11.68
+    versionCode: 1967
+    commit: c061d9de76fc8cff854ff2828f5e83229244ae69
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -94,9 +94,9 @@ Builds:
       - fyne package -os android/386 --release --sign
     ndk: r27d
 
-  - versionName: 1.11.67
-    versionCode: 1963
-    commit: 4b27727ec6388bd1c9fd70c097d68abde57b1c43
+  - versionName: 1.11.68
+    versionCode: 1968
+    commit: c061d9de76fc8cff854ff2828f5e83229244ae69
     sudo:
       - apt-get update
       - apt-get install -y golang-go
@@ -131,5 +131,5 @@ VercodeOperation:
   - '%c + 2'
   - '%c + 3'
 UpdateCheckData: FyneApp.toml|Build\s*=\s*(\d+)|FyneApp.toml|Version\s*=\s*"([^"]+)"
-CurrentVersion: 1.11.67
-CurrentVersionCode: 1963
+CurrentVersion: 1.11.68
+CurrentVersionCode: 1968
