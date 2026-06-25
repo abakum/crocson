@@ -1,0 +1,2 @@
+Android: 上架至 https://appgallery.cloud.huawei.com/search/crocson
+启动时的隐私政策同意对话框

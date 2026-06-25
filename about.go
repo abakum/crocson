@@ -128,7 +128,7 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	appInfo.Hidden = !isAndroid
 
 	privacyRow := container.NewHBox(
-		widget.NewLabel(lp("Accept")), privacyCheck, widget.NewLabel(lp("of Privacy Policy")))
+		widget.NewLabel(lp("I agree to the Privacy Policy")), privacyCheck) // "Принимаю политику конфиденциальности"
 
 	title := ""
 	if isAndroid {
