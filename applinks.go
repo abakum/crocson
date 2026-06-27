@@ -348,11 +348,6 @@ func (qr *QR) makeScannerSettings() fyne.CanvasObject {
 	labelL.Wrapping = fyne.TextWrapWord
 	labelL.Alignment = fyne.TextAlignTrailing
 
-	if apiLevel() <= 28 {
-		labelT.Hide()
-		labelL.Hide()
-	}
-
 	// Разрешить
 	setupButton := widget.NewButtonWithIcon(lp("Allow")+"\n"+GHP, theme.SettingsIcon(), func() {
 		idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
@@ -1085,7 +1080,14 @@ func (qr *QR) UpdateFromClipboard() {
 	qr.mainContainer.Refresh()
 }
 
-// handleIOTapped обрабатывает нажатие на IO-ссылку
+// handleIOTapped обрабатывает нажатие на IO-ссылку.
+// На мобильном резолвит диплинк и действует по default-обработчику:
+//   - crocson, API > 28: открываем crocson (доставка через onNewIntent), тост "crocson";
+//   - crocson, API ≤ 28: применяем конфиг напрямую через канал uriFromIntent (fromURI),
+//     без перезапуска activity (запуск диплинком на ≤28 циклит), тост "crocson";
+//   - захвачен не crocson: применяем конфиг через uriFromIntent (без тоста) и ведём
+//     пользователя к возврату домена: crocson «Open by default» + поверх настройки
+//     захватчика для сброса привязки.
 func (qr *QR) handleIOTapped() {
 	if !(isAndroid || asMobile) {
 		if err := OpenURL(qr.currentText); err == nil {
@@ -1093,28 +1095,67 @@ func (qr *QR) handleIOTapped() {
 		}
 		return
 	}
-	if apiLevel() <= 28 {
-		return
-	}
 
 	intent := &Intent{
 		Data:   strings.TrimPrefix(qr.link.URL.String(), qr.link.URL.Scheme+":"),
 		Scheme: qr.link.URL.Scheme,
-		Flags: flagActivity(
-			FLAG_ACTIVITY_SINGLE_TOP,
-			FLAG_ACTIVITY_REQUIRE_NON_BROWSER,
-		),
+		Flags:  flagActivity(FLAG_ACTIVITY_SINGLE_TOP),
 	}
+	intentStr := intent.String()
+	log.Debugf("handleIOTapped: currentText=%q intentStr=%q apiLevel=%d", qr.currentText, intentStr, apiLevel())
 
-	if err := OpenURL(intent.String()); err == nil {
-		NewToast(qr.window, "OK").Show()
+	// Кто обработал бы этот диплинк по умолчанию.
+	info, _ := ResolveIntent(intentStr)
+	defaultIsCrocson := strings.HasPrefix(info, "default="+ID+"/")
+	log.Debugf("handleIOTapped: resolve info=%q defaultIsCrocson=%v", info, defaultIsCrocson)
+
+	if defaultIsCrocson {
+		if apiLevel() <= 28 {
+			// На API ≤ 28 запуск activity диплинком циклит, поэтому применяем
+			// relay-конфиг напрямую через канал доставки: fromURI (send.go) разберёт
+			// диплинк и применит его, без перезапуска activity.
+			uriFromIntent <- qr.currentText
+			log.Debug("handleIOTapped: ≤28 branch, fed uriFromIntent")
+			NewToast(qr.window, CS).Show()
+			return
+		}
+		// На API > 28 — открываем crocson (доставка через onNewIntent).
+		err := OpenURL(intentStr)
+		log.Debugf("handleIOTapped: >28 open crocson OpenURL=%v", err)
+		if err == nil {
+			NewToast(qr.window, CS).Show()
+		}
 		return
 	}
 
-	intent.SetFlags(BROWSER)
-	if err := OpenURL(intent.String()); err != nil {
-		qr.app.SendNotification(fyne.NewNotification("Error", err.Error()))
+	// Домен захвачен другим приложением (напр. браузером) или default нет:
+	// применяем relay-конфиг без запуска activity (loop-safe на любом API) и открываем
+	// диалог сброса default захватчика, чтобы пользователь снял привязку.
+	uriFromIntent <- qr.currentText
+	capturerPkg := defaultPackage(info)
+	log.Debugf("handleIOTapped: captured by %q", capturerPkg)
+	// Сначала crocson «Open by default» (чтобы включить croc-домен), затем поверх —
+	// настройки захватчика: пользователь сбросит привязку, выйдет и попадёт на настройки
+	// crocson, где включит домен.
+	idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
+	if capturerPkg != "" && capturerPkg != "none" && capturerPkg != "android" {
+		// Нативный тост (android.widget.Toast) виден поверх экрана настроек захватчика.
+		NewToast(qr.window, lp("Clear default")).Show()
+		idActions(capturerPkg, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
 	}
+}
+
+// defaultPackage извлекает пакет из строки info вида "default=<pkg>/<class>; …".
+func defaultPackage(info string) string {
+	const prefix = "default="
+	s := strings.TrimPrefix(info, prefix)
+	if s == info { // префикс не найден
+		return ""
+	}
+	if i := strings.IndexAny(s, "/;"); i >= 0 {
+		return s[:i]
+	}
+	return s
 }
 
 // updateVisibility управляет видимостью виджетов

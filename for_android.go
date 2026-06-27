@@ -686,6 +686,12 @@ func OpenDAV(s string) error {
 	return OpenURL(u.String())
 }
 
+// ResolveIntent возвращает описание того, кто обработал бы intent-URI
+// (default-компонент + кандидаты), не запуская activity.
+func ResolveIntent(intentStr string) (string, error) {
+	return callStringString("resolveIntent", intentStr)
+}
+
 func CanList(u fyne.URI) (bool, error) {
 	if u == nil {
 		return false, nil

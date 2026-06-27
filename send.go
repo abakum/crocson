@@ -1678,12 +1678,15 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
 							continue
 						}
-						entry.SetText(st)
-						a.Preferences().SetString("new-relay", ne)
-						a.Preferences().SetString("relay-address", as)
-						a.Preferences().SetString("relay6", a6)
-						a.Preferences().SetString("relay-ports", ps)
-						addCurrentRelay(a)
+						// Эта горутина — не Fyne-main: UI/prefs-мутации через fyne.Do.
+						fyne.Do(func() {
+							entry.SetText(st)
+							a.Preferences().SetString("new-relay", ne)
+							a.Preferences().SetString("relay-address", as)
+							a.Preferences().SetString("relay6", a6)
+							a.Preferences().SetString("relay-ports", ps)
+							addCurrentRelay(a)
+						})
 						continue
 					}
 					// deepLink davX: webdavX:

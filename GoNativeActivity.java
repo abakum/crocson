@@ -291,6 +291,34 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
+    // resolveIntent парсит intent-URI и возвращает описание того, кто обработает его
+    // (default-компонент + список кандидатов), не запуская activity.
+    static String resolveIntent(String intentStr) {
+        try {
+            android.content.Intent intent = android.content.Intent.parseUri(intentStr, android.content.Intent.URI_INTENT_SCHEME);
+            android.content.pm.PackageManager pm = goNativeActivity.getPackageManager();
+            android.content.pm.ResolveInfo def =
+                pm.resolveActivity(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            java.util.List<android.content.pm.ResolveInfo> all = pm.queryIntentActivities(intent, 0);
+            StringBuilder sb = new StringBuilder();
+            sb.append("default=").append(def == null ? "none/chooser"
+                : (def.activityInfo.applicationInfo.packageName + "/" + def.activityInfo.name));
+            sb.append("; candidates=").append(all == null ? 0 : all.size()).append(" [");
+            if (all != null) {
+                for (int i = 0; i < all.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append(all.get(i).activityInfo.applicationInfo.packageName);
+                }
+            }
+            sb.append("]");
+            Log.d(TAG, "Java: resolveIntent " + intentStr + " => " + sb.toString());
+            return sb.toString();
+        } catch (Exception e) {
+            Log.e(TAG, "Java: resolveIntent failed: " + e.getMessage());
+            return "error: " + e.getMessage();
+        }
+    }
+
     static String getMimeType(String uriStr) {
         try {
             android.net.Uri uri = android.net.Uri.parse(uriStr);

@@ -294,6 +294,11 @@ func OpenURL(s string) error {
 	return fyne.CurrentApp().OpenURL(u)
 }
 
+// ResolveIntent на не-Android возвращает пустую строку — резолвить нечего.
+func ResolveIntent(intentStr string) (string, error) {
+	return "", nil
+}
+
 // acquireMulticastLock is a no-op on non-Android platforms: only Android
 // blocks inbound multicast unless a WifiManager.MulticastLock is held.
 func acquireMulticastLock() bool { return true }
