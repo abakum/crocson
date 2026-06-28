@@ -38,6 +38,7 @@ chmod +x crocson-x86_64.AppImage && ./crocson-x86_64.AppImage
 
 #### macOS (from .dmg):
 Mount the .dmg file and drag crocson.app to Applications folder
+First launch: hold the `сontrol` key while clicking the app, select `Open` from the context menu, then click `Open` in the confirmation dialog.
 
 ### Launch Instructions:
 - **macOS**: `open /Applications/crocson.app` or click in Launchpad

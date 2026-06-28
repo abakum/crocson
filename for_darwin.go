@@ -37,6 +37,7 @@ import (
 	"sync/atomic"
 
 	"fyne.io/fyne/v2"
+	log "github.com/schollz/logger"
 )
 
 // caffeinate управляет энергосбережением macOS
@@ -49,6 +50,7 @@ import (
 //
 // Возвращает текущее значение счётчика после операции
 func caffeinate(i int32) int32 {
+
 	old := atomic.LoadInt32(&sleepCounter)
 	newVal := atomic.AddInt32(&sleepCounter, i)
 	if i == 0 {
@@ -59,8 +61,10 @@ func caffeinate(i int32) int32 {
 	// Управление ассертом через очередь Fyne (вместо мьютекса в C)
 	fyne.Do(func() {
 		if old <= 0 && newVal > 0 {
+			log.Debugf("preventSleep %v", 1)
 			C.preventSleep(1)
 		} else if old > 0 && newVal <= 0 {
+			log.Debugf("caffeinate %v", 0)
 			C.preventSleep(0)
 		}
 	})
