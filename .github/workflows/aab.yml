@@ -387,11 +387,10 @@ jobs:
 
           if [ "${{ inputs.arm64 }}" = "true" ]; then
             FILE="crocson.apk"
-            FILE_TYPE=5
           else
             FILE="crocson.aab"
-            FILE_TYPE=13
           fi
+          FILE_TYPE=5
 
           if [ ! -f "$FILE" ]; then
             echo "ERROR: $FILE not found"
@@ -456,7 +455,25 @@ jobs:
 
           echo "Huawei: $FILE uploaded as draft (fileType=$FILE_TYPE)"
 
+          FYNEAPP="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          for LOC in ru-RU en-US ja-JP tr-TR zh-CN; do
+            NOTES_FILE="$GITHUB_WORKSPACE/workspace/crocson/metadata/$LOC/changelogs/${VERSION_NAME}.txt"
+            if [ ! -f "$NOTES_FILE" ]; then
+              echo "newFeatures [$LOC]: skip (no changelog file)"
+              continue
+            fi
+            NOTES=$(cat "$NOTES_FILE")
+            RESP=$(curl -fsS -X PUT "$BASE/publish/v2/app-language-info?appId=$HUAWEI_APP_ID&releaseType=1" \
+              "${AUTH[@]}" \
+              -H 'Content-Type: application/json' \
+              -d "$(jq -cn --arg lang "$LOC" --arg nf "$NOTES" '{lang:$lang, newFeatures:$nf}')")
+            echo "newFeatures [$LOC] ret=$(echo "$RESP" | jq -r '.ret.code') $(echo "$RESP" | jq -r '.ret.msg // ""')"
+          done
+
           if [ "${{ inputs.appgallery-submit }}" = "true" ]; then
+            echo "Waiting 300s — Huawei parses the package asynchronously before submit (doc: 2-5 min, using 5)..."
+            sleep 300
             echo "Submitting app for review..."
             SUB=$(curl -fsS -X POST "$BASE/publish/v2/app-submit?appId=$HUAWEI_APP_ID" \
               "${AUTH[@]}" \
