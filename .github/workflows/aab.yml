@@ -434,9 +434,12 @@ jobs:
           fi
           echo "OBS upload URL obtained (objectId=$OBJECT_ID)"
 
-          mapfile -t OBS_HEADERS < <(echo "$UP" | jq -r '.urlInfo.headers | to_entries[] | "\(.key): \(.value)"')
+          HARGS=()
+          while IFS= read -r h; do HARGS+=("-H" "$h"); done < \
+            <(echo "$UP" | jq -r '.urlInfo.headers | to_entries[] | "\(.key): \(.value)"')
+          echo "OBS headers: $(echo "$UP" | jq -r '.urlInfo.headers | keys | join(", ")')"
           curl -fsS -X PUT "$UPLOAD_URL" \
-            "${OBS_HEADERS[@]/#/-H }" \
+            "${HARGS[@]}" \
             --upload-file "$FILE"
           echo "File uploaded to OBS"
 
