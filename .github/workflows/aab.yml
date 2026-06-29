@@ -372,13 +372,84 @@ jobs:
 
       - name: AppGallery — upload (draft)
         if: ${{ inputs.upload-appgallery }}
-        uses: eatorb/huawei-appgallery-action@e77c25116505ccbaf4fdfce9f8bf51bb02f512dc  # v1.0.0
-        with:
-          client-id: ${{ secrets.APPGALLERY_CLIENT_ID }}
-          client-secret: ${{ secrets.APPGALLERY_CLIENT_SECRET }}
-          app-id: ${{ secrets.APPGALLERY_APP_ID }}
-          file-path: ${{ (inputs.arm64 && format('{0}/workspace/crocson/crocson.apk', github.workspace)) || format('{0}/workspace/crocson/crocson.aab', github.workspace) }}
-          submit: 'false'
+        env:
+          HUAWEI_CLIENT_ID: ${{ secrets.APPGALLERY_CLIENT_ID }}
+          HUAWEI_CLIENT_SECRET: ${{ secrets.APPGALLERY_CLIENT_SECRET }}
+          HUAWEI_APP_ID: ${{ secrets.APPGALLERY_APP_ID }}
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/workspace/crocson"
+
+          if [ "${{ inputs.arm64 }}" = "true" ]; then
+            FILE="crocson.apk"
+            FILE_TYPE=5
+          else
+            FILE="crocson.aab"
+            FILE_TYPE=13
+          fi
+
+          if [ ! -f "$FILE" ]; then
+            echo "ERROR: $FILE not found"
+            ls -la .
+            exit 1
+          fi
+
+          SIZE=$(wc -c < "$FILE" | tr -d ' ')
+          SHA256=$(sha256sum "$FILE" | awk '{print $1}')
+          echo "Uploading $FILE ($SIZE bytes, sha256=$SHA256) fileType=$FILE_TYPE"
+
+          BASE="https://connect-api.cloud.huawei.com/api"
+
+          TOKEN=$(curl -fsS -X POST "$BASE/oauth2/v1/token" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -cn --arg cid "$HUAWEI_CLIENT_ID" \
+                       --arg sec "$HUAWEI_CLIENT_SECRET" \
+                  '{grant_type:"client_credentials", client_id:$cid, client_secret:$sec}')" \
+            | jq -r '.access_token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "ERROR: Huawei auth failed"
+            exit 1
+          fi
+          echo "Auth OK"
+
+          AUTH=(-H "Authorization: Bearer $TOKEN" -H "client_id: $HUAWEI_CLIENT_ID")
+
+          UP=$(curl -fsS -G "$BASE/publish/v2/upload-url/for-obs" \
+            "${AUTH[@]}" \
+            --data-urlencode "appId=$HUAWEI_APP_ID" \
+            --data-urlencode "fileName=$FILE" \
+            --data-urlencode "sha256=$SHA256" \
+            --data-urlencode "contentLength=$SIZE" \
+            --data-urlencode "releaseType=1")
+          UPLOAD_URL=$(echo "$UP" | jq -r '.urlInfo.url')
+          OBJECT_ID=$(echo "$UP" | jq -r '.urlInfo.objectId')
+          if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
+            echo "ERROR: upload-url request failed:"
+            echo "$UP" | jq .
+            exit 1
+          fi
+          echo "OBS upload URL obtained (objectId=$OBJECT_ID)"
+
+          mapfile -t OBS_HEADERS < <(echo "$UP" | jq -r '.urlInfo.headers | to_entries[] | "\(.key): \(.value)"')
+          curl -fsS -X PUT "$UPLOAD_URL" \
+            "${OBS_HEADERS[@]/#/-H }" \
+            --upload-file "$FILE"
+          echo "File uploaded to OBS"
+
+          INFO=$(curl -fsS -X PUT "$BASE/publish/v2/app-file-info?appId=$HUAWEI_APP_ID" \
+            "${AUTH[@]}" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -cn --arg ft "$FILE_TYPE" --arg fn "$FILE" --arg oid "$OBJECT_ID" \
+                  '{fileType:$ft, files:[{fileName:$fn, fileDestUrl:$oid}]}')")
+          echo "app-file-info response:"
+          echo "$INFO" | jq .
+          RET=$(echo "$INFO" | jq -r '.ret.code')
+          if [ "$RET" != "0" ]; then
+            echo "ERROR: app-file-info failed (ret.code=$RET)"
+            exit 1
+          fi
+
+          echo "Huawei: $FILE uploaded as draft (fileType=$FILE_TYPE)"
 
       - name: Cleanup
         if: always()
