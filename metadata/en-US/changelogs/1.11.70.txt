@@ -1,0 +1,2 @@
+Android: restoring the deep link when captured by the browser
+macOS: instructions for the first launch when installing via .dmg

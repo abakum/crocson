@@ -18,13 +18,18 @@ on:
         required: false
         default: false
         type: boolean
+      arm64:
+        description: 'ARM64 only (APK instead of AAB)'
+        required: false
+        default: false
+        type: boolean
       upload-rustore:
-        description: 'Upload .aab to RuStore (draft)'
+        description: 'Upload to RuStore (draft)'
         required: false
         default: false
         type: boolean
       upload-appgallery:
-        description: 'Upload .aab to AppGallery (draft)'
+        description: 'Upload to AppGallery (draft)'
         required: false
         default: false
         type: boolean
@@ -76,20 +81,77 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Setup bundletool
+        if: ${{ !inputs.arm64 }}
         uses: amyu/setup-bundletool@v1.1
         with:
           version: 1.18.3
 
       - name: Decode keystore
-        if: ${{ inputs.build-apk || inputs.build-apks }}
+        if: ${{ inputs.arm64 || inputs.build-apk || inputs.build-apks }}
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
       - name: Decode RuStore upload keystore
+        if: ${{ !inputs.arm64 }}
         run: |
           echo "${{ secrets.RUSTORE_UPLOAD_KEYSTORE }}" | base64 -d > /tmp/rustore-upload.keystore
 
+      - name: fyne package — build ARM64 APK
+        if: ${{ inputs.arm64 }}
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+          
+          VERSION_NAME=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
+          BUILD_NUMBER=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          
+          if [ -z "$VERSION_NAME" ] || [ -z "$BUILD_NUMBER" ]; then
+              echo "ERROR: Could not extract Version or Build number from FyneApp.toml."
+              cat FyneApp.toml
+              exit 1
+          fi
+          
+          echo "Extracted Version Name: $VERSION_NAME"
+          echo "Extracted Build Number: $BUILD_NUMBER"
+          echo "Building for Android target: android/arm64"
+          
+          export CGO_ENABLED=1
+          export GOOS=android
+          export GOARCH=arm64
+          
+          fyne package -os android/arm64 --release
+          
+          if [ ! -f "crocson.apk" ]; then
+            echo "ERROR: crocson.apk was not created"
+            ls -la .
+            exit 1
+          fi
+          echo "APK created:"
+          ls -la crocson.apk
+
+      - name: Sign ARM64 APK
+        if: ${{ inputs.arm64 }}
+        run: |
+          cd $GITHUB_WORKSPACE/workspace/crocson
+
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          if [ ! -d "$BUILD_TOOLS" ]; then
+            echo "Installing Android build tools 36.0.0..."
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0"
+          fi
+
+          echo "Signing crocson.apk..."
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks /tmp/keystore.jks \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            crocson.apk
+          
+          echo "Verifying crocson.apk..."
+          "$BUILD_TOOLS/apksigner" verify -v crocson.apk
+
       - name: fyne release — build AAB
+        if: ${{ !inputs.arm64 }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           fyne release --os android \
@@ -105,7 +167,7 @@ jobs:
           ls -la crocson.aab
 
       - name: bundletool — universal APK
-        if: ${{ inputs.build-apk }}
+        if: ${{ !inputs.arm64 && inputs.build-apk }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           bundletool build-apks \
@@ -122,7 +184,7 @@ jobs:
           ls -la crocson-all.apk
 
       - name: bundletool — all ABIs APKs
-        if: ${{ inputs.build-apks }}
+        if: ${{ !inputs.arm64 && inputs.build-apks }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
 
@@ -137,7 +199,7 @@ jobs:
           ls -la crocson.apks
 
       - name: Filter .apks — keep uncompressed .so only
-        if: ${{ inputs.build-apks }}
+        if: ${{ !inputs.arm64 && inputs.build-apks }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
           go run ./cmd/apks -o crocson-filtered.apks crocson.apks
@@ -146,7 +208,7 @@ jobs:
           unzip -l crocson.apks
 
       - name: Upload crocson.aab
-        if: ${{ inputs.build-aab }}
+        if: ${{ !inputs.arm64 && inputs.build-aab }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson.aab
@@ -155,7 +217,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload crocson-all.apk
-        if: ${{ inputs.build-apk }}
+        if: ${{ !inputs.arm64 && inputs.build-apk }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson-all.apk
@@ -163,8 +225,17 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Upload crocson-arm64.apk
+        if: ${{ inputs.arm64 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: crocson-arm64.apk
+          path: ${{ github.workspace }}/workspace/crocson/crocson.apk
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Upload crocson.apks
-        if: ${{ inputs.build-apks }}
+        if: ${{ !inputs.arm64 && inputs.build-apks }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson.apks
@@ -172,7 +243,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: RuStore — upload AAB (draft)
+      - name: RuStore — upload (draft)
         if: ${{ inputs.upload-rustore }}
         id: rustore
         env:
@@ -181,7 +252,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          AAB="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
+          # Определяем, что загружаем: APK или AAB
+          if [ "${{ inputs.arm64 }}" = "true" ]; then
+            FILE="$GITHUB_WORKSPACE/workspace/crocson/crocson.apk"
+            FILE_TYPE="apk"
+          else
+            FILE="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
+            FILE_TYPE="aab"
+          fi
+
           FYNEAPP="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
 
           APP_ID=$(grep -E '^\s*ID\s*=' "$FYNEAPP" | sed -E 's/^\s*ID\s*=\s*"([^"]+)".*/\1/')
@@ -194,7 +273,7 @@ jobs:
           fi
 
           echo "App: $APP_ID  Version: $VERSION_NAME"
-          echo "AAB: $(ls -la "$AAB" | awk '{print $5}') bytes"
+          echo "Uploading $FILE_TYPE: $(ls -la "$FILE" | awk '{print $5}') bytes"
 
           # 1. Auth — SHA512withRSA(keyId + timestamp) per RuStore docs
           TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%S.000Z')
@@ -236,21 +315,21 @@ jobs:
           fi
           echo "Draft ID: $VERSION_ID"
 
-          # 3. Upload AAB — curl -F per official RuStore docs
+          # 3. Upload file (APK or AAB)
           UPLOAD_RESP=$(curl -sS --location --request POST \
-            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version/${VERSION_ID}/aab" \
+            "https://public-api.rustore.ru/public/v1/application/${APP_ID}/version/${VERSION_ID}/${FILE_TYPE}" \
             -H "Public-Token: $TOKEN" \
-            --form "file=@${AAB}")
+            --form "file=@${FILE}")
 
           echo "Upload response:"
           echo "$UPLOAD_RESP" | jq .
 
           CODE=$(echo "$UPLOAD_RESP" | jq -r '.code')
           if [ "$CODE" != "OK" ]; then
-            echo "ERROR: AAB upload failed"
+            echo "ERROR: ${FILE_TYPE} upload failed"
             exit 1
           fi
-          echo "AAB uploaded to draft $VERSION_ID"
+          echo "${FILE_TYPE^^} uploaded to draft $VERSION_ID"
 
           # 4. Send draft to moderation
           PERM_FILE="$GITHUB_WORKSPACE/workspace/crocson/metadata/ru-RU/permissions.txt"
@@ -280,14 +359,14 @@ jobs:
           echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
           echo "status=sent_to_moderation" >> $GITHUB_OUTPUT
 
-      - name: AppGallery — upload AAB (draft)
+      - name: AppGallery — upload (draft)
         if: ${{ inputs.upload-appgallery }}
         uses: eatorb/huawei-appgallery-action@e77c25116505ccbaf4fdfce9f8bf51bb02f512dc  # v1.0.0
         with:
           client-id: ${{ secrets.APPGALLERY_CLIENT_ID }}
           client-secret: ${{ secrets.APPGALLERY_CLIENT_SECRET }}
           app-id: ${{ secrets.APPGALLERY_APP_ID }}
-          file-path: ${{ github.workspace }}/workspace/crocson/crocson.aab
+          file-path: ${{ inputs.arm64 && github.workspace }}/workspace/crocson/crocson.apk || ${{ github.workspace }}/workspace/crocson/crocson.aab
           submit: 'false'
 
       - name: Cleanup
