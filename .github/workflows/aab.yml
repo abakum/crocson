@@ -377,7 +377,7 @@ jobs:
           client-id: ${{ secrets.APPGALLERY_CLIENT_ID }}
           client-secret: ${{ secrets.APPGALLERY_CLIENT_SECRET }}
           app-id: ${{ secrets.APPGALLERY_APP_ID }}
-          file-path: ${{ inputs.arm64 && github.workspace }}/workspace/crocson/crocson.apk || ${{ github.workspace }}/workspace/crocson/crocson.aab
+          file-path: ${{ (inputs.arm64 && format('{0}/workspace/crocson/crocson.apk', github.workspace)) || format('{0}/workspace/crocson/crocson.aab', github.workspace) }}
           submit: 'false'
 
       - name: Cleanup
