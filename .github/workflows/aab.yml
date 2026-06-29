@@ -112,6 +112,11 @@ jobs:
           
           echo "Extracted Version Name: $VERSION_NAME"
           echo "Extracted Build Number: $BUILD_NUMBER"
+
+          VC=$((BUILD_NUMBER + 1))
+          sed -i "s/^Build = .*/Build = $VC/" FyneApp.toml
+          echo "arm64 APK versionCode set to $VC (Build=$BUILD_NUMBER + 1)"
+
           echo "Building for Android target: android/arm64"
           
           export CGO_ENABLED=1
@@ -154,6 +159,12 @@ jobs:
         if: ${{ !inputs.arm64 }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
+
+          BUILD_NUMBER=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
+          VC=$((BUILD_NUMBER - 1))
+          sed -i "s/^Build = .*/Build = $VC/" FyneApp.toml
+          echo "AAB versionCode set to $VC (Build=$BUILD_NUMBER - 1)"
+
           fyne release --os android \
             --keystore /tmp/rustore-upload.keystore \
             --key-name "${{ secrets.RUSTORE_KEY_ALIAS }}" \
