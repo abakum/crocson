@@ -33,6 +33,11 @@ on:
         required: false
         default: false
         type: boolean
+      appgallery-submit:
+        description: 'AppGallery: submit for review right after upload'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -450,6 +455,20 @@ jobs:
           fi
 
           echo "Huawei: $FILE uploaded as draft (fileType=$FILE_TYPE)"
+
+          if [ "${{ inputs.appgallery-submit }}" = "true" ]; then
+            echo "Submitting app for review..."
+            SUB=$(curl -fsS -X POST "$BASE/publish/v2/app-submit?appId=$HUAWEI_APP_ID" \
+              "${AUTH[@]}" \
+              -H 'Content-Type: application/json' \
+              -d '{}')
+            echo "app-submit response:"
+            echo "$SUB" | jq .
+            SUB_RET=$(echo "$SUB" | jq -r '.ret.code')
+            if [ "$SUB_RET" != "0" ]; then
+              echo "WARNING: app-submit returned ret.code=$SUB_RET (version may need release notes / required fields in AppGallery Connect)"
+            fi
+          fi
 
       - name: Cleanup
         if: always()
