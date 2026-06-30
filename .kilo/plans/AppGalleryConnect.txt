@@ -5536,3 +5536,1565 @@ Internal system error. Rectify the fault based on the error cause provided in th
 
 The app name is the same as an existing one.
 ---
+AppGallery Connect ReferencesConnect APIUpload Management APIObtaining the File Upload URL
+Obtaining the File Upload URL
+Last updated: 2026-04-03 11:11
+Function
+This API is used to obtain the upload URLs of files including images, videos, and APP and PDF files to be uploaded to AppGallery Connect. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Currently, this API supports the following app package formats: APK, AAB, RPK, APP (HarmonyOS app or atomic service), and EXE (Windows app).
+
+Prototype
+Protocol
+
+HTTPS GET
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/upload-url/for-obs
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+This API supports the Service Account, API client, and OAuth client modes. For details about their differences, please refer to Getting Started.
+
+Service Account mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${JWT} format. Here JWT is the authentication token obtained when you obtain authorization using the Service Account mode.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained by the API for obtaining a token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authorization information. Pass the access token obtained via the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String(32)
+
+App ID.
+
+fileName
+
+Yes
+
+String(256)
+
+Original file name, including the file name extension. This parameter is used to obtain the original file name extension when the upload URL is generated.
+
+sha256
+
+No
+
+String(64)
+
+SHA-256 hash value of the app package content. If this parameter is passed, the integrity of an uploaded app package will be verified. If this parameter is not passed, verification is not performed.
+
+contentLength
+
+Yes
+
+Integer
+
+File size, in bytes.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: full release
+6: HarmonyOS test release (API version 10 or later)
+The default value is 1.
+
+chineseMainlandFlag
+
+No
+
+Integer
+
+Indicates whether to distribute the package to the Chinese mainland.
+
+The options are as follows:
+
+0: no
+1: yes
+NOTE
+If your registration location is not the Chinese mainland, the chineseMainlandFlag parameter is mandatory.
+
+Response Parameters
+NOTE
+The validity period of the obtained upload URL is about 5 minutes. After the validity period expires, you need to obtain the URL again.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+ConnectRet
+
+Result code and description.
+
+urlInfo
+
+Yes
+
+CommonUrlInfo
+
+File upload information, including the request method, file upload URL, and request header.
+
+ConnectRet
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+code
+
+No
+
+Integer
+
+Result code.
+
+msg
+
+No
+
+String
+
+Result code description.
+
+CommonUrlInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+objectId
+
+Yes
+
+String
+
+Object ID of a file on the file server.
+
+url
+
+Yes
+
+String
+
+URL for uploading a file, in https://{domainname}.com/{objectId} format.
+
+method
+
+Yes
+
+String
+
+HTTP request method. A PUT response is returned when the file upload URL is obtained.
+
+headers
+
+No
+
+Map<String,String>
+
+Parameters required in the request header for uploading a file to the file server using the file upload URL. The value is in the following JSON format: {"Authorization":"***","x-amz-content-sha256":"***","x-amz-date":"***","Host":"***","user-agent":"***","Content-Type":"***"}
+
+For details, please refer to Uploading a File.
+
+Call Example
+public static JSONObject getUploadUrlForObs(String domain, String clientId, String token, String appId, String fileName, String sha256, Integer contentLength, Integer releaseType, String userAgent) {
+    HttpGet get = new HttpGet(domain + "/publish/v2/upload-url/for-obs?appId=" + appId + "&fileName=" + fileName + "&sha256=" + sha256 + "&contentLength=" + contentLength + "&releaseType=" + releaseType + "&userAgent=" + userAgent);
+    get.setHeader("Authorization", "Bearer " + token);
+    get.setHeader("client_id", clientId);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(get);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            // Object returned by the app information query API, which can be received using the AppInfo object. For details, please refer to the API reference.
+            JSONObject object = JSON.parseObject(result);
+            return object;
+        }
+    } catch (Exception e) {
+    }
+    return null;
+}
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIUploading a File
+Uploading a File
+Last updated: 2025-09-30 12:02
+Function
+This API is used to upload a file from your client or server to AppGallery Connect. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+HTTPS is used for APIs between the browser or client and the server. The Content-Type header must be in the application/octet-stream format. Files must be encoded in application/octet-stream format and attached to an HTTPS packet.
+
+Currently, this API supports the following app package formats: APK, AAB, RPK, APP (HarmonyOS app or atomic service), and EXE (Windows app).
+
+Restrictions
+File size restrictions:
+APK file: The size cannot exceed 4 GB.
+RPK file: The size cannot exceed 20 MB for quick apps and 30 MB for quick games.
+AAB file: The size cannot exceed 150 MB.
+App (HarmonyOS app or atomic service): The size cannot exceed 4 GB for a HarmonyOS app and 10 MB for an atomic service.
+EXE file (Windows app): The size cannot exceed 4 GB.
+The file name extension must be the same as that in the request in Obtaining the File Upload URL.
+User profile pictures must be encrypted for storage.
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+URL obtained in Obtaining the File Upload URL.
+
+Data Format
+
+Request: Content-Type: application/octet-stream
+
+Response: Content-Type: application/json
+
+Request Parameters
+header
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information, which corresponds to Authorization in the headers parameter returned by the API for obtaining the file upload URL.
+
+x-amz-content-sha256
+
+Yes
+
+String
+
+SHA-256 hash value of the app file content, which corresponds to x-amz-content-sha256 in the headers parameter returned by the API for obtaining the file upload URL.
+
+x-amz-date
+
+Yes
+
+String
+
+Time when the file upload URL is generated, which corresponds to x-amz-date in the headers parameter returned by the API for obtaining the file upload URL.
+
+Host
+
+Yes
+
+String
+
+Address of the server to which the app file is to be uploaded, which corresponds to Host in the headers parameter returned by the API for obtaining the file upload URL.
+
+user-agent
+
+Yes
+
+String
+
+User agent, which corresponds to user-agent in the headers parameter returned by the API for obtaining the file upload URL.
+
+Content-Type
+
+Yes
+
+String
+
+Object content type, which corresponds to Content-Type in the headers parameter returned by the API for obtaining the file upload URL.
+
+Body
+The request body contains the file content in binary mode. The corresponding Content-Type is application/octet-stream. The file size must be the same as the value of contentLength set when the upload URL is obtained.
+
+Response Parameters
+If the API returns the HTTP status code 200, the file is successfully uploaded.
+
+Call Example
+public static void uploadFile(String domain, String clientId, String token, String appId, String fileName, String sha256, Integer contentLength, Integer releaseType, String userAgent) {
+    // Obtain the upload URL and headers parameter by the API for obtaining the file upload URL.
+    GetUploadUrlForObsRsp urlRsp = getUploadUrlForObs(domain, clientId, token, appId, fileName, sha256, contentLength, releaseType, userAgent);
+    String uploadUrl = urlRsp.getUrlInfo().getUrl();
+    Map<String, String> headers = urlRsp.getUrlInfo().getHeaders();
+
+    CloseableHttpClient httpClient = HttpClientUtil.createClient();
+
+    // File to upload.
+    File tempFile = new File("F:\\216X216.png");
+    HttpEntity httpEntity = new FileEntity(tempFile);
+
+    HttpPut httpPut = new HttpPut(uploadUrl);
+    httpPut.setConfig(RequestConfig.custom()
+            .setConnectTimeout(HTTP_TIMEOUT)
+            .setConnectionRequestTimeout(HTTP_TIMEOUT)
+            .setSocketTimeout(HTTP_TIMEOUT)
+            .build());
+    if (headers != null) {
+        headers.forEach(httpPut::setHeader);
+    }
+    if (httpEntity != null) {
+        httpPut.setEntity(httpEntity);
+    }
+    try {
+        httpClient.execute(httpPut);
+    } catch (IOException e) {
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIInitializing Chunk Information
+Initializing Chunk Information
+Last updated: 2026-04-03 11:11
+Function
+This API is used to initialize chunk information before obtaining chunk upload URLs. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/upload/multipart/init
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+This API supports the Service Account, API client, and OAuth client modes. For details about their differences, please refer to Getting Started.
+
+Service Account mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${JWT} format. Here JWT is the authentication token obtained when you obtain authorization using the Service Account mode.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained by the API for obtaining a token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authorization information. Pass the access token obtained via the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String(32)
+
+App ID.
+
+fileName
+
+Yes
+
+String(256)
+
+Original file name, including the file name extension.
+
+contentType
+
+No
+
+String
+
+Object content type, which complies with the content-type format in an HTTP header, for example, image/jpeg.
+
+If the parameter is left empty, the value application/octet-stream is used by default.
+
+fileType
+
+No
+
+Integer
+
+File type.
+
+The options are as follows:
+
+1: APP (HarmonyOS app or atomic service package)
+2: OBB (APK expansion file)
+3: APK (Android package, including APK and AAB formats)
+Default value: 2
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: full release
+6: HarmonyOS test release (API version 10 or later)
+obbType
+
+No
+
+Integer
+
+Type of an OBB file.
+
+The options are as follows:
+
+1: main expansion file
+2: patch expansion file
+This parameter is mandatory when an OBB file is uploaded. Before uploading an OBB file, ensure that the latest version of your app has been associated with the corresponding APK.
+
+chineseMainlandFlag
+
+No
+
+Integer
+
+Indicates whether to distribute the package to the Chinese mainland.
+
+The options are as follows:
+
+0: no
+1: yes
+NOTE
+If fileType is set to 1 and your registration location is not the Chinese mainland, the chineseMainlandFlag parameter is mandatory.
+
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+ConnectRet
+
+Result code and description.
+
+objectId
+
+Yes
+
+String(128)
+
+Generated object ID. This ID is used when you call the API for obtaining chunk upload URLs.
+
+nspPartMinSize
+
+Yes
+
+Integer(64)
+
+Minimum size of a chunk, in bytes. The default value is 5 MB.
+
+nspPartMaxSize
+
+Yes
+
+Integer(64)
+
+Maximum size of a chunk, in bytes. By default, the maximum size of a chunk is 1024 MB.
+
+nspUploadId
+
+Yes
+
+String(128)
+
+File upload ID. This ID is used when you call the API for obtaining chunk upload URLs.
+
+ConnectRet
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+code
+
+No
+
+Integer
+
+Result code.
+
+msg
+
+No
+
+String
+
+Result code description.
+
+Call Example
+public static JSONObject uploadMultipartInit(String domain, String clientId, String token, String appId,
+        String fileName, String contentType, Integer releaseType) {
+        HttpPost put =
+            new HttpPost(domain + "/publish/v2/upload/multipart/init?appId=" + appId + "&fileName=" + fileName);
+        put.setHeader("Authorization", "Bearer " + token);
+        put.setHeader("client_id", clientId);
+        try {
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse httpResponse = httpClient.execute(put);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+                String result = br.readLine();
+                JSONObject object = JSON.parseObject(result);
+                return object;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIObtaining Chunk Upload URLs
+Obtaining Chunk Upload URLs
+Last updated: 2026-04-03 11:11
+Function
+This API is used to obtain the upload URLs of all chunks. Before calling this API, you must call the API for initializing chunk information. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/upload/multipart/parts
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+This API supports the Service Account, API client, and OAuth client modes. For details about their differences, please refer to Getting Started.
+
+Service Account mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${JWT} format. Here JWT is the authentication token obtained when you obtain authorization using the Service Account mode.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained by the API for obtaining a token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authorization information. Pass the access token obtained via the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+objectId
+
+Yes
+
+String
+
+Object ID, which must be the same as the value of objectId generated during chunk information initialization.
+
+nspUploadId
+
+Yes
+
+String
+
+Upload ID, which must be the same as the value of nspUploadId generated during chunk information initialization.
+
+Body
+The request body carries chunk details in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+additionalPropX
+
+Yes
+
+FilePartInfo
+
+Chunk details. The X variable indicates the chunk ID, with the number at the end of the ID starting from 1, for example, additionalProp1 and additionalProp2.
+
+FilePartInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+sha256
+
+No
+
+String(64)
+
+SHA-256 value of a chunk.
+
+length
+
+Yes
+
+Integer(64)
+
+Size of a chunk, in bytes. The value must be the same as the actual size. The maximum size of a single chunk is 100 MB.
+
+Request Example
+POST /api/publish/v2/upload/multipart/parts?objectId=*******&nspUploadId=***** HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******68
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "additionalProp1": {
+        "sha256": "",
+        "length": 5242880
+    },
+    "additionalProp2": {
+        "sha256": "",
+        "length": 3519290
+    }
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+ConnectRet
+
+Result code and description.
+
+uploadInfoMap
+
+Yes
+
+HashMap<String, FilePartUploadInfo>
+
+Map object that contains the chunk URLs. The key parameter indicates the chunk ID (for example, additionalProp1 and additionalProp2), and the value parameter indicates the FilePartUploadInfo entity class that contains the chunk URL information.
+
+ConnectRet
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+code
+
+No
+
+Integer
+
+Result code.
+
+msg
+
+No
+
+String
+
+Result code description.
+
+FilePartUploadInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+url
+
+Yes
+
+String
+
+Chunk upload URL. The validity period of an upload URL is 4 minutes. Upload a chunk by calling the API for uploading file chunks within the period.
+
+method
+
+Yes
+
+String
+
+HTTP request method used for uploading chunks. The default value is PUT.
+
+partObjectId
+
+Yes
+
+String
+
+Object ID of a chunk. It may be an empty string.
+
+headers
+
+Yes
+
+String
+
+Parameter required in the request header for uploading a chunk using the chunk upload URL. The value is of the JSON type in the following format: {"Authorization":"***","x-amz-content-sha256":"***","x-amz-date":"***","Host":"***","Content-Type":"***"}
+
+For details, please refer to Uploading File Chunks.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+     },
+    "uploadInfoMap": {
+            "additionalProp1": {
+                    "url": "https://xxx.xxx.com/CN/20200728/1595904761905-6f2cca88-73fe-403e-9fc0-a49648aac596.jpg?partNumber=1&uploadId=000001739*****CEBAEC4E5A",
+                   "method": "PUT",
+                   "partObjectId": "",
+                   "headers": {
+                            "Authorization": "AWS4-HMAC-SHA256 Credential=I06FNCS*********ZC/20200728/cn-north-4/s3/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-content-sha256;x-amz-date, Signature=51015****************224b1281931781",
+                           "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
+                           "x-amz-date": "202****022Z",
+                           "Host": "agc-fhs-dev-test.obs.cn-north-4.****.com",
+                           "Content-Type": "application/octet-stream"
+                     }
+               },
+            "additionalProp2": {
+                 ....
+              } 
+      }  
+}
+Call Example
+public static JSONObject uploadMultipartParts(String domain, String clientId, String token, String objectId,
+        String nspUploadId) {
+        HttpPost put = new HttpPost(
+            domain + "/publish/v2/upload/multipart/parts?objectId=" + objectId + "&nspUploadId=" + nspUploadId);
+        put.setHeader("Authorization", "Bearer " + token);
+        put.setHeader("client_id", clientId);
+        String s = "{\n" +
+                "    \"additionalProp1\": {\n" +
+                
+                "        \"sha256\": \"\",\n" +
+                "        \"length\": 5242880\n" +
+                "    },\n" +
+                "    \"additionalProp2\": {\n" +
+                
+                "        \"sha256\": \"\",\n" +
+                "        \"length\": 3519290\n" +
+                "    }\n" +
+                "}";
+        StringEntity entity = new StringEntity(s, Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        put.setEntity(entity);
+        try {
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse httpResponse = httpClient.execute(put);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+                String result = br.readLine();
+                JSONObject object = JSON.parseObject(result);
+                return object;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }finally {
+            put.releaseConnection();
+        }
+        return null;
+    }
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIUploading File Chunks
+Uploading File Chunks
+Last updated: 2025-09-30 12:02
+Function
+This API is used to upload a file chunk to the AppGallery Connect server. Only one chunk can be uploaded at a time. Multiple chunks can be uploaded one by one. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+Request method specified by the method parameter returned when chunk upload URLs are obtained.
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+File chunk upload URL, which corresponds to the url parameter in FilePartUploadInfo returned by the API for obtaining chunk upload URLs.
+
+Data Format
+
+Request: Content-Type: application/octet-stream
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information, which corresponds to Authorization in the headers parameter returned by the API for obtaining chunk upload URLs.
+
+x-amz-content-sha256
+
+Yes
+
+String
+
+SHA-256 hash value of the file object content, which corresponds to x-amz-content-sha256 in the headers parameter returned by the API for obtaining chunk upload URLs.
+
+x-amz-date
+
+Yes
+
+String
+
+Time when a chunk upload URL is generated, which corresponds to x-amz-date in the headers parameter returned by the API for obtaining chunk upload URLs.
+
+Host
+
+Yes
+
+String
+
+Upload server URL, which corresponds to Host in the headers parameter returned by the API for obtaining chunk upload URLs.
+
+Content-Type
+
+Yes
+
+String
+
+Object content type, which corresponds to Content-Type in the headers parameter returned by the API for obtaining chunk upload URLs.
+
+Body
+The request body contains the file chunk content in binary mode. The corresponding Content-Type is application/octet-stream. The file size must be the same as the value of length set when the upload URL is obtained and cannot exceed 100 MB.
+
+Response Parameters
+If the HTTP status code 200 is returned, the upload is successful. In this case, the response header will contain the following parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ETag
+
+Yes
+
+String(header)
+
+Value of ETag in the response header. The value varies depending on the chunk and will be used for chunk merging.
+
+If the HTTP status code is not 200, the upload fails. Check whether the request parameters are correct during obtaining file chunk upload URLs.
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIMerging File Chunks
+Merging File Chunks
+Last updated: 2026-04-03 11:11
+Function
+This API is used to merge uploaded file chunks into a complete file. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/upload/multipart/compose
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+This API supports the Service Account, API client, and OAuth client modes. For details about their differences, please refer to Getting Started.
+
+Service Account mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${JWT} format. Here JWT is the authentication token obtained when you obtain authorization using the Service Account mode.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained by the API for obtaining a token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authorization information. Pass the access token obtained via the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+objectId
+
+Yes
+
+String(200)
+
+Object ID, which must be the same as the value of objectId generated during chunk information initialization.
+
+nspUploadId
+
+Yes
+
+String(64)
+
+Upload ID, which must be the same as the value of nspUploadId generated during chunk information initialization.
+
+Body
+The request body carries chunk information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+additionalPropX
+
+Yes
+
+FilePartComposeInfo
+
+Chunk information.
+
+In the parameter name, X indicates the chunk ID, for example, additionalProp1 and additionalProp2. The value of X must be the same as the chunk ID returned by the API for obtaining chunk upload URLs.
+
+FilePartComposeInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+partObjectId
+
+Yes
+
+String(64)
+
+Chunk object ID, which must be the same as the value of partObjectId returned by the API for obtaining chunk upload URLs.
+
+etag
+
+Yes
+
+String(64)
+
+Value of Etag returned for a chunk when the API for uploading file chunks is called.
+
+Request Example
+POST /api/publish/v2/upload/multipart/compose?objectId=*******&nspUploadId=***** HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******68
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "additionalProp1": {
+        "partObjectId": "",
+        "etag": "41a9ba6******fac180e149f94"
+    },
+    "additionalProp2": {
+        "partObjectId": "",
+        "etag": "2b8dd6a26*****3a364f55d2a92"
+    }
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+ConnectRet
+
+Result code and description.
+
+ConnectRet
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+code
+
+No
+
+Integer
+
+Result code.
+
+msg
+
+No
+
+String
+
+Result code description.
+
+Call Example
+public static JSONObject uploadMultipartCompose(String domain, String clientId, String token, String objectId,
+        String nspUploadId) {
+        HttpPost put = new HttpPost(
+            domain + "/publish/v2/upload/multipart/compose?objectId=" + objectId + "&nspUploadId=" + nspUploadId);
+        put.setHeader("Authorization", "Bearer " + token);
+        put.setHeader("client_id", clientId);
+        String s = "{\n" +
+                "    \"additionalProp1\": {\n" +
+                "        \"partObjectId\": \"\",\n" +
+                "        \"etag\": \"41a9ba6bd7130538555fac180e149f94\"\n" +
+                "    },\n" +
+                "    \"additionalProp2\": {\n" +
+                "        \"partObjectId\": \"\",\n" +
+                "        \"etag\": \"2b8dd6a26f8eaa6d32d3a364f55d2a92\"\n" +
+                "    }\n" +
+                "}";
+        StringEntity entity = new StringEntity(s, Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        put.setEntity(entity);
+        try {
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse httpResponse = httpClient.execute(put);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+                String result = br.readLine();
+                JSONObject object = JSON.parseObject(result);
+                return object;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }finally {
+            put.releaseConnection();
+        }
+        return null;
+    }
+---
+AppGallery Connect ReferencesConnect APIUpload Management APIResult Codes
+Result Codes
+Last updated: 2025-09-30 12:02
+Expand
+Result Code
+
+Description
+
+0
+
+Successful.
+
+204144641
+
+Invalid input parameter.
+
+204144642
+
+Unknown system error.
+
+204144643
+
+Failed to obtain developer account information.
+
+204144644
+
+Failed to query app information.
+
+204144645
+
+Failed to obtain the authentication code for file upload.
+
+204144654
+
+Invalid parameter.
+
+204144658
+
+Failed to call the Huawei file server API during file upload.
+
+204144666
+
+Failed to perform authentication because the user is suspended or the user identity is not verified.
+
+204144667
+
+Failed to upload the file to the CMS server.
+
+204144668
+
+Failed to obtain the upload parameters.
+
+204144672
+
+Failed to obtain the country/region code.
+
+204144675
+
+The app has been removed.
+
+204144688
+
+Failed to obtain the URL for uploading the app package (HarmonyOS app).
+
+204144699
+
+Failed to obtain file information (HarmonyOS app).
+
+999002
+
+Invalid parameter.
+
+204144700
+
+Failed to initialize chunk information.
+
+204144701
+
+Failed to obtain chunk upload URLs.
+
+204144702
+
+Failed to merge chunks.
+
+204144704
+
+Failed to associate the OBB file.
+
+204144705
+
+The packageName parameter is empty.
+
+204144706
+
+The countryRegion parameter is empty.
+
+204144707
+
+The additionalProp_Num parameter in the input parameter body of the API for obtaining chunk upload URLs/merging chunks is invalid.
+
+204144708
+
+The main OBB file in the input parameter body of the API for associating the OBB file is invalid.
+
+204144729
+
+The Android app name contains sensitive words.
+
+204144733
+
+The number of app name changes exceeded the upper limit for the Android app. For an app released in the Chinese mainland in full mode, its name can be changed at most twice in a calendar year.
+
+204144734
+
+The customized requestId parameter associated with the package does not exist.
+
+204144735
+
+Security check is being performed on the file. Please try again later.
+
+204144736
+
+Failed to perform this open testing operation.
+
+204144741
+
+Cannot release an open testing version for a non-HarmonyOS app.
+---
