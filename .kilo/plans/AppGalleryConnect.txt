@@ -1,0 +1,5538 @@
+AppGallery Connect ReferencesConnect APIObtaining a Token
+Obtaining a Token
+Last updated: 2025-09-30 12:02
+Function
+This API is used to obtain a token for calling an AppGallery Connect API in API client mode after your client is authenticated by AppGallery Connect.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/oauth2/v1/token
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+The request parameters are passed in JSON format and described as follows.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+grant_type
+
+Yes
+
+String(256)
+
+This parameter has a fixed value of client_credentials.
+
+client_id
+
+Yes
+
+String(256)
+
+Client ID, which is generated when the API client is created.
+
+client_secret
+
+Yes
+
+String(2048)
+
+Client key, which is generated when the API client is created.
+
+Request Example
+POST /api/oauth2/v1/token
+Host: connect-api.cloud.huawei.com
+Content-Type: application/json
+{
+   "grant_type":"client_credentials",
+   "client_id":"26********20",
+   "client_secret":"************************"
+}
+Response Parameters
+The return value is a character string in JSON format. The following table describes the response parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+access_token
+
+No
+
+String
+
+Access token, which is used to call the AppGallery Connect API.
+
+This parameter is returned only when a token is successfully obtained.
+
+expires_in
+
+No
+
+Long
+
+Validity period of the access token, in seconds. You need to call this API again to obtain a new access token when the current one expires.
+
+The validity period is 48 hours. If the API is called to obtain the value of access_token twice within 48 hours, both access tokens are valid.
+
+This parameter is returned only when a token is successfully obtained.
+
+ret
+
+No
+
+String(100)
+
+JSON character string containing the result code and description upon failure to obtain a token in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description.
+
+Response Example
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+{
+    "access_token": "eyJhbGciOiJIUzU****************",    
+    "expires_in": 172800
+}
+Call Example
+public static String getToken(String domain, String clientId, String clientSecret) {
+    String token = null;
+    try {
+        HttpPost post = new HttpPost(domain + "/oauth2/v1/token");
+
+        JSONObject keyString = new JSONObject();
+        keyString.put("client_id", "18893***83957248");
+        keyString.put("client_secret", "B15B497B44E080EBE2C4DE4E74930***52409516B2A1A5C8F0FCD2C579A8EB14");
+        keyString.put("grant_type", "client_credentials");
+
+        StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        post.setEntity(entity);
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpResponse response = httpClient.execute(post);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+            JSONObject object = JSON.parseObject(result);
+            token = object.getString("access_token");
+        }
+
+        post.releaseConnection();
+        httpClient.close();
+    } catch (Exception e) {
+
+    }
+    return token;
+}
+---
+AppGallery Connect ReferencesConnect APIObtaining a Project-Level Token
+Obtaining a Project-Level Token
+Last updated: 2026-04-03 13:00
+Function
+This API is used to obtain a token for calling an AppGallery Connect API in API client mode after your client is authenticated by AppGallery Connect.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://{domain}/api/oauth2/v1/token
+
+Domain name for China: connect-api.cloud.huawei.com
+Domain name for Germany: connect-api-dre.cloud.huawei.com
+Domain name for Singapore: connect-api-dra.cloud.huawei.com
+Domain name for Russia: connect-api-drru.cloud.huawei.com
+NOTICE
+Ensure that the domain name used for calling this API is the same as the data processing location set for the project. For example, if a project's data processing location is China, the domain name in the API call must be connect-api.cloud.huawei.com.
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+The request parameters are passed in JSON format and described as follows.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+grant_type
+
+Yes
+
+String(256)
+
+This parameter has a fixed value of client_credentials.
+
+client_id
+
+Yes
+
+String(256)
+
+Client ID, that is, client_id in the file agc-apiclient-*.json, which is obtained when a project-level credential is downloaded.
+
+client_secret
+
+Yes
+
+String(2048)
+
+Client secret, that is, client_secret in the file agc-apiclient-*.json, which is obtained when a project-level credential is downloaded.
+
+Request Example
+POST /api/oauth2/v1/token
+Host: connect-api.cloud.huawei.com
+Content-Type: application/json
+{
+   "grant_type":"client_credentials",
+   "client_id":"26********20",
+   "client_secret":"************************"
+}
+Response Parameters
+The return value is a character string in JSON format. The following table describes the response parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+access_token
+
+No
+
+String
+
+Access token, which is used to call the AppGallery Connect API.
+
+This parameter is returned only when a token is successfully obtained.
+
+expires_in
+
+No
+
+Long
+
+Validity period of the access token, in seconds. You need to call this API again to obtain a new access token when the current one expires.
+
+The validity period is 48 hours. If the API is called to obtain the value of access_token twice within 48 hours, both access tokens are valid.
+
+This parameter is returned only when a token is successfully obtained.
+
+ret
+
+No
+
+String(100)
+
+JSON character string containing the result code and description upon failure to obtain a token in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description.
+
+Response Example
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+{
+    "access_token": "eyJhbGciOiJIUzU****************",    
+    "expires_in": 172800
+}
+Call Example
+public static String getToken(String domain, String clientId, String clientSecret) {
+    String token = null;
+    try {
+        HttpPost post = new HttpPost(domain + "/oauth2/v1/token");
+
+        JSONObject keyString = new JSONObject();
+        keyString.put("client_id", "18893***83957248");
+        keyString.put("client_secret", "B15B497B44E080EBE2C4DE4E74930***52409516B2A1A5C8F0FCD2C579A8EB14");
+        keyString.put("grant_type", "client_credentials");
+
+        StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        post.setEntity(entity);
+
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpResponse response = httpClient.execute(post);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(response.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+            JSONObject object = JSON.parseObject(result);
+            token = object.getString("access_token");
+        }
+
+        post.releaseConnection();
+        httpClient.close();
+    } catch (Exception e) {
+
+    }
+    return token;
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroid
+Android
+Last updated: 2025-09-30 12:02
+Querying the App ID Corresponding to an App Package Name
+Querying App Information
+Updating App Basic Information
+Updating App Localization Information
+Deleting App Localization Information
+Updating App File Information
+Submitting an App for Release
+Submitting an App for Release in Download Mode
+Updating Phased Release
+Obtaining the Callback Result
+Setting the GMS Dependency Flag for an App
+Updating the Release Time of a Version
+Querying the Compilation Status of an App Package
+Submitting an App Package in Download Mode
+Querying the App Package List
+Result Codes
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidQuerying the App ID Corresponding to an App Package Name
+Querying the App ID Corresponding to an App Package Name
+Last updated: 2025-09-30 12:02
+Function
+This API is used to query the app ID corresponding to an app package name. Multiple app package names can be used for query at a time. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS GET
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/appid-list
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+packageName
+
+Yes
+
+String(4096)
+
+App package name. Use commas (,) to separate multiple package names. A maximum of 50 package names are supported.
+
+packageTypes
+
+No
+
+String(32)
+
+App package type, which will be used to filter app packages.
+
+The options are as follows:
+
+1: APK
+2: RPK
+8: EXE (Windows app)
+Use commas (,) to separate multiple package types.
+
+pcVersionName
+
+No
+
+String(255)
+
+App package version number, which will be used to filter Windows app packages.
+
+This parameter is valid only when packageTypes is set to 8 and there is only one Windows app.
+
+During the filtering, the version number of a Windows app package is queried. If the value is greater than or equal to the latest version number, the value is returned. Otherwise, an error will be reported.
+
+Request Example
+GET /api/publish/v2/appid-list?packageName=com.huawei.xxxx HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41*******7168
+Authorization: Bearer *******
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+appids
+
+No
+
+List<Pair>
+
+Array of the AppId objects corresponding to specified app package names.
+
+Pair
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+key
+
+No
+
+String(128)
+
+App name.
+
+value
+
+No
+
+String(128)
+
+App ID corresponding to an app package name.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    },
+    "appids": [
+        {
+            "key": "PhotoPlaza",
+            "value": "10****057"
+        }
+    ]
+}
+Call Example
+public static AppId[] queryAppId(String domain, String client_id, String token, String packageNames) {
+    HttpGet get = new HttpGet(domain + "/publish/v2/appid-list?packageName=" + packageNames);
+    get.setHeader("client_id", client_id);
+    get.setHeader("Authorization", "Bearer " + token);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(get);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+            AppId[] appids = (AppId[]) object.get("appids");
+            return appids;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidQuerying App Information
+Querying App Information
+Last updated: 2025-09-30 12:02
+Function
+This API is used to query app details in a specified language based on an app ID. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS GET
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-info
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+ID of an app to be queried.
+
+lang
+
+No
+
+String
+
+Language. If this parameter is not passed, app information in all languages is queried.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+Request Example
+GET /api/publish/v2/app-info?appId=10*****57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41*****7168
+Authorization: Bearer ******
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+appInfo
+
+No
+
+AppInfo
+
+App basic information.
+
+auditInfo
+
+No
+
+AuditInfo
+
+Review comments.
+
+languages
+
+Yes
+
+List<LanguageInfo>
+
+App information in multiple languages.
+
+If a language type is passed during query, the app information will be returned in the specified language type.
+If no language type is passed during query, the app information will be returned in all supported languages.
+If an unsupported language type is passed during query, an empty array will be returned.
+phasedReleaseInfo
+
+No
+
+PhasedReleaseInfo
+
+Phased release information.
+
+AppInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+releaseState
+
+No
+
+Integer(4)
+
+App status.
+
+When releaseType is set to 1, the status is as follows. For details about the status transition, please refer to #EN-US_TOPIC_0000001158365045/p1188514919140.
+
+0: released
+1: release rejected
+2: removed (including forcible removal)
+3: releasing
+4: reviewing
+5: pending update review
+6: removal requested
+7: draft
+8: update rejected
+9: removal rejected
+10: removed by developer
+11: release canceled
+12: under pre-review
+13: pre-review failed
+defaultLang
+
+No
+
+String(64)
+
+Default language of an app. For details, please refer to Languages.
+
+parentType
+
+Yes
+
+Integer(4)
+
+Level-1 category of an app. The ID is fixed. For details, please refer to App/Game Categories.
+
+childType
+
+Yes
+
+Integer(4)
+
+Level-2 category of an app. The ID is fixed. For details, please refer to App/Game Categories.
+
+grandChildType
+
+Yes
+
+Integer(4)
+
+Level-3 category of an app. The ID is fixed. For details, please refer to App/Game Categories.
+
+privacyPolicy
+
+Yes
+
+String(255)
+
+URL of your app's privacy statement.
+
+The URL will be added to your app details page, which can redirect users to your statement about how you will process their sensitive data and device data.
+
+The statement must describe how your app collects, uses, and shares user data. It is recommended that you provide it for such scenarios as:
+
+Apps for children
+Apps that involve account registration or access to an existing user account, or otherwise specified by relevant laws
+Apps that collect user or device data
+appNetType
+
+No
+
+Integer(1)
+
+App networking type.
+
+The options are as follows:
+
+1: standalone
+2: online
+NOTE
+This parameter applies only to game apps.
+
+isFree
+
+No
+
+Integer(1)
+
+App payment type.
+
+The options are as follows:
+
+1: free
+0: paid
+price
+
+No
+
+String(256)
+
+App price, in {"countryCode":"price"} format. In the format, countryCode indicates the country code and price indicates the app price.
+
+priceDetail
+
+No
+
+String(8192)
+
+Price of an app in different countries/regions. The value is a JSON array. Use commas (,) to separate the records of different countries/regions. Example: [{"country":"CN","currency":"CNY","price":"18.00"},{{"country":"DE","currency":"EUR","price":"2.50"}}].
+
+In the format, country indicates the country/region code, currency indicates the currency corresponding to the country/region code, and price indicates the app price.
+
+publishCountry
+
+No
+
+String(256)
+
+Code of a country/region where an app is released. Use commas (,) to separate multiple country/region codes, for example, CN,DE,MC.
+
+contentRate
+
+No
+
+String(256)
+
+App rating. The value is in JSON format, for example, {"HW":"3+"}.
+
+isAppForcedUpdate
+
+No
+
+Integer(1)
+
+Indicates whether an app is forcibly updated.
+
+The options are as follows:
+
+0: no
+1: yes
+sensitivePermissionDesc
+
+No
+
+String(256)
+
+Sensitive permission description.
+
+hispaceAutoDown
+
+No
+
+Integer(1)
+
+Indicates whether to allow AppGallery to capture an app package from the Internet.
+
+The options are as follows:
+
+0: no
+1: yes
+appTariffType
+
+No
+
+String(16)
+
+Type of an in-app purchase item.
+
+The options are as follows:
+
+1: activation
+2: item
+3: unlocking a game level
+4: virtual coin
+5: paid chapter
+6: others
+7: course
+8: membership
+If multiple values are returned, multiple types of items are charged, for example, 1,2,3.
+
+publicationNumber
+
+No
+
+String(50)
+
+Publication approval number.
+
+cultureRecordNumber
+
+No
+
+String(50)
+
+Internet culture operation license (China only).
+
+developerWebsite
+
+No
+
+String(255)
+
+Developer official website.
+
+developerNameCn
+
+No
+
+String(64)
+
+Developer name in Chinese.
+
+developerNameEn
+
+No
+
+String(64)
+
+Developer name in English.
+
+elecCertificateUrl
+
+No
+
+String(256)
+
+Electronic copyright certificate in PDF format.
+
+certificateURLs
+
+Yes
+
+String(256)
+
+List of image addresses of app copyright certificates or proxy certificates, separated by commas (,). A maximum of five image addresses are allowed.
+
+publicationURLs
+
+No
+
+String(1024)
+
+Publication approval number credentials, separated by commas (,). A maximum of three credentials in image or PDF format are allowed.
+
+cultureRecordURLs
+
+No
+
+String(256)
+
+Internet culture operation license image or PDF URL (China only).
+
+updateTime
+
+No
+
+String(32)
+
+UTC update time in yyyy-mm-dd hh:mm:ss format.
+
+versionNumber
+
+No
+
+String(32)
+
+Version number.
+
+versionCode
+
+No
+
+Integer(64)
+
+Version code, corresponding to versionCode in the package.
+
+versionId
+
+No
+
+String(32)
+
+Version ID.
+
+onShelfVersionNumber
+
+No
+
+String(32)
+
+Number of the released version.
+
+onShelfVersionCode
+
+No
+
+Integer(64)
+
+Code of the released version, corresponding to versionCode in the package.
+
+onShelfVersionId
+
+No
+
+String(32)
+
+ID of the released version.
+
+shareLink
+
+No
+
+String(1024)
+
+URL for sharing.
+
+familyShareTag
+
+No
+
+Integer(1)
+
+Indicates whether an app can be shared among family members. The options are 0 (no) and 1 (yes). The value 1 is returned only for apps whose release countries or regions contain the Chinese mainland.
+
+deviceTypes
+
+Yes
+
+List<DeviceTypeInfo>
+
+Device type of an app. The array can contain up to six elements.
+
+webGameFlag
+
+No
+
+Integer
+
+Indicates whether an app is a browser game.
+
+The options are as follows:
+
+0: no
+1: yes
+privacyRightsUrl
+
+No
+
+String(256)
+
+URL for users to add, delete, modify, and view their personal data.
+
+invitationCount
+
+No
+
+Integer
+
+Number of invitations.
+
+For closed testing, the number of users who participate in the test will be returned.
+For open testing, the number of downloads and installations will be returned.
+downloadCount
+
+No
+
+Integer
+
+Total number of times that the version is downloaded.
+
+Version status transition during a full release
+
+Click to enlarge
+
+DeviceTypeInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+deviceType
+
+Yes
+
+Integer
+
+Device type.
+
+The options are as follows:
+
+4: mobile phone
+6: VR gadget
+7: watch
+8: Vision
+9: router
+10: telematics device
+appAdapters
+
+No
+
+String
+
+Compatible device type. Use commas (,) to separate multiple device types.
+
+The options are as follows:
+
+1: Honor Cube (router)
+4: mobile phone
+5: tablet
+6: VR gadget
+7: watch
+8: Vision
+9: router
+11: children's watch
+12: smart watch
+13: speaker with a screen
+LanguageInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+lang
+
+No
+
+String(64)
+
+Current language. For details, please refer to Languages.
+
+appName
+
+No
+
+String(64)
+
+App name in the current language.
+
+appDesc
+
+No
+
+String(8000)
+
+Full introduction in the current language.
+
+briefInfo
+
+No
+
+String(60)
+
+Brief introduction in the current language.
+
+newFeatures
+
+No
+
+String(1000)
+
+New features in the current language.
+
+icon
+
+No
+
+String(256)
+
+Icon address in the current language.
+
+showType
+
+No
+
+Integer(1)
+
+Screenshot display mode in the current language.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+videoShowType
+
+No
+
+Integer(1)
+
+Video display mode in the current language.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+introPic
+
+No
+
+String(4096)
+
+Address of an app screenshot. Use commas (,) to separate multiple addresses. A maximum of 10 addresses are supported.
+
+introVideo
+
+No
+
+String(4096)
+
+App introduction video address and video screenshot address. A maximum of five videos are supported. Each video maps the corresponding screenshot. Example: [{"videoUrl":"XXX/app/000/000/375/20160512143416.mp4","frameUrl":"XXX/app/000/000/375/20160512143416.68439491.jpg"},{"videoUrl":"/app/000/000/376/20160512143416.mp4","frameUrl":"/app/000/000/376/20160512143416.68439491.jpg"}]
+
+rcmdPic
+
+No
+
+String(4096)
+
+App promotion screenshot address. Use commas (,) to separate multiple addresses. A maximum of 10 addresses are supported.
+
+rcmdVideo
+
+No
+
+String(4096)
+
+App promotion video address and video screenshot address. A maximum of five videos are supported. Each video maps the corresponding screenshot. Example: [{"videoUrl":"XXX/app/000/000/375/20160512143416.mp4","frameUrl":"XXX/app/000/000/375/20160512143416.68439491.jpg"},{"videoUrl":"/app/000/000/376/20160512143416.mp4","frameUrl":"/app/000/000/376/20160512143416.68439491.jpg"}]
+
+deviceMaterials
+
+No
+
+List<DeviceMaterial>
+
+Device-type-specific visual assets, including images and videos. The array can contain up to six elements.
+
+When an app package applies to multiple devices, only the visual assets for the mobile phone are displayed. When an app package applies to only one device type, only the visual assets for the specific device type are displayed.
+
+DeviceMaterial
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+deviceType
+
+Yes
+
+Integer(1)
+
+Device type.
+
+The options are as follows:
+
+4: mobile phone
+6: VR gadget
+7: watch
+8: Vision
+9: router
+10: telematics device
+appIcon
+
+No
+
+String(256)
+
+Download URL of the app icon.
+
+screenShots
+
+No
+
+String(2560)
+
+App screenshot address. Use commas (,) to separate multiple addresses. A maximum of 10 addresses are supported.
+
+banner
+
+No
+
+String(255)
+
+Address of an HD image.
+
+showType
+
+No
+
+Integer(1)
+
+Screenshot display mode.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+vrCover
+
+No
+
+String(255)
+
+Download URL of the VR cover image.
+
+vrShots
+
+No
+
+String(1280)
+
+VR app screenshot address. Use commas (,) to separate multiple addresses. A maximum of five addresses are supported.
+
+vrRecomGraphic
+
+No
+
+String(255)
+
+Download URL of the VR promotion image.
+
+vrCoverLayeredImage
+
+No
+
+String(512)
+
+VR cover layering image address. Two addresses are required, namely, the foreground image address and background image address. Separate them with a comma (,).
+
+vrRecomGraphic4to3
+
+No
+
+String(512)
+
+VR 4:3 promotion image address. Two addresses are required, namely, the foreground image address and background image address. Separate them with a comma (,).
+
+vrRecomGraphic1to1
+
+No
+
+String(512)
+
+VR 1:1 promotion image address. Two addresses are required, namely, the foreground image address and background image address. Separate them with a comma (,).
+
+vrApplicationPanorama
+
+No
+
+String(255)
+
+VR app panorama address.
+
+introVedios
+
+No
+
+String(1300)
+
+Introduction video. The value is a JSON character string that contains the vedioUrl and frameUrl fields. The array can contain up to five elements.
+
+Example:
+
+"introVedios": ["{\"frameUrl\":\"https://**.cn:18445/FileServer/D11.jpeg\",\"vedioUrl\":\"https://*.*.cn:18445/82C.mp4\"}" ]
+
+rcmdVedios
+
+No
+
+String(1300)
+
+Promotion video. The value is a JSON character string that contains the vedioUrl and frameUrl fields. The array can contain up to five elements.
+
+Example:
+
+"rcmdVedios": ["{\"frameUrl\":\"https://*.*.cn:18445/5D7.jpeg\",\"vedioUrl\":\"https://*.*.cn:18445/97A.mp4\"}"
+
+promoGraphics
+
+No
+
+String(2560)
+
+Promotion image address. Use commas (,) to separate multiple addresses. A maximum of 10 addresses are supported.
+
+rcmdPics
+
+No
+
+String(1280)
+
+Promotion image address. Use commas (,) to separate multiple addresses. A maximum of 10 addresses are supported.
+
+videoShowType
+
+No
+
+Integer(1)
+
+Video display mode.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+AuditInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+auditOpinion
+
+Yes
+
+String(1024)
+
+Overall review comments of an app.
+
+copyRightAuditResult
+
+No
+
+Integer(4)
+
+Copyright review result.
+
+The options are as follows:
+
+0: passed
+1: failed
+This parameter is returned only for apps released in the Chinese mainland.
+
+copyRightAuditOpinion
+
+No
+
+String(1024)
+
+Copyright review comments.
+
+This parameter is returned only for apps released in the Chinese mainland.
+
+copyRightCodeAuditResult
+
+No
+
+Integer(4)
+
+Publication approval number review result.
+
+The options are as follows:
+
+0: passed
+1: failed
+This parameter is returned only for apps released in the Chinese mainland.
+
+copyRightCodeAuditOpinion
+
+No
+
+String(1024)
+
+Publication approval number review comments.
+
+This parameter is returned only for apps released in the Chinese mainland.
+
+recordAuditResult
+
+No
+
+Integer(4)
+
+Filing review result.
+
+The options are as follows:
+
+0: passed
+1: failed
+This parameter is returned only for apps released in the Chinese mainland.
+
+recordAuditOpinion
+
+No
+
+String(1024)
+
+ICP information review comments.
+
+This parameter is returned only for apps released in the Chinese mainland.
+
+PhasedReleaseInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+state
+
+Yes
+
+String
+
+Status of the release by phase.
+
+The options are as follows:
+
+SUSPEND: suspended
+RELEASE: released
+CANCEL: canceled
+DRAFT: draft
+phasedReleaseStartTime
+
+Yes
+
+String(64)
+
+Start time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleaseEndTime
+
+Yes
+
+String(64)
+
+End time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleasePercent
+
+Yes
+
+String(10)
+
+Phased release percentage. The value ranges from 0.00 to 100.00, accurate to two decimal places. Do not include a percent sign (%) in the value.
+
+phasedReleaseDescription
+
+Yes
+
+String(500)
+
+Phased release description.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    },
+    "appInfo": {
+        "releaseState": 11,
+        "defaultLang": "zh-CN",
+        "parentType": 13,
+        "childType": 26,
+        "grandChildType": 10041,
+        "privacyPolicy": "https://*****.link",
+        
+        "isFree": 1,
+        "price": "{\"CN\":\"0\"}",
+        "priceDetail": "[]",
+        "publishCountry": "AF,AE,OM,PK,PS,BH,QA,KW,LB,SA,IQ,IL,JO,AU,MO,PG,PF,PH,FJ,KR,KH,CK,LA,MV,MY,AS,BD,MM,NR,NP,JP,LK,SB,TW,TH,TO,VU,BN,HK,SG,NZ,IN,ID,VN,AZ,GE,KZ,KG,MN,TJ,TM,UZ,AM,ALL,CN,AL,IE,EE,AD,AT,BG,BE,IS,BA,PL,DK,DE,RU,FR,FO,VA,FI,GL,NL,ME,CZ,HR,LV,LT,LI,LU,RO,MT,MK,MD,MC,NO,PT,SE,CH,RS,CY,SM,SK,SI,UA,ES,GR,HU,IT,GB,GI,BY,TR,DZ,EG,ET,AO,BJ,BW,BF,BI,GQ,TG,ER,CV,GM,CG,CD,DJ,GN,GW,GH,GA,ZW,CM,KM,CI,KE,LS,LR,LY,RE,RW,MG,MW,ML,YT,MU,MR,MA,MZ,NA,ZA,SS,NE,NG,SL,SN,SC,ST,SZ,SO,TZ,TN,UG,YE,ZM,TD,CF,AR,AW,AI,AG,BB,BS,PY,PA,BR,PR,BO,BZ,DO,EC,GF,CO,CR,GD,GP,GY,HT,AN,HN,KY,MQ,MS,PE,MX,NI,SV,LC,VC,SR,TT,GT,VE,UY,JM,VG,CL,CA",
+        "contentRate": "{\"HW\":\"3+\"}",
+        "hispaceAutoDown": 0,
+        "appTariffType": "6",
+        "developerNameCn": "****",
+        "developerNameEn": "****",
+        "developerAddr": "",
+        "developerEmail": "",
+        "developerPhone": "",
+        "developerWebsite": "",
+        "certificateURLs": "https://***5819F41A7F216EF87637667B4E33C.jpg",
+        "publicationURLs": "[\"\"]",
+        "cultureRecordURLs": "[null]",
+        "updateTime": "2021-03-26 07:47:39",
+        "versionNumber": "6.5.0.300",
+        "familyShareTag": 0,
+        "deviceTypes": [
+            {
+                "deviceType": 4,
+                "appAdapters": "4,5"
+            }
+        ]
+    },
+    "auditInfo": {
+        "auditOpinion": ""
+    },
+    "languages": [
+        {
+            "lang": "en-US",
+            "appName": "PhotoPlaza-en",
+            "appDesc": "*****",
+            "briefInfo": "*****",
+            "newFeatures": "*****",
+            "icon": "https://****D.png",
+            "showType": 0,
+            "videoShowType": 1,
+            "introPic": "https://*****D0.jpg",
+            "deviceMaterials": [
+                {
+                    "deviceType": 4,
+                    "appIcon": "https://****8D.png",
+                    "screenShots": [
+                        "https://****1B.jpg",
+                        "https://****BA.jpg",
+                        "https://****CA.jpg",
+                        "https://****D0.jpg"
+                    ],
+                    "showType": 0,
+                    "vrCoverLayeredImage": [],
+                    "vrRecomGraphic4to3": [],
+                    "vrRecomGraphic1to1": [],
+                    "promoGraphics": [],
+                    "videoShowType": 1
+                }
+            ]
+        },
+        {
+            "lang": "zh-CN",
+            "appName": "PhotoPlaza",
+            "appDesc": "****",
+            "briefInfo": "****",
+            "newFeatures": "****",
+            "icon": "****8D.png",
+            "showType": 0,
+            "videoShowType": 1,
+            "introPic": "https://****D0.jpg",
+            "rcmdPic": ",,,",
+            "deviceMaterials": [
+                {
+                    "deviceType": 4,
+                    "appIcon": "https://****8D.png",
+                    "screenShots": [
+                        "https://****1B.jpg",
+                        "https://****BA.jpg",
+                        "https://****CA.jpg",
+                        "https://****D0.jpg"
+                    ],
+                    "showType": 0,
+                    "vrCoverLayeredImage": [],
+                    "vrRecomGraphic4to3": [],
+                    "vrRecomGraphic1to1": [],
+                    "promoGraphics": [],
+                    "rcmdPics": ",,,",
+                    "videoShowType": 1
+                }
+            ]
+        }
+    ]
+}
+Call Example
+public static void getAppInfo(String domain, String clientId, String token, String appId, String lang) {
+    HttpGet get = new HttpGet(domain + "/publish/v2/app-info?appId=" + appId + "&lang=" + lang);
+
+    get.setHeader("Authorization", "Bearer " + token);
+    get.setHeader("client_id", clientId);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(get);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+
+            System.out.println(object.get("ret"));
+
+            AppInfo appInfo = (AppInfo) object.get("appInfo");
+
+            AuditInfo auditInfo = (AuditInfo) object.get("auditInfo");
+
+            LangInfo[] langInfos = (LangInfo[]) object.get("languages");
+        }
+    } catch (Exception e) {
+
+    }
+
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidUpdating App Basic Information
+Updating App Basic Information
+Last updated: 2025-09-30 12:02
+Function
+This API is used to update details about an app. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Restrictions
+Currently, this API is not available for individual developers in Russia.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-info
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+appId
+
+Yes
+
+String
+
+ID of an app to be updated.
+
+Body
+The request body carries the updated app information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+defaultLang
+
+No
+
+String(64)
+
+Default language of an app. For details, please refer to Languages.
+
+childType
+
+No
+
+Integer(4)
+
+Level-2 category of an app. The ID is fixed. For details, please refer to App/Game Categories.
+
+grandChildType
+
+No
+
+Integer(4)
+
+Level-3 category of an app. The ID is fixed. For details, please refer to App/Game Categories.
+
+privacyPolicy
+
+Yes
+
+String(255)
+
+Privacy statement link.
+
+appNetType
+
+No
+
+Integer(1)
+
+App networking type.
+
+The options are as follows:
+
+1: standalone
+2: online
+isFree
+
+No
+
+Integer(1)
+
+App payment type.
+
+The options are as follows:
+
+1: free
+0: paid
+If isFree is set to 1, the price and priceDetail parameters are invalid.
+
+price
+
+No
+
+String(256)
+
+App price, in {"countryCode":"price"} format. In the format, countryCode indicates the country code and price indicates the app price. You can check the supported country/region codes. For details about the supported currencies, please refer to the ISO 4217 standard.
+
+AppGallery Connect adjusts the final price based on the price rules of the country or region.
+
+NOTICE
+This parameter is mandatory when isFree is set to 0.
+
+priceDetail
+
+No
+
+String(8192)
+
+Price of an app in different countries/regions. The value is a JSON array. Use commas (,) to separate the records of different countries/regions. Example: [{"country":"CN","currency":"CNY","price":"18.00"},{{"country":"DE","currency":"EUR","price":"2.50"}}].
+
+In the format, country indicates the country/region code, currency indicates the currency corresponding to the country/region code, and price indicates the app price. You can check the supported country/region codes. For details about the supported currencies, please refer to the ISO 4217 standard.
+
+AppGallery Connect adjusts the final price based on the price rules of the country or region.
+
+NOTICE
+This parameter is mandatory when isFree is set to 0.
+
+publishCountry
+
+No
+
+String(2048)
+
+Code of a country/region where an app is released. Use commas (,) to separate multiple country/region codes, for example, CN,DE,MC. If this parameter is set to OTHER, when HUAWEI AppGallery supports new release countries or regions, the app will be automatically distributed to these countries or regions. For details about the country/region code list, please refer to Country/Region Codes.
+
+NOTICE
+The parameter cannot contain only OTHER.
+
+isAppForcedUpdate
+
+No
+
+Integer(1)
+
+Indicates whether an app is forcibly updated.
+
+The options are as follows:
+
+0: no
+1: yes
+hispaceAutoDown
+
+No
+
+Integer(1)
+
+Indicates whether to allow AppGallery to capture an app package from the Internet.
+
+The options are as follows:
+
+0: no
+1: yes
+appTariffType
+
+No
+
+String(16)
+
+Type of an in-app purchase item.
+
+The options are as follows:
+
+1: activation
+2: item
+3: unlocking a game level
+4: virtual coin
+5: paid chapter
+6: others
+7: course
+8: membership
+Multiple values are supported. Use commas (,) to separate them, for example, 1,2,3.
+
+publicationNumber
+
+No
+
+String(50)
+
+Publication approval number.
+
+This parameter applies only to game apps.
+
+cultureRecordNumber
+
+No
+
+String(50)
+
+Internet culture operation license (China only).
+
+This parameter applies only to game apps.
+
+developerNameCn
+
+No
+
+String(64)
+
+Chinese name of a developer. This parameter can be modified only for developers on the trustlist.
+
+developerNameEn
+
+No
+
+String(64)
+
+English name of a developer. This parameter can be modified only for developers on the trustlist.
+
+developerWebsite
+
+No
+
+String(255)
+
+Developer official website.
+
+familyShareTag
+
+No
+
+Integer(1)
+
+Indicates whether an app can be shared among family members.
+
+The options are as follows:
+
+0: no
+1: yes
+deviceTypes
+
+No
+
+List<DeviceTypeInfo>
+
+Device type information.
+
+webGameFlag
+
+No
+
+Integer
+
+Indicates whether an app is a browser game.
+
+The options are as follows:
+
+0: no
+1: yes
+This parameter is valid only for mobile RPK games and when compatible devices include Windows devices (the values of appAdapters include 15).
+
+privacyRightsUrl
+
+No
+
+String(256)
+
+URL for users to add, delete, modify, and view their personal data.
+
+userAgreementUrl
+
+No
+
+String(512)
+
+User agreement URL.
+
+encrypted
+
+No
+
+Integer(32)
+
+Indicates whether to encrypt the package.
+
+The options are as follows:
+
+0: no
+1: yes
+The default value is 1.
+
+DeviceTypeInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+deviceType
+
+Yes
+
+Integer
+
+Device type.
+
+The options are as follows:
+
+4: mobile phone
+6: VR gadget
+7: watch
+8: Vision
+9: router
+10: telematics device
+appAdapters
+
+Yes
+
+String
+
+Compatible device type. Use commas (,) to separate multiple device types.
+
+The options are as follows:
+
+1: Honor Cube (router)
+4: mobile phone
+5: tablet
+6: VR gadget
+7: watch
+8: Vision
+9: router
+11: children's watch
+12: smart watch
+13: speaker with a screen
+15: Windows
+The restrictions on an APK package are as follows:
+
+When deviceType is set to 4, appAdapters can be set to 4, 5, 7, or 15. If 7 is selected, 4 must be selected as well. To set this parameter to 15, contact Huawei operations personnel for authorization.
+When deviceType is set to 6, appAdapters can be set to 4 or 5.
+When deviceType is set to 7, appAdapters can be set to 11 or 12.
+When deviceType is set to 8, appAdapters can be set to 1, 3, or 8.
+The restrictions on an RPK package are as follows:
+
+When deviceType is set to 4, appAdapters can be set to 4, 5, or 15.
+NOTICE
+This parameter is mandatory when the device type is changed. Otherwise, this parameter will be left empty when deviceType is passed.
+
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void updateAppInfo(String domain, String clientId, String token, String appId) {
+    HttpPut put = new HttpPut(domain + "/publish/v2/app-info?appId=" + appId);
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+    JSONObject keyString = new JSONObject();
+    //Request Body
+    keyString.put("defaultLang", "zh-CN");
+    keyString.put("isFree", 0);
+        keyString.put("price","{\"CN\":\"12\"}");
+        keyString.put("priceDetail","[{\"country\":\"CN\",\"currency\":\"CNY\",\"price\":100}]);
+    keyString.put("childType", 15);
+    keyString.put("grandChildType", 10043);
+    //...
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidUpdating App Localization Information
+Updating App Localization Information
+Last updated: 2025-09-30 12:02
+Function
+This API is used to update localization information for a specified app. If no localization information is available, this API is used to add the localization information . Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-language-info
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+ID of the app whose localization information needs to be updated.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+Body
+The request body carries the updated localization app information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+lang
+
+Yes
+
+String(64)
+
+Language. For details, please refer to Languages.
+
+appName
+
+No
+
+String(64)
+
+App name in a language. This parameter is mandatory when a language type is added.
+
+appDesc
+
+No
+
+String(8000)
+
+Full introduction in a language.
+
+briefInfo
+
+No
+
+String(80)
+
+Brief introduction in a language.
+
+newFeatures
+
+No
+
+String(500)
+
+New features in a language.
+
+Request Example
+PUT /api/publish/v2/app-language-info?appId=10******57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******7168
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "lang": "zh-CN",
+    "appName": "PhotoPlaza",
+    "appDesc": "*****",
+    "briefInfo": "*****",
+    "newFeatures": "*****"
+ 
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void updateLangInfo(String domain, String clientId, String token, String appId, Integer releaseType) {
+    HttpPut put = new HttpPut(
+        domain + "/publish/v2/app-language-info?appId=" + appId + "&releaseType=" + releaseType);
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+    JSONObject keyString = new JSONObject();
+    //Request Body
+    keyString.put("lang", "zh-CN");
+    keyString.put("appName", "Demo");
+    keyString.put("appDesc", "This is a Demo");
+    //...
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidDeleting App Localization Information
+Deleting App Localization Information
+Last updated: 2025-09-30 12:02
+Function
+This API is used to delete unnecessary localization information about a specified app. App information in the default language cannot be deleted. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS DELETE
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-language-info
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+ID of the app whose localization information needs to be deleted.
+
+lang
+
+Yes
+
+String
+
+Language in which localization information needs to be deleted. For details, please refer to Languages.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+Request Example
+DELETE /api/publish/v2/app-language-info?appId=10******57&amp; lang=zh-CN HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******68
+Content-Type: application/json
+Authorization: Bearer *******
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void deleteLangInfo(String domain, String clientId, String token, String appId, String lang, Integer releaseType) {
+    HttpDelete put = new HttpDelete(
+        domain + "/publish/v2/app-language-info?appId=" + appId + "&lang=" + lang + "&releaseType" + releaseType);
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidUpdating App File Information
+Updating App File Information
+Last updated: 2025-09-30 12:02
+Function
+This API is used to update app file information after images, videos, and APK, RPK, and AAB files are uploaded. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-file-info
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+ID of an app to be updated.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+Body
+The request body carries the updated app file information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+lang
+
+No
+
+String(8)
+
+Language. For details, please refer to Languages.
+
+This parameter is mandatory for updating images and videos.
+
+imgShowType
+
+No
+
+Integer(1)
+
+Screenshot display mode.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+This parameter is mandatory when fileType is set to 2.
+
+videoShowType
+
+No
+
+Integer(1)
+
+Video display mode.
+
+The options are as follows:
+
+0: portrait
+1: landscape
+This parameter is mandatory when fileType is set to 1. The actual display mode (landscape or portrait) of videos and posters must be consistent with that specified by videoShowType.
+
+clearArk
+
+No
+
+Integer(1)
+
+Indicates whether to clear the Ark package (used for update from Android+Ark to Android).
+
+The options are as follows:
+
+1: yes
+0: no
+The default value is 0.
+
+sensitivePermissionDesc
+
+No
+
+String(2048)
+
+Sensitive permission description.
+
+fileType
+
+Yes
+
+Integer(1)
+
+File type.
+
+The options are as follows:
+
+0: app icon.
+1: A maximum of three app introduction videos and their corresponding posters are supported. In files, you must upload a video before a poster, and posters and videos must be uploaded alternately. That is, upload one pair before another.
+2: app screenshots
+3: promotion video and its video poster. You must pass a video before a poster in files.
+4: promotion image
+5: app package, such as RPK, APK, and AAB files
+6: agent certificate or agent copyright image.
+7: electronic certificate in PDF format. The size cannot exceed 5 MB.
+8: screenshot of the Internet culture operation license (China only).
+9: Internet culture operation license image or PDF (only for game apps)
+10: VR cover image
+11: VR app screenshot
+12: VR app promotion image
+13: VR cover layering image
+14: 4:3 VR promotion image
+15: 1:1 VR promotion image
+● 16: VR app panorama
+For details about the file upload requirements, please refer to App File Restrictions.
+
+files
+
+Yes
+
+List<FileInfo>
+
+App file information.
+
+deviceType
+
+No
+
+Integer
+
+Device type.
+
+The options are as follows:
+
+4: mobile phone
+6: VR gadget
+7: watch
+8: Vision
+9: router
+10: telematics device
+This parameter is mandatory when visual assets need to be updated for an app that supports multiple device types.
+
+FileInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+fileName
+
+No
+
+String
+
+File name, including the file name extension.
+
+This parameter is mandatory when fileType is set to 5.
+
+fileDestUrl
+
+Yes
+
+String
+
+Object ID of a file on the file server.
+
+Call the API for obtaining the file upload URL, then call the API for uploading a file to upload the file, and finally obtain the object ID returned by the API for obtaining the file upload URL.
+
+versionName
+
+No
+
+String
+
+Version number of a Windows app package.
+
+This parameter is mandatory for EXE packages.
+
+displayName
+
+No
+
+String
+
+Name displayed in the registry, which uniquely identifies a Windows app.
+
+This parameter is mandatory for EXE packages.
+
+NOTICE
+Before calling the API for updating app file information, ensure that the publishCountry field is not empty.
+
+Request Example
+PUT /api/publish/v2/app-file-info?appId=10******57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 4141******68
+Content-Type: application/json
+Authorization: Bearer *******
+{
+       "fileType":5,
+       "files":{
+              "fileName":"PhotoPlaza.apk",
+              "fileDestUrl":"**716E24D17593E159601A67A7.apk"
+       }
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+pkgVersion
+
+No
+
+List<String>
+
+Package ID. This parameter is returned only by the API with a package added. Currently, only one record is supported.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    },
+    "pkgVersion": []
+}
+Call Example
+public static void updateAppFileInfo(String domain, String clientId, String token, String appId,
+    List<FileInfo> files) throws InvocationTargetException, IllegalAccessException {
+    HttpPut put = new HttpPut(domain + "/publish/v2/app-file-info?appId=" + appId);
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+    JSONObject keyString = new JSONObject();
+    // Set the language.
+    keyString.put("lang", "zh-CN");
+    List<PublishFileInfo> fileInfos = new ArrayList<>();
+    for (FileInfo fileInfo : files) {
+        PublishFileInfo publishFileInfo = new PublishFileInfo();
+        BeanUtils.copyProperties(publishFileInfo, fileInfo);    
+        publishFileInfo.setFileDestUrl(fileInfo.getFileDestUlr());
+        fileInfos.add(publishFileInfo);
+    }
+    System.out.println(JSON.toJSONString(fileInfos));
+    keyString.put("files", fileInfos);
+    keyString.put("fileType", 0);
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidSubmitting an App for Release
+Submitting an App for Release
+Last updated: 2025-09-30 12:02
+Function
+This API is used to submit an app for release. Before calling this API, ensure that the app information is complete and the app package has been uploaded. Callers of this API include account holders, administrators, and app administrators.
+
+NOTE
+App packages are parsed asynchronously. Please wait for two minutes after a package is uploaded, and then call an API to send a release request.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-submit
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+releaseTime
+
+No
+
+String
+
+Release time in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+NOTE
+If releaseTime is not specified, the app will be released immediately after being approved.
+
+remark
+
+No
+
+String
+
+Remarks. This parameter can be left empty. If this parameter is set, the value contains 10 to 300 characters.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+NOTE
+If this parameter is set to 3, your app must have a version that has already been released.
+
+The default value is 1.
+
+Body
+phasedReleaseStartTime, phasedReleaseEndTime, and phasedReleaseDescription in the request body are mandatory only when releaseType is set to 3.
+
+The request body carries release information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+state
+
+No
+
+String
+
+It is unnecessary to set the parameter.
+
+phasedReleaseStartTime
+
+Yes
+
+String(64)
+
+Start time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleaseEndTime
+
+Yes
+
+String(64)
+
+End time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleasePercent
+
+Yes
+
+String(10)
+
+Phased release percentage.
+
+For an Android app, the value ranges from 0.00 to 100.00, accurate to two decimal places. Do not include a percent sign (%) in the value.
+For a HarmonyOS app, the value ranges from 0.00 to 100.00. The value can contain no decimal place or one or two decimal places. Do not include a percent sign (%) in the value.
+phasedReleaseDescription
+
+Yes
+
+String(500)
+
+Phased release description.
+
+isPureDetection
+
+No
+
+Integer
+
+Indicates whether to request green app certification.
+
+The options are as follows:
+
+0: no
+1: yes
+sensitivePermissionIconUrl
+
+No
+
+String
+
+Object ID of the green certification request material. This parameter is mandatory when isPureDetection is set to 1. To obtain the value of this parameter, pack the green certification request material into a ZIP package, call the API for obtaining the file upload URL, then call the API for uploading a file to upload the certification request material, and finally obtain the object ID returned by the API for obtaining the file upload URL.
+
+isCommitSensitivePermissionTips
+
+No
+
+boolean
+
+Indicates whether prohibited functions are eliminated. The value true indicates yes. This parameter is mandatory when isPureDetection is set to 1 and can only be set to true. Such functions include:
+
+Pop-ups on the home screen, lock screen, and in other apps, unless necessary to app functions
+Undeletable notifications, unless necessary to app functions
+Ads that compromise user experience, such as top or side banner ads or pop-up ads
+Guiding users to enable developer options
+Guiding users to enable the USB debugging mode
+Using hot patches to introduce malicious behavior or behavior that violates the preceding clauses
+Request Example
+POST /api/publish/v2/app-submit?appId=10****57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 414*******68
+Content-Type: application/json; 
+Authorization: Bearer *****
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void  submit(String domain,String clientId, String token, String appId){
+    HttpPost put = new HttpPost(domain + "/publish/v2/app-submit?appid=" + appId);
+
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidSubmitting an App for Release in Download Mode
+Submitting an App for Release in Download Mode
+Last updated: 2025-09-30 12:02
+Function
+This API is used to submit an app stored on your server for release. The app package download URL is passed. Huawei server automatically downloads the app package from the download URL and starts the release process. Callers of this API include account holders, administrators, and app administrators.
+
+Restrictions
+If a developer outside the Chinese mainland wants to use the API, the app release countries or regions must include the Chinese mainland. Developers in the Chinese mainland are beyond these constraints.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-submit-with-file
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+Body
+The request body carries release details in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+releaseTime
+
+No
+
+String(64)
+
+Release time in UTC format. If this parameter is left empty, the app is released immediately after being approved. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+remark
+
+No
+
+String(300)
+
+Remarks. This parameter can be left empty. If this parameter is set, the value contains 10 to 300 characters.
+
+releaseType
+
+No
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+3: by phase
+The default value is 1.
+
+downloadUrl
+
+Yes
+
+String
+
+App package download URL provided by you. The package can be in APK, RPK, AAB, or EXE format.
+
+APK file: The size cannot exceed 4 GB.
+RPK file: The size cannot exceed 20 MB for quick apps and 30 MB for quick games.
+AAB file: The size cannot exceed 150 MB.
+EXE file (Windows app): The size cannot exceed 4 GB.
+downloadFileName
+
+Yes
+
+String(64)
+
+Name of the to-download file in downloadUrl, including the file name extension.
+
+callbackAddr
+
+No
+
+String
+
+Callback URL for releasing an app, which is configured by you. Huawei server calls the API for obtaining the callback result to notify your server of the app release result through the URL.
+
+requestId
+
+Yes
+
+String
+
+Request string defined by you. The value must be unique. This parameter is carried in the result callback.
+
+clearArk
+
+No
+
+String
+
+Indicates whether to clear the Ark package (used for update from Android+Ark to Android).
+
+The options are as follows:
+
+1: yes
+0: no
+The default value is 0.
+
+sensitivePermissionDesc
+
+No
+
+String
+
+Sensitive information.
+
+phasedReleaseInfo
+
+No
+
+PhasedReleaseInfo
+
+Phased release information. This parameter is mandatory when releaseType is set to 3.
+
+versionName
+
+No
+
+String
+
+Version number of a Windows app package.
+
+This parameter is mandatory for EXE packages.
+
+displayName
+
+No
+
+String
+
+Name displayed in the registry, which uniquely identifies a Windows app.
+
+This parameter is mandatory for EXE packages.
+
+isPureDetection
+
+No
+
+Integer
+
+Indicates whether to request green app certification.
+
+The options are as follows:
+
+0: no
+1: yes
+sensitivePermissionIconUrl
+
+No
+
+String
+
+Object ID of the green certification request material. This parameter is mandatory when isPureDetection is set to 1. To obtain the value of this parameter, pack the green certification request material into a ZIP package, call the API for obtaining the file upload URL, then call the API for uploading a file to upload the certification request material, and finally obtain the object ID returned by the API for obtaining the file upload URL.
+
+isCommitSensitivePermissionTips
+
+No
+
+boolean
+
+Indicates whether prohibited functions are eliminated. The value true indicates yes. This parameter is mandatory when isPureDetection is set to 1 and can only be set to true. Such functions include:
+
+Pop-ups on the home screen, lock screen, and in other apps, unless necessary to app functions
+Undeletable notifications, unless necessary to app functions
+Ads that compromise user experience, such as top or side banner ads or pop-up ads
+Guiding users to enable developer options
+Guiding users to enable the USB debugging mode
+Using hot patches to introduce malicious behavior or behavior that violates the preceding clauses
+PhasedReleaseInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+state
+
+No
+
+String
+
+It is unnecessary to set the parameter.
+
+phasedReleaseStartTime
+
+Yes
+
+String(64)
+
+Start time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleaseEndTime
+
+Yes
+
+String(64)
+
+End time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleasePercent
+
+Yes
+
+String(10)
+
+Phased release percentage. The value ranges from 0.00 to 100.00, accurate to two decimal places. Do not include a percent sign (%) in the value.
+
+phasedReleaseDescription
+
+Yes
+
+String(500)
+
+Phased release description.
+
+Request Example
+POST /api/publish/v2/app-submit-with-file?appId=10*****57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41*****168
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "downloadUrl": "https://***7A7.apk",
+    "downloadFileName":"PhotoPlaza.apk",
+    "requestId":"1111"
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void  releaseAppByDownload(String domain,String clientId, String token, String appId){
+    HttpPost put = new HttpPost(domain + "/publish/v2/app-submit-with-file?appid=" + appId);
+
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+
+    JSONObject keyString = new JSONObject();
+    keyString.put("downloadUrl", "www.testurl.com"); //replace by your actual url
+    keyString.put("downloadFileName", "testfile"); //replace by your actual file name
+    keyString.put("requestId", "1");
+
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidUpdating Phased Release
+Updating Phased Release
+Last updated: 2025-09-30 12:02
+Function
+This API is used to change release by phase to full release or update the configuration of release by phase. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/phased-release
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+releaseType
+
+No
+
+Integer
+
+Release type to be changed. You can change the release type from release by phase to full release.
+
+The options are as follows:
+
+1: on the entire network
+NOTE
+For release on the entire network, set Body to {}.
+
+3: by phase
+The default value is 3.
+
+Body
+The request body carries phased release information in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+state
+
+No
+
+String
+
+Status of the release by phase.
+
+The options are as follows:
+
+SUSPEND: suspended
+RELEASE: released
+phasedReleaseStartTime
+
+No
+
+String(64)
+
+Start time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800 The start time of a released app cannot be changed.
+
+phasedReleaseEndTime
+
+No
+
+String(64)
+
+End time of phased release, in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+phasedReleasePercent
+
+No
+
+String(10)
+
+Phased release percentage. The value must be greater than 0.00 and less than 100.00, accurate to two decimal places. Do not include a percent sign (%) in the value.
+
+phasedReleaseDescription
+
+No
+
+String(500)
+
+Phased release description.
+
+Request Example
+PUT /api/publish/v2/phased-release?appId=10*****57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41*****168
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "state": "RELEASE",
+    "phasedReleaseStartTime":"2015-01-01T01:01:01+0800",
+    "phasedReleaseEndTime":"2015-01-01T01:01:01+0800",
+    "phasedReleasePercent":"50.00"
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+Call Example
+public static void  updateReleaseByPhase(String domain,String clientId, String token, String appId){
+    HttpPut put = new HttpPut(domain + "/publish/v2/phased-release?appid=" + appId);
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+    JSONObject keyString = new JSONObject();
+    keyString.put("state", "RELEASE");
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidObtaining the Callback Result
+Obtaining the Callback Result
+Last updated: 2025-09-30 12:02
+Function
+APIs including Submitting an App for Release in Download Mode and Submitting an App Package in Download Mode are all asynchronous APIs. When they are called, Huawei server does not send back result immediately. When calling these APIs, you need to pass your callback address, so that Huawei server can send you the execution result through the API for obtaining the callback result based on the callback address.
+
+When you release an app in download mode, if you do not receive a notification due to an unknown Huawei internal exception or network disconnection of your server (generally, a notification is sent within five minutes after you submit an app for release), it is recommended that you periodically check whether the app has been submitted for approval (value of releaseState is 4) through the API for querying app information.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+HUAWEI server -> Your server
+
+URL
+
+You need to ensure that the callback address specified by callbackAddr when you call APIs for submitting an app for release in download mode and submitting an app package in download mode can be properly accessed.
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+callBackData
+
+Yes
+
+String
+
+JSON string of the app release result, in the format {"requestId":"xxx","retCode":xxxxx,"desc":"xxx","pkgVersion":"xxx","downloadFileName":"xxx"}".
+
+requestId: your request ID, which is the same as the value of requestId passed when an app is submitted for release in download mode.
+retCode: result code. The value 0 indicates success, and other values indicate failure. For details, please refer to Result Codes.
+desc: result code description.
+pkgVersion: app package version.
+downloadFileName: app package name.
+signatureRSAWithPSS
+
+Yes
+
+String
+
+When sending a notification, Huawei server signs parameters in callBackData using the SHA256WithRSA/PSS algorithm and returns the signed character string in the signatureRSAWithPSS parameter.
+
+You need to use the public key obtained in Obtaining the Public Key for Signature Verification to verify the signature. For details about the verification method, please refer to Signature Verification Example.
+
+Response Parameters
+No response is required.
+
+Signature Verification Example
+/*
+@content String for which the signature is to be verified. The JSON string carried in callBackData is passed.
+@sign Signed string.
+*/
+privatestaticvoidverifySignature(String content, String sign) {
+    try{
+                String pubKey = "Public key for signature verification";     // Replace the value with the actual public key for signature verification in AppGallery Connect. For details about how to obtain the public key, please refer to the API for obtaining the public key for signature verification.
+        X509EncodedKeySpec x509EncodedKeySpec = newX509EncodedKeySpec(Base64.decodeBase64(pubKey));
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey publicKey = keyFactory.generatePublic(x509EncodedKeySpec);
+        Signature signature = Signature.getInstance("SHA256WithRSA/PSS");
+        signature.initVerify(publicKey);
+        signature.update(content.getBytes(Charset.forName("UTF-8")));
+        if(!signature.verify(Base64.decodeBase64(sign))) {
+            thrownewConnectException(EnumReturnCode.INVALID_PARAMETER, "Failed to verifySignature");
+        }
+    } catch(NoSuchAlgorithmException | SignatureException | InvalidKeyException | InvalidKeySpecException e) {
+        LOG.error("verify signature failed", e);
+        thrownewConnectException(EnumReturnCode.INVALID_PARAMETER, "Failed to verifySignature");
+    } catch(Exception e) {
+        LOG.error("verify signature failed", e);
+        thrownewConnectException(EnumReturnCode.INVALID_PARAMETER, "Failed to verifySignature");
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidSetting the GMS Dependency Flag for an App
+Setting the GMS Dependency Flag for an App
+Last updated: 2025-09-30 12:02
+Function
+This API is used to report whether an app depends on GMS to AppGallery Connect. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/properties/gms
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+Body
+The request body carries the GMS dependency flag of an app in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+needGms
+
+Yes
+
+Integer
+
+Indicates whether an app depends on GMS.
+
+The options are as follows:
+
+0: no
+1: yes
+Request Example
+PUT /api/publish/v2/properties/gms?appId=1******57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******68
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "needGms":0
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    },
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidUpdating the Release Time of a Version
+Updating the Release Time of a Version
+Last updated: 2025-09-30 12:02
+Function
+This API is used to update the release time of a version. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Restrictions
+This API can be called only when the app is in Releasing state.
+
+Prototype
+Protocol
+
+HTTPS PUT
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/on-shelf-time
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+Body
+The request body carries the updated release time in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+changeType
+
+Yes
+
+Integer
+
+Modification type.
+
+The options are as follows:
+
+2: change the release time from a scheduled time to immediately
+3: change the scheduled release time
+releaseTime
+
+Yes
+
+String
+
+Version release time in UTC format. The format is yyyy-MM-ddTHH:mm:ssZZ. Example: 2015-01-01T01:01:01+0800
+
+This parameter is valid when changeType is set to 3.
+
+releaseType
+
+Yes
+
+Integer
+
+App release type.
+
+The options are as follows:
+
+1: on the entire network
+Currently, only this option is supported.
+
+Request Example
+PUT /api/publish/v2/on-shelf-time?appId=1******57 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 41******68
+Content-Type: application/json
+Authorization: Bearer ******
+{
+    "changeType":3,
+    "releaseTime":"2015-01-01T01:01:01+0800",
+    "releaseType":1
+}
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Response Example
+{
+    "ret": {
+        "code": 0,
+        "msg": "success"
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidQuerying the Compilation Status of an App Package
+Querying the Compilation Status of an App Package
+Last updated: 2025-09-30 12:02
+Function
+This API is used to query the compilation status of an app package. Callers of this API include account holders, administrators, and app administrators.
+
+Prototype
+Protocol
+
+HTTPS GET
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/package/compile/status
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+pkgIds
+
+Yes
+
+String
+
+App package IDs for query, separated by commas (,).
+
+This parameter corresponds to the pkgVersion parameter returned by the API for querying the package list.
+
+Request Example
+GET /api/publish/v2/package/compile/status?appId=10*****7&pkgIds=10004151 HTTP/1.1
+Host: connect-api.cloud.huawei.com
+client_id: 414*******68
+Content-Type: application/json
+Authorization: Bearer ******
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+pkgStateList
+
+Yes
+
+PackageStates
+
+App package list.
+
+PackageStates description
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+pkgId
+
+Yes
+
+String
+
+App package ID.
+
+aabCompileStatus
+
+No
+
+Integer
+
+This parameter will be deprecated. For new apps, use successStatus instead.
+
+Compilation status.
+
+The options are as follows:
+
+0: not sent
+1: compiling
+2: compilation completed
+3: compilation failed
+failReason
+
+No
+
+Integer
+
+This parameter will be deprecated. For new apps, use successStatus instead.
+
+Compilation error code of an Android AAB package.
+
+The options are as follows:
+
+6: The app supports dynamic features but does not integrate the Dynamic Ability SDK.
+7: The universal.apk file cannot run properly due to invalid module configurations.
+8: The Asset Pack is not supported.
+9: Failed to download the AAB package.
+10: Failed to download the AAB package. The package is empty.
+11: Failed to decompress the AAB package. The package format is invalid.
+12: Failed to parse the AAB package using the bundletool.
+13-18: Failed to compile the AAB package.
+19: The AAB package size exceeds the upper limit (150 MB).
+successStatus
+
+Yes
+
+Integer(32)
+
+App package status.
+
+The options are as follows:
+
+0: normal
+1: parsing
+2: failed. The package is unavailable.
+Response Example
+{
+  "ret": {    
+    "code": 0,
+    "msg": "success"
+  },
+  "pkgStateList": [
+    {
+      "pkgId": "****",
+      "aabCompileStatus": 0,
+      "failReason": 6,
+      "successStatus": 0
+    }
+  ]
+}
+Call Example
+public static JSONObject getAabStatus(String domain, String clientId, String token, String appId, String pkgIds) {
+    HttpGet get = new HttpGet(domain + "/publish/v2/package/compile/status?appId=" + appId + "&pkgIds=" + pkgIds);
+
+    get.setHeader("Authorization", "Bearer " + token);
+    get.setHeader("client_id", clientId);
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(get);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            // Object returned by the app information query API, which can be received using the AppInfo object. For details, please refer to the API reference.
+            JSONObject object = JSON.parseObject(result);
+
+            return object;
+        }
+    } catch (Exception e) {
+
+    }
+    return null;
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidSubmitting an App Package in Download Mode
+Submitting an App Package in Download Mode
+Last updated: 2025-09-30 12:02
+Function
+This API is used to submit an app package stored on your own server to the AppGallery Connect server. Huawei server automatically downloads the app package from the download address but does not associate the version. This API only submits app packages but does not release them. Callers of this API include account holders, administrators, and app administrators.
+
+Restrictions
+If a developer outside the Chinese mainland wants to use the API, the app release countries or regions must include the Chinese mainland. Developers in the Chinese mainland are beyond these constraints.
+
+Prototype
+Protocol
+
+HTTPS POST
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/app-package-file/by-url
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+Body
+The request body carries release details in JSON format. The following table describes the parameters.
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+downloadUrl
+
+Yes
+
+String(256)
+
+Download URL of your app package.
+
+APK file: The size cannot exceed 4 GB.
+RPK file: The size cannot exceed 20 MB for quick apps and 30 MB for quick games.
+AAB file: The size cannot exceed 150 MB.
+EXE file (Windows app): The size cannot exceed 4 GB.
+downloadFileName
+
+Yes
+
+String(64)
+
+Name of the file matching downloadUrl, including the file name extension.
+
+callbackAddr
+
+No
+
+String(256)
+
+Callback URL, which is configured by you. Huawei server calls the API for obtaining the callback result to notify your server of the submission result through the URL.
+
+requestId
+
+Yes
+
+String(64)
+
+Request string defined by you. The value must be unique. This parameter is carried in the result callback.
+
+versionName
+
+No
+
+String(255)
+
+Version number of a Windows app package.
+
+This parameter is mandatory for EXE packages.
+
+displayName
+
+No
+
+String(255)
+
+Name displayed in the registry, which uniquely identifies a Windows app.
+
+This parameter is mandatory for EXE packages.
+
+packageType
+
+No
+
+Integer(32)
+
+App package type.
+
+1: APK
+2: RPK
+8: EXE (Windows app)
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+Call Example
+public static void  releaseAppByDownload(String domain,String clientId, String token, String appId){
+    HttpPost put = new HttpPost(domain + "/publish/v2/app-package-file/by-url?appid=" + appId);
+
+    put.setHeader("Authorization", "Bearer " + token);
+    put.setHeader("client_id", clientId);
+
+    JSONObject keyString = new JSONObject();
+    keyString.put("downloadUrl", "www.testurl.com"); //replace by your actual url
+    keyString.put("downloadFileName", "testfile"); //replace by your actual file name
+    keyString.put("requestId", "1");
+
+    StringEntity entity = new StringEntity(keyString.toString(), Charset.forName("UTF-8"));
+    entity.setContentEncoding("UTF-8");
+    entity.setContentType("application/json");
+    put.setEntity(entity);
+
+    try {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpResponse httpResponse = httpClient.execute(put);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_OK) {
+            BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+            String result = br.readLine();
+
+            JSONObject object = JSON.parseObject(result);
+            System.out.println(object.get("ret"));
+        }
+    } catch (Exception e) {
+
+    }
+}
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidQuerying the App Package List
+Querying the App Package List
+Last updated: 2025-09-30 12:02
+Function
+This API is used to query the list of packages associated with an app. Callers of this API include account holders, administrators, app administrators, and operations personnel.
+
+Prototype
+Protocol
+
+HTTPS GET
+
+Direction
+
+Your server -> Huawei server
+
+URL
+
+https://connect-api.cloud.huawei.com/api/publish/v2/package-list
+
+Data Format
+
+Request: Content-Type: application/json
+
+Response: Content-Type: application/json
+
+Request Parameters
+Header
+NOTE
+For details about the differences between the API client and OAuth client modes, please refer to Getting Started.
+
+API client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+client_id
+
+Yes
+
+String
+
+Client ID. For details about how to obtain the value, please refer to Creating an API Client.
+
+Authorization
+
+Yes
+
+String
+
+Authorization information in Authorization: Bearer ${access_token} format. In the format, access_token is obtained in Obtaining a Token.
+
+OAuth client mode
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+teamId
+
+Yes
+
+String
+
+Your team ID. You can obtain the ID by calling the API for obtaining the team account list.
+
+oauth2Token
+
+Yes
+
+String
+
+Authentication information. Pass the access token obtained in the API for obtaining an access token.
+
+Query
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+appId
+
+Yes
+
+String
+
+App ID.
+
+fromRecCount
+
+No
+
+Integer
+
+ID of the record where the query starts.
+
+The default value is 1.
+
+maxReqCount
+
+No
+
+Integer
+
+Number of packages to be queried.
+
+The maximum value is 100.
+
+The default value is 10.
+
+Response Parameters
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+ret
+
+Yes
+
+String(100)
+
+JSON character string containing the result code and description in {"code":retcode, "msg": "description"} format, in which retcode indicates the result code and description indicates the result code description. For details about the result code, please refer to Result Codes.
+
+retCount
+
+Yes
+
+Integer
+
+Number of returned app packages.
+
+totalCount
+
+Yes
+
+Integer
+
+Total number of app packages.
+
+pkgList
+
+Yes
+
+List<PackageInfo>
+
+Information of the app package list.
+
+packagePath
+
+No
+
+String
+
+Complete URL for downloading the uploaded APK. The URL is valid for 5 minutes.
+
+abisType
+
+No
+
+Integer
+
+CPU architecture type.
+
+The options are as follows:
+
+1: 32-bit (armeabi-v7a|armeabi|x86|mips)
+2: 64-bit (armeabi-v8a|x86_64|mips64)
+3: 32-bit and 64-bit
+The default value is 3.
+
+PackageInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+pkgVersion
+
+Yes
+
+String
+
+Unique ID of an app package.
+
+fileName
+
+Yes
+
+String
+
+App package name.
+
+versionCode
+
+Yes
+
+Integer
+
+Version code, corresponding to versionCode in the app package.
+
+versionName
+
+No
+
+String
+
+Version description, corresponding to versionName in the app package.
+
+packageSize
+
+Yes
+
+Integer
+
+Size of the app package, which is parsed from the app package.
+
+uploadTime
+
+Yes
+
+Integer
+
+Upload time of the app package.
+
+shaCode
+
+No
+
+String
+
+SHA-256 digest of the app package.
+
+packageType
+
+Yes
+
+Integer
+
+App package type. Currently, only the value 1 is supported, indicating the APK package.
+
+mainObb
+
+No
+
+ObbInfo
+
+Main OBB file associated with the APK package.
+
+patchObb
+
+No
+
+ObbInfo
+
+Patch OBB file associated with the APK package.
+
+ObbInfo
+
+Parameter
+
+Mandatory
+
+Type
+
+Description
+
+obbId
+
+Yes
+
+String
+
+ID of an OBB file.
+
+obbType
+
+Yes
+
+Integer
+
+Type of an OBB file.
+
+The options are as follows:
+
+1: main expansion file
+2: patch expansion file
+fileName
+
+Yes
+
+String
+
+OBB file name. After uploaded, the file is renamed by the server in the following format:
+
+main|patch.apkVersion.packageName.obb
+
+The value main indicates the main expansion file, and patch indicates the patch expansion file. The value of apkVersion is the version number of the APK package, and packageName indicates the name of the APK package. Example: main.314159.com.example.app.obb.
+
+sha256
+
+No
+
+String
+
+SHA-256 digest of an OBB file.
+
+fileSize
+
+Yes
+
+Integer
+
+Size of an OBB file.
+
+uploadTime
+
+Yes
+
+String
+
+Upload time of an OBB file.
+
+Call Example
+public static JSONObject getAppPkgList(String domain, String clientId, String token, String appId,
+        Integer fromRecCount, Integer maxReqCount) {
+        HttpGet put = new HttpGet(domain + "/publish/v2/package-list?appId=" + appId + "&fromRecCount=" + fromRecCount
+            + "&maxReqCount=" + maxReqCount);
+        put.setHeader("Authorization", "Bearer " + token);
+        put.setHeader("client_id", clientId);
+        try {
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse httpResponse = httpClient.execute(put);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_OK) {
+                BufferedReader br =
+                    new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), Consts.UTF_8));
+                String result = br.readLine();
+                JSONObject object = JSON.parseObject(result);
+                return object;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        } finally {
+            put.releaseConnection();
+        }
+        return null;
+    }
+---
+AppGallery Connect ReferencesConnect APIPublishing APIAndroidResult Codes
+Result Codes
+Last updated: 2025-09-30 12:02
+Expand
+Result Code
+
+Description
+
+0
+
+Successful.
+
+204144641
+
+Invalid input parameter.
+
+204144642
+
+Unknown system error.
+
+204144643
+
+Failed to obtain developer account information.
+
+204144644
+
+Failed to query app information.
+
+204144645
+
+Failed to obtain the authentication code for file upload.
+
+204144646
+
+Failed to add an APK or RPK file.
+
+204144647
+
+Failed to update the service.
+
+204144648
+
+Failed to query app service information.
+
+204144649
+
+Failed to update app information.
+
+204144650
+
+Failed to update the app information in the specified language because the specified language does not exist.
+
+204144651
+
+The default language of the app cannot be deleted.
+
+204144652
+
+The app has no localization information.
+
+204144653
+
+The app information in the specified language does not exist.
+
+204144654
+
+Invalid parameter.
+
+204144655
+
+Failed to download files when the API for submitting an app for release in download mode is called.
+
+204144656
+
+The API for submitting an app for release in download mode can be used only by developers in the Chinese mainland or for apps whose release countries or regions include the Chinese mainland.
+
+204144657
+
+Failed to upload files to Huawei file server when the API for submitting an app for release in download mode is called.
+
+204144658
+
+Failed to call the Huawei file server API during file upload.
+
+204144659
+
+The asynchronous processing queue is full when the API for submitting an app for release in download mode is called. Please try again later.
+
+204144660
+
+Failed to query the app information when the API for submitting an app for release is called. Status codes in the failure description include:
+
+80210099: The app uses dynamic features but does not integrate the Dynamic Ability SDK.
+80210100: The universal.apk file cannot run properly due to invalid module configurations.
+80210101: Asset Pack is not supported.
+80210102: Failed to download the AAB package.
+80210103: Failed to download the AAB package. The package is empty.
+80210104: Failed to decompress the AAB package. The package format is invalid.
+80210105: Failed to parse the AAB package using the bundletool.
+80210106: Failed to compile the AAB package.
+80210116: The AAB package size exceeds the upper limit (150 MB).
+204144662
+
+Failed to upload the APK package. The status code included in the failure description is as follows:
+
+90200503: Too many APKs uploaded under this app ID. Up to 300 APKs can be uploaded under each app ID.
+
+204144663
+
+Failed to upload the RPK package.
+
+204144664
+
+Failed to perform pre-check before submitting the app for review.
+
+204144665
+
+Failed to perform authentication and query user information.
+
+204144666
+
+Failed to perform authentication because the user is suspended or the user identity is not verified.
+
+204144667
+
+Failed to upload the file to the CMS server.
+
+204144668
+
+Failed to obtain the upload parameters.
+
+204144670
+
+Failed to create the app.
+
+204144672
+
+Failed to obtain the country/region code.
+
+204144673
+
+Failed to create the product.
+
+204144675
+
+The app has been removed.
+
+204144677
+
+Incorrect request body for updating the app release time.
+
+204144678
+
+Failed to update the app release time.
+
+204144680
+
+Failed to query the price tier.
+
+204144681
+
+Failed to update content rating information.
+
+204144683
+
+Failed to obtain the DRM key.
+
+204144685
+
+Failed to create the project.
+
+204144687
+
+Failed to update the GMS attribute.
+
+999002
+
+Invalid parameter.
+
+204144716
+
+Failed to obtain user information.
+
+204144717
+
+Failed to query the APK package check result.
+
+204144718
+
+Failed to query the package status.
+
+204144719
+
+The Windows app package is being compiled.
+
+204144720
+
+Failed to compile the Windows app package. Status codes in the failure description include:
+
+991: Invalid package.
+992: Inconsistent package names.
+993: Invalid hapAppProvision file.
+994: The package does not exist.
+995: The package format is not supported.
+996: Failed to parse the package.
+997: The package name does not match that configured for the app.
+998: The device type and app name do not match.
+999: The hapAppProvision file is a debug file.
+1000: The hapAppProvision file has expired.
+1001: The signing certificate and provision integration certificate are not the same.
+1002: The developer certificate has expired.
+1003: The developer certificate has not taken effect.
+1004: The package name must be unique.
+1005: The certificate in the package has expired. Please modify and upload the package again.
+1006: The package size exceeds the allowed.
+204144721
+
+No app information is found based on the criterion packageTypes.
+
+204144722
+
+Inconsistent signatures of multiple APK packages.
+
+204144723
+
+Inconsistent signatures of multiple package versions.
+
+204144725
+
+Failed to query version information about released Windows apps.
+
+204144727
+
+The package is being compiled. Please try again 3 to 5 minutes later.
+
+204144729
+
+The Android app name contains sensitive words.
+
+204144731
+
+Insufficient permission for the telematics app.
+
+204144733
+
+The number of app name changes exceeded the upper limit for the Android app. For an app released in the Chinese mainland in full mode, its name can be changed at most twice in a calendar year.
+
+204144734
+
+The customized requestId parameter associated with the package does not exist.
+
+204144735
+
+Security check is being performed on the file. Please try again later.
+
+204144736
+
+Failed to perform this open testing operation.
+
+204144737
+
+Failed to add a test user group.
+
+204144738
+
+Failed to update the test user group.
+
+204144739
+
+Failed to query test user group information.
+
+204144740
+
+Failed to delete the test user group.
+
+204144741
+
+Cannot release an open testing version for a non-HarmonyOS app.
+
+204144742
+
+Failed to add a version.
+
+204144743
+
+No version can be modified.
+
+204144744
+
+Failed to query the test user group list.
+
+204144745
+
+Failed to delete test users in batches.
+
+204144747
+
+Failed to delete the Windows app.
+
+204144748
+
+Failed to delete the app.
+
+204144749
+
+Failed to remove the Windows app.
+
+204144750
+
+Failed to add test users in batches.
+
+204144751
+
+Failed to obtain the site where the test user group is stored.
+
+204144752
+
+Failed to obtain the registration location of the developer.
+
+204144753
+
+Failed to obtain authorized resources.
+
+204144754
+
+Failed to check files such as images.
+
+204144755
+
+No app version information.
+
+204144756
+
+The app does not exist.
+
+204144757
+
+The parameter indicating the app category is incorrect. Set a new one in AppGallery Connect.
+
+204144758
+
+Internal system error. Rectify the fault based on the error cause provided in the msg field of the response.
+
+204144818
+
+The app name is the same as an existing one.
+---
