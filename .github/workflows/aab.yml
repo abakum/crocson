@@ -19,7 +19,7 @@ on:
         default: false
         type: boolean
       arm64:
-        description: 'ARM64 only (APK instead of AAB)'
+        description: 'ARM64 only AAB (single .so)'
         required: false
         default: false
         type: boolean
@@ -92,7 +92,7 @@ jobs:
           version: 1.18.3
 
       - name: Decode keystore
-        if: ${{ inputs.arm64 || inputs.build-apk || inputs.build-apks }}
+        if: ${{ inputs.build-apk || inputs.build-apks }}
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > /tmp/keystore.jks
 
@@ -101,7 +101,7 @@ jobs:
         run: |
           echo "${{ secrets.RUSTORE_UPLOAD_KEYSTORE }}" | base64 -d > /tmp/rustore-upload.keystore
 
-      - name: Build arm64 AAB + APK
+      - name: Build arm64-only AAB
         if: ${{ inputs.arm64 }}
         run: |
           cd $GITHUB_WORKSPACE/workspace/crocson
@@ -114,7 +114,7 @@ jobs:
           fi
           echo "Extracted Build Number: $BUILD_NUMBER"
 
-          # --- arm64-only AAB (transport key, vc=Build-1) -> Huawei ---
+          # --- arm64-only AAB (transport key, vc=Build-1) ---
           AAB_VC=$((BUILD_NUMBER - 1))
           sed -i "s/^Build = .*/Build = $AAB_VC/" FyneApp.toml
           echo "Building arm64-only AAB (vc=$AAB_VC, transport-signed)..."
@@ -129,44 +129,6 @@ jobs:
           fi
           echo "arm64-only AAB created:"
           ls -la crocson.aab
-
-          # --- arm64 APK (vc=Build+1) -> RuStore, signed with app key later ---
-          APK_VC=$((BUILD_NUMBER + 1))
-          sed -i "s/^Build = .*/Build = $APK_VC/" FyneApp.toml
-          echo "Building arm64 APK (vc=$APK_VC)..."
-          export CGO_ENABLED=1
-          export GOOS=android
-          export GOARCH=arm64
-          fyne package -os android/arm64 --release
-          if [ ! -f "crocson.apk" ]; then
-            echo "ERROR: crocson.apk was not created"
-            ls -la .
-            exit 1
-          fi
-          echo "arm64 APK created:"
-          ls -la crocson.apk
-
-      - name: Sign ARM64 APK
-        if: ${{ inputs.arm64 }}
-        run: |
-          cd $GITHUB_WORKSPACE/workspace/crocson
-
-          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
-          if [ ! -d "$BUILD_TOOLS" ]; then
-            echo "Installing Android build tools 36.0.0..."
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0"
-          fi
-
-          echo "Signing crocson.apk..."
-          "$BUILD_TOOLS/apksigner" sign \
-            --ks /tmp/keystore.jks \
-            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
-            crocson.apk
-          
-          echo "Verifying crocson.apk..."
-          "$BUILD_TOOLS/apksigner" verify -v crocson.apk
 
       - name: fyne release — build AAB
         if: ${{ !inputs.arm64 }}
@@ -232,7 +194,7 @@ jobs:
           unzip -l crocson.apks
 
       - name: Upload crocson.aab
-        if: ${{ !inputs.arm64 && inputs.build-aab }}
+        if: ${{ inputs.build-aab }}
         uses: actions/upload-artifact@v4
         with:
           name: crocson.aab
@@ -246,15 +208,6 @@ jobs:
         with:
           name: crocson-all.apk
           path: ${{ github.workspace }}/workspace/crocson/crocson-all.apk
-          retention-days: 7
-          if-no-files-found: error
-
-      - name: Upload crocson-arm64.apk
-        if: ${{ inputs.arm64 }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: crocson-arm64.apk
-          path: ${{ github.workspace }}/workspace/crocson/crocson.apk
           retention-days: 7
           if-no-files-found: error
 
@@ -276,14 +229,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Определяем, что загружаем: APK или AAB
-          if [ "${{ inputs.arm64 }}" = "true" ]; then
-            FILE="$GITHUB_WORKSPACE/workspace/crocson/crocson.apk"
-            FILE_TYPE="apk"
-          else
-            FILE="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
-            FILE_TYPE="aab"
-          fi
+          # Определяем, что загружаем: всегда AAB (в т.ч. arm64-only)
+          FILE="$GITHUB_WORKSPACE/workspace/crocson/crocson.aab"
+          FILE_TYPE="aab"
 
           FYNEAPP="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
 
