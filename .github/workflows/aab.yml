@@ -410,6 +410,19 @@ jobs:
 
           echo "Huawei: $FILE uploaded as draft (fileType=$FILE_TYPE)"
 
+          # Объявляем, что приложение НЕ зависит от GMS (HMS-устройства видят пакет).
+          # Чистый Go/Fyne, нет firebase/play-services — needGms=0 правдив.
+          GMS=$(curl -fsS -X PUT "$BASE/publish/v2/properties/gms?appId=$HUAWEI_APP_ID" \
+            "${AUTH[@]}" \
+            -H 'Content-Type: application/json' \
+            -d '{"needGms":0}')
+          echo "set gms flag response:"
+          echo "$GMS" | jq .
+          GMS_RET=$(echo "$GMS" | jq -r '.ret.code')
+          if [ "$GMS_RET" != "0" ]; then
+            echo "WARNING: properties/gms returned ret.code=$GMS_RET (flag can be set manually in AppGallery Connect)"
+          fi
+
           FYNEAPP="$GITHUB_WORKSPACE/workspace/crocson/FyneApp.toml"
           VERSION_NAME=$(grep -E '^\s*Version\s*=' "$FYNEAPP" | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
           for LOC in ru-RU en-US ja-JP tr-TR zh-CN; do
