@@ -53,36 +53,20 @@ func policyURL(code string) *url.URL {
 	return u
 }
 
-// pairRow lays out a label and a hyperlink for one language. When vertical is
-// true the phrase is centered on the first line and the policy link on the
-// second (used for the long Russian pair); otherwise both share a single
-// centered line.
-func pairRow(label, link fyne.CanvasObject, vertical bool) fyne.CanvasObject {
-	centered := func(o fyne.CanvasObject) fyne.CanvasObject {
-		return container.New(layout.NewCenterLayout(), o)
-	}
-	if vertical {
-		return container.NewVBox(centered(label), centered(link))
-	}
-	return centered(container.NewHBox(label, link))
-}
-
 // showPrivacyConsent shows the multilingual privacy policy consent dialog.
 // onResult is called exactly once with the user decision: true for Accept,
 // false for Decline (or dismissing the dialog without a choice). The dialog
 // does not exit/reset on its own — the caller decides what to do with it.
 func showPrivacyConsent(a fyne.App, w fyne.Window, onResult func(bool)) {
+	centered := func(o fyne.CanvasObject) fyne.CanvasObject {
+		return container.New(layout.NewCenterLayout(), o)
+	}
 	content := container.NewVBox(
-		pairRow(widget.NewLabel("Please read"),
-			widget.NewHyperlink("Privacy Policy", policyURL("en-US")), false),
-		pairRow(widget.NewLabel("Lütfen okuyun"),
-			widget.NewHyperlink("Gizlilik Politikası", policyURL("tr-TR")), false),
-		pairRow(widget.NewLabel("お読みください"),
-			widget.NewHyperlink("プライバシーポリシー", policyURL("ja-JP")), false),
-		pairRow(widget.NewLabel("请阅读"),
-			widget.NewHyperlink("隐私政策", policyURL("zh-CN")), false),
-		pairRow(widget.NewLabel("Пожалуйста прочитайте"),
-			widget.NewHyperlink("Политика конфиденциальности", policyURL("ru-RU")), true),
+		centered(widget.NewHyperlink("Privacy Policy", policyURL("en-US"))),
+		centered(widget.NewHyperlink("Gizlilik Politikası", policyURL("tr-TR"))),
+		centered(widget.NewHyperlink("プライバシーポリシー", policyURL("ja-JP"))),
+		centered(widget.NewHyperlink("隐私政策", policyURL("zh-CN"))),
+		centered(widget.NewHyperlink("Политика конфиденциальности", policyURL("ru-RU"))),
 	)
 
 	var d dialog.Dialog
