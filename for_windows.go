@@ -29,10 +29,12 @@ import (
 )
 
 var (
-	kernel32                = windows.NewLazySystemDLL("kernel32.dll")
-	setThreadExecutionState = kernel32.NewProc("SetThreadExecutionState")
+	kernel32                  = windows.NewLazySystemDLL("kernel32.dll")
+	setThreadExecutionState   = kernel32.NewProc("SetThreadExecutionState")
 	procGetConsoleProcessList = kernel32.NewProc("GetConsoleProcessList")
-	procFreeConsole          = kernel32.NewProc("FreeConsole")
+	procFreeConsole           = kernel32.NewProc("FreeConsole")
+	procFillConsoleOutputChar = kernel32.NewProc("FillConsoleOutputCharacterW")
+	procFillConsoleOutputAttr = kernel32.NewProc("FillConsoleOutputAttribute")
 )
 
 const (
@@ -136,4 +138,33 @@ func hideConsole() {
 	if count == 1 {
 		procFreeConsole.Call()
 	}
+}
+
+func clearConsole() {
+	h := windows.Stdout
+	var info windows.ConsoleScreenBufferInfo
+	if err := windows.GetConsoleScreenBufferInfo(h, &info); err != nil {
+		return
+	}
+	cells := uint32(uint16(info.Size.X)) * uint32(uint16(info.Size.Y))
+	if cells == 0 {
+		return
+	}
+	coord := uintptr(uint16(0)) | (uintptr(uint16(0)) << 16)
+	var written uint32
+	procFillConsoleOutputChar.Call(
+		uintptr(h),
+		uintptr(' '),
+		uintptr(cells),
+		coord,
+		uintptr(unsafe.Pointer(&written)),
+	)
+	procFillConsoleOutputAttr.Call(
+		uintptr(h),
+		uintptr(info.Attributes),
+		uintptr(cells),
+		coord,
+		uintptr(unsafe.Pointer(&written)),
+	)
+	windows.SetConsoleCursorPosition(h, windows.Coord{X: 0, Y: 0})
 }

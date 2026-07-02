@@ -296,6 +296,8 @@ func logTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 		logOutput.lastLines = make([]string, 0, LOG_LINES)
 		logOutput.segments = make([]widget.RichTextSegment, 0, LOG_LINES)
 		logOutput.refresh()
+
+		clearConsole()
 	})
 
 	debugCheck.SetChecked(debugBool(a))
