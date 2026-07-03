@@ -127,8 +127,8 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	})
 	appInfo.Hidden = !isAndroid
 
-	privacyRow := container.NewHBox(
-		widget.NewLabel(lp("I agree to the Privacy Policy")), privacyCheck) // "Принимаю политику конфиденциальности"
+	privacyRow := container.New(newTightHBox(0.5),
+		privacyCheck, widget.NewLabel(lp("I agree to the Privacy Policy"))) // "Принимаю политику конфиденциальности"
 
 	title := ""
 	if isAndroid {
@@ -137,7 +137,7 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	ti := container.NewTabItemWithIcon(title, theme.InfoIcon(), //lp("About")
 		container.NewVScroll(container.NewVBox(
 			appInfo,
-			container.New(&tightVBoxLayout{},
+			container.New(newTightVBox(0.6),
 				crocHyperlink,
 				fromHyperlink,
 				oldHyperlink,
@@ -179,29 +179,74 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	return ti
 }
 
-type tightVBoxLayout struct{}
+type tightVBox struct {
+	tight float32
+}
 
-const tight = 0.6
+type tightHBox struct {
+	tight float32
+}
 
-func (t *tightVBoxLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+func newTightVBox(tight ...float32) *tightVBox {
+	t := float32(0.7)
+	if len(tight) > 0 {
+		t = tight[0]
+	}
+	return &tightVBox{tight: t}
+}
+
+func newTightHBox(tight ...float32) *tightHBox {
+	t := float32(0.7)
+	if len(tight) > 0 {
+		t = tight[0]
+	}
+	return &tightHBox{tight: t}
+}
+
+func (t *tightVBox) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	yPos := float32(0)
 	for _, obj := range objects {
 		if obj.Visible() {
 			obj.Resize(fyne.NewSize(size.Width, obj.MinSize().Height))
 			obj.Move(fyne.NewPos(0, yPos))
-			yPos += obj.MinSize().Height * tight
+			yPos += obj.MinSize().Height * t.tight
 		}
 	}
 }
 
-func (t *tightVBoxLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+func (t *tightVBox) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	height := float32(0)
 	width := float32(0)
 	for _, obj := range objects {
 		if obj.Visible() {
-			height += obj.MinSize().Height * tight
+			height += obj.MinSize().Height * t.tight
 			if obj.MinSize().Width > width {
 				width = obj.MinSize().Width
+			}
+		}
+	}
+	return fyne.NewSize(width, height)
+}
+
+func (t *tightHBox) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	xPos := float32(0)
+	for _, obj := range objects {
+		if obj.Visible() {
+			obj.Resize(fyne.NewSize(obj.MinSize().Width, size.Height))
+			obj.Move(fyne.NewPos(xPos, 0))
+			xPos += obj.MinSize().Width * t.tight
+		}
+	}
+}
+
+func (t *tightHBox) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	height := float32(0)
+	width := float32(0)
+	for _, obj := range objects {
+		if obj.Visible() {
+			width += obj.MinSize().Width * t.tight
+			if obj.MinSize().Height > height {
+				height = obj.MinSize().Height
 			}
 		}
 	}

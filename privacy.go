@@ -61,14 +61,6 @@ func showPrivacyConsent(a fyne.App, w fyne.Window, onResult func(bool)) {
 	centered := func(o fyne.CanvasObject) fyne.CanvasObject {
 		return container.New(layout.NewCenterLayout(), o)
 	}
-	content := container.NewVBox(
-		centered(widget.NewHyperlink("Privacy Policy", policyURL("en-US"))),
-		centered(widget.NewHyperlink("Gizlilik Politikası", policyURL("tr-TR"))),
-		centered(widget.NewHyperlink("プライバシーポリシー", policyURL("ja-JP"))),
-		centered(widget.NewHyperlink("隐私政策", policyURL("zh-CN"))),
-		centered(widget.NewHyperlink("Политика конфиденциальности", policyURL("ru-RU"))),
-	)
-
 	var d dialog.Dialog
 	var once sync.Once
 	respond := func(accepted bool) {
@@ -85,10 +77,17 @@ func showPrivacyConsent(a fyne.App, w fyne.Window, onResult func(bool)) {
 		d.Hide()
 	})
 
-	buttons := container.NewHBox(layout.NewSpacer(), accept, decline, layout.NewSpacer())
+	content := container.New(newTightVBox(),
+		centered(widget.NewHyperlink("Privacy Policy", policyURL("en-US"))),
+		centered(widget.NewHyperlink("Gizlilik Politikası", policyURL("tr-TR"))),
+		centered(widget.NewHyperlink("プライバシーポリシー", policyURL("ja-JP"))),
+		centered(widget.NewHyperlink("隐私政策", policyURL("zh-CN"))),
+		centered(widget.NewHyperlink("Политика конфиденциальности", policyURL("ru-RU"))),
+		centered(widget.NewLabel("")),
+		centered(container.NewHBox(accept, decline)),
+	)
 
-	d = dialog.NewCustomWithoutButtons(lp("Accept"),
-		container.NewBorder(nil, buttons, nil, nil, content), w)
+	d = dialog.NewCustomWithoutButtons(lp("Accept"), content, w)
 
 	d.SetOnClosed(func() {
 		// Dismissed without a button (e.g. back gesture) → treat as decline.

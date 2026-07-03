@@ -69,25 +69,25 @@ const (
 
 	// cmd/c "set LOGGER=trace&crocson.exe"
 	// LOGGER=trace crocson
-	LEVEL                   = "debug"
-	FORKfrom                = "howeyc"
-	FORKfromVersion         = "1.11.5"
-	FORKfromBuild           = 40
-	FORKto                  = "abakum"
-	GH                      = "github.com"
-	GHP                     = FORKto + ".github.io"
-	DAV                     = "dav"
-	HTTP                    = "http"
-	DAVS                    = "davs"
-	HTTPS                   = "https"
-	IO                      = HTTPS + "://" + GHP + "/croc#"
-	SCAN                    = "//" + GHP + "/scan/"
-	qrSize          float32 = 21 * 16
-	OFF                     = "..."
-	ALL                     = "0.0.0.0"
-	LOCAL                   = "127.0.0.1"
-	PUBLICIP                = HTTPS + "://ip.ya.ru"
-	PrivacyPolicyURL        = HTTPS + "://" + GHP + "/croc/privacy-policy.html"
+	LEVEL                    = "debug"
+	FORKfrom                 = "howeyc"
+	FORKfromVersion          = "1.11.5"
+	FORKfromBuild            = 40
+	FORKto                   = "abakum"
+	GH                       = "github.com"
+	GHP                      = FORKto + ".github.io"
+	DAV                      = "dav"
+	HTTP                     = "http"
+	DAVS                     = "davs"
+	HTTPS                    = "https"
+	IO                       = HTTPS + "://" + GHP + "/croc#"
+	SCAN                     = "//" + GHP + "/scan/"
+	qrSize           float32 = 21 * 16
+	OFF                      = "..."
+	ALL                      = "0.0.0.0"
+	LOCAL                    = "127.0.0.1"
+	PUBLICIP                 = HTTPS + "://ip.ya.ru"
+	PrivacyPolicyURL         = HTTPS + "://" + GHP + "/croc/privacy-policy.html"
 )
 
 const (
@@ -406,7 +406,7 @@ func main() {
 	w.Resize(size)
 	AppClosed = lp("App closed. Tap to start.")
 
-	showPrivacyConsentOnStart(a, w)
+	// showPrivacyConsentOnStart(a, w)
 
 	w.ShowAndRun()
 }
