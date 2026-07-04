@@ -1050,9 +1050,9 @@ public class GoNativeActivity extends NativeActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Log.d(TAG, "Java: onRequestPermissionsResult requestCode=" + requestCode + ", grantResults=" + grantResults[0]);
         if (requestCode == 123 && pendingIntentURIs != null) {
-            boolean granted = true;
+            boolean granted = false;
             for (int result : grantResults) {
-                if (result != 0) granted = false;
+                if (result == PackageManager.PERMISSION_GRANTED) granted = true;
             }
             Log.d(TAG, "Java: permissionResult granted=" + granted + ", pending URIs=" + pendingIntentURIs.size());
             if (granted) {

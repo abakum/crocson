@@ -90,7 +90,7 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	crocHyperlink := widget.NewHyperlink(fmt.Sprintf("%s/%s/%s", GH, SCHOLLZ, CROC), nil)
 	crocHyperlink.SetURLFromString(fmt.Sprintf("%s://%s/%s/%s/releases/latest", HTTPS, GH, SCHOLLZ, CROC))
 
-	privacyCheck = widget.NewCheck("", nil)
+	privacyCheck = widget.NewCheck(lp("I agree to the Privacy Policy"), nil)
 
 	var onPrivacyChanged func(bool)
 	onPrivacyChanged = func(_ bool) {
@@ -127,8 +127,8 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 	})
 	appInfo.Hidden = !isAndroid
 
-	privacyRow := container.New(newTightHBox(0.5),
-		privacyCheck, widget.NewLabel(lp("I agree to the Privacy Policy"))) // "Принимаю политику конфиденциальности"
+	// privacyRow := container.New(newTightHBox(0.5),
+	// 	privacyCheck, widget.NewLabel(lp("I agree to the Privacy Policy"))) // "Принимаю политику конфиденциальности"
 
 	title := ""
 	if isAndroid {
@@ -142,7 +142,7 @@ func aboutTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 				fromHyperlink,
 				oldHyperlink,
 				newHyperlink,
-				privacyRow,
+				privacyCheck,
 			),
 			aboutInfo,
 			licenseToggle,
