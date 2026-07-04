@@ -461,6 +461,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		widget.NewFormItem("local", onlyLocalCheck),
 		widget.NewFormItem("multicast", widget.NewEntryWithData(binding.BindPreferenceString("multicast-address", a.Preferences()))),
 		widget.NewFormItem("version", widget.NewCheckWithData(lp("Check new desktop version"), binding.BindPreferenceBool("check-version", a.Preferences()))),
+		widget.NewFormItem("internal-dns", widget.NewCheckWithData(lp("Use built-in DNS resolver"), binding.BindPreferenceBool("internal-dns", a.Preferences()))),
 	)
 
 	// 5. Секция Storage Options

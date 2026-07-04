@@ -40,6 +40,7 @@ import (
 	"github.com/schollz/croc/v10/src/comm"
 	"github.com/schollz/croc/v10/src/croc"
 	"github.com/schollz/croc/v10/src/message"
+	"github.com/schollz/croc/v10/src/models"
 	"github.com/schollz/croc/v10/src/utils"
 	"github.com/schollz/mnemonicode"
 
@@ -1379,6 +1380,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			var sendErr error
 
 			ctx, ctc := context.WithCancel(appCtx)
+			models.INTERNAL_DNS = a.Preferences().Bool("internal-dns")
 			client, err := crocNew(ctx, opt)
 			if err != nil {
 				ctc()

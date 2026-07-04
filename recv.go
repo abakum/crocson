@@ -25,6 +25,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/schollz/croc/v10/src/comm"
 	"github.com/schollz/croc/v10/src/croc"
+	"github.com/schollz/croc/v10/src/models"
 	log "github.com/schollz/logger"
 )
 
@@ -960,6 +961,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 
 		ctx, ctc := context.WithCancel(appCtx)
+		models.INTERNAL_DNS = a.Preferences().Bool("internal-dns")
 		client, err := crocNew(ctx, opt)
 		if err != nil {
 			ctc()
