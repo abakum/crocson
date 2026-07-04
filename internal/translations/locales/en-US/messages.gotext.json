@@ -23,7 +23,7 @@
             "translation": "I agree to the Privacy Policy",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/about.go:131:21"
+            "position": "crocson/about.go:131:35"
         },
         {
             "id": "Click the Deep Link above to test",
@@ -47,7 +47,7 @@
             "translation": "Allow",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:357:44"
+            "position": "crocson/applinks.go:352:44"
         },
         {
             "id": "Use",
@@ -55,7 +55,7 @@
             "translation": "Use",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:378:21"
+            "position": "crocson/applinks.go:373:21"
         },
         {
             "id": "on page",
@@ -63,7 +63,7 @@
             "translation": "on page",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:380:21"
+            "position": "crocson/applinks.go:375:21"
         },
         {
             "id": "to",
@@ -71,7 +71,7 @@
             "translation": "to",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:382:21"
+            "position": "crocson/applinks.go:377:21"
         },
         {
             "id": "Scan QRs",
@@ -79,7 +79,7 @@
             "translation": "Scan QRs",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:418:34"
+            "position": "crocson/applinks.go:413:34"
         },
         {
             "id": "with:",
@@ -87,7 +87,15 @@
             "translation": "with:",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/applinks.go:418:53"
+            "position": "crocson/applinks.go:413:53"
+        },
+        {
+            "id": "Reset settings",
+            "message": "Reset settings",
+            "translation": "Reset settings",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true,
+            "position": "crocson/applinks.go:1143:25"
         },
         {
             "id": "Export full log",
@@ -119,7 +127,7 @@
             "translation": "Accept",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/privacy.go:106:39"
+            "position": "crocson/privacy.go:90:39"
         },
         {
             "id": "Cancel",
@@ -127,7 +135,7 @@
             "translation": "Cancel",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:83:44"
+            "position": "crocson/recv.go:84:44"
         },
         {
             "id": "Wait for them before pressing Download",
@@ -135,7 +143,7 @@
             "translation": "Wait for them before pressing Download",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:105:31"
+            "position": "crocson/recv.go:106:31"
         },
         {
             "id": "Relay",
@@ -143,7 +151,7 @@
             "translation": "Relay",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:134:33"
+            "position": "crocson/recv.go:135:33"
         },
         {
             "id": "Download",
@@ -151,7 +159,7 @@
             "translation": "Download",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:721:42"
+            "position": "crocson/recv.go:722:42"
         },
         {
             "id": "Secret must be longer than 5 characters",
@@ -159,7 +167,7 @@
             "translation": "Secret must be longer than 5 characters",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:734:23"
+            "position": "crocson/recv.go:735:23"
         },
         {
             "id": "Use WebDAV for magic-wormhole relay",
@@ -167,7 +175,7 @@
             "translation": "Use WebDAV for magic-wormhole relay",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:763:24"
+            "position": "crocson/recv.go:764:24"
         },
         {
             "id": "Receive cancelled.",
@@ -175,7 +183,7 @@
             "translation": "Receive cancelled.",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:812:26"
+            "position": "crocson/recv.go:813:26"
         },
         {
             "id": "Connected via magic-wormhole",
@@ -183,7 +191,7 @@
             "translation": "Connected via magic-wormhole",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:824:24"
+            "position": "crocson/recv.go:825:24"
         },
         {
             "id": "Use WebDAV for webwormhole relay",
@@ -191,7 +199,7 @@
             "translation": "Use WebDAV for webwormhole relay",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:841:24"
+            "position": "crocson/recv.go:842:24"
         },
         {
             "id": "Connected via webwormhole",
@@ -199,7 +207,7 @@
             "translation": "Connected via webwormhole",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:900:24"
+            "position": "crocson/recv.go:901:24"
         },
         {
             "id": "Change directory",
@@ -207,7 +215,7 @@
             "translation": "Change directory",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:914:18"
+            "position": "crocson/recv.go:915:18"
         },
         {
             "id": "Receiving file",
@@ -215,7 +223,7 @@
             "translation": "Receiving file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:1081:26"
+            "position": "crocson/recv.go:1083:26"
         },
         {
             "id": "Send cancelled.",
@@ -223,7 +231,7 @@
             "translation": "Send cancelled.",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:1156:36"
+            "position": "crocson/recv.go:1158:36"
         },
         {
             "id": "Received",
@@ -231,7 +239,7 @@
             "translation": "Received",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:1163:46"
+            "position": "crocson/recv.go:1165:46"
         },
         {
             "id": "Receive",
@@ -239,7 +247,7 @@
             "translation": "Receive",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/recv.go:1425:38"
+            "position": "crocson/recv.go:1427:38"
         },
         {
             "id": "Empty name",
@@ -263,7 +271,7 @@
             "translation": "Pick a file to send",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:283:31"
+            "position": "crocson/send.go:289:31"
         },
         {
             "id": "Send",
@@ -271,7 +279,7 @@
             "translation": "Send",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:972:42"
+            "position": "crocson/send.go:978:42"
         },
         {
             "id": "Have them press the Download now",
@@ -279,7 +287,7 @@
             "translation": "Have them press the Download now",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:1007:23"
+            "position": "crocson/send.go:1013:23"
         },
         {
             "id": "Have them not press the Download yet",
@@ -287,7 +295,7 @@
             "translation": "Have them not press the Download yet",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:1456:24"
+            "position": "crocson/send.go:1463:24"
         },
         {
             "id": "Sending file",
@@ -295,7 +303,7 @@
             "translation": "Sending file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:1541:57"
+            "position": "crocson/send.go:1548:57"
         },
         {
             "id": "Sent file",
@@ -303,7 +311,7 @@
             "translation": "Sent file",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/send.go:1593:47"
+            "position": "crocson/send.go:1600:47"
         },
         {
             "id": "Hide",
@@ -434,12 +442,20 @@
             "position": "crocson/settings.go:463:59"
         },
         {
+            "id": "Use built-in DNS resolver",
+            "message": "Use built-in DNS resolver",
+            "translation": "Use built-in DNS resolver",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true,
+            "position": "crocson/settings.go:464:64"
+        },
+        {
             "id": "UnZip files",
             "message": "UnZip files",
             "translation": "UnZip files",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:467:8"
+            "position": "crocson/settings.go:468:8"
         },
         {
             "id": "Zip folders",
@@ -447,7 +463,7 @@
             "translation": "Zip folders",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:469:9"
+            "position": "crocson/settings.go:470:9"
         },
         {
             "id": "File path CSV parts",
@@ -455,7 +471,7 @@
             "translation": "File path CSV parts",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:479:16"
+            "position": "crocson/settings.go:480:16"
         },
         {
             "id": "Disable Multiplexing",
@@ -463,7 +479,7 @@
             "translation": "Disable Multiplexing",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:487:60"
+            "position": "crocson/settings.go:488:60"
         },
         {
             "id": "Disable Compression",
@@ -471,7 +487,7 @@
             "translation": "Disable Compression",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:488:63"
+            "position": "crocson/settings.go:489:63"
         },
         {
             "id": "speed e.g. 500k",
@@ -479,7 +495,7 @@
             "translation": "speed e.g. 500k",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:493:16"
+            "position": "crocson/settings.go:494:16"
         },
         {
             "id": "Appearance",
@@ -487,15 +503,15 @@
             "translation": "Appearance",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:502:29"
+            "position": "crocson/settings.go:503:29"
         },
         {
-            "id": "Network Local",
-            "message": "Network Local",
-            "translation": "Network Local",
+            "id": "Network",
+            "message": "Network",
+            "translation": "Network",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:505:29"
+            "position": "crocson/settings.go:506:29"
         },
         {
             "id": "Storage Options",
@@ -503,7 +519,7 @@
             "translation": "Storage Options",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:506:29"
+            "position": "crocson/settings.go:507:29"
         },
         {
             "id": "Transfer Options",
@@ -511,7 +527,7 @@
             "translation": "Transfer Options",
             "translatorComment": "Copied from source.",
             "fuzzy": true,
-            "position": "crocson/settings.go:507:29"
+            "position": "crocson/settings.go:508:29"
         }
     ]
 }

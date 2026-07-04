@@ -1140,7 +1140,7 @@ func (qr *QR) handleIOTapped() {
 	idActions(ID, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
 	if capturerPkg != "" && capturerPkg != "none" && capturerPkg != "android" {
 		// Нативный тост (android.widget.Toast) виден поверх экрана настроек захватчика.
-		NewToast(qr.window, lp("Clear default")).Show()
+		NewToast(qr.window, lp("Reset settings")).Show()
 		idActions(capturerPkg, APP_OPEN_BY_DEFAULT_SETTINGS, APPLICATION_DETAILS_SETTINGS)
 	}
 }

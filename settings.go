@@ -452,7 +452,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	ra, _ := relayAddressBinding.Get()
 	relayAddressEntry.OnChanged(ra)
 
-	// 4. Секция Network Local
+	// 4. Секция Network
 	networkForm := widget.NewForm(
 		widget.NewFormItem("host", hostSelect),
 		widget.NewFormItem("public-ip", publicIPEntry),
@@ -503,7 +503,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		widget.NewAccordionItem(lp("Appearance"), appearanceForm),
 		widget.NewAccordionItem("Croc", crocForm),
 		widget.NewAccordionItem(lp("Relay"), relayForm),
-		widget.NewAccordionItem(lp("Network Local"), networkForm),
+		widget.NewAccordionItem(lp("Network"), networkForm),
 		widget.NewAccordionItem(lp("Storage Options"), storageForm),
 		widget.NewAccordionItem(lp("Transfer Options"), transferForm),
 		qr.GetAccordionItem(),
