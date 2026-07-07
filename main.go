@@ -230,6 +230,15 @@ func main() {
 		os.Exit(exitCode)
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			LogD(fmt.Sprintf("PANIC at startup: %v", r))
+			LogD(string(debug.Stack()))
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(1)
+		}
+	}()
+
 	hideConsole()
 
 	a := app.NewWithID(ID)
@@ -387,7 +396,13 @@ func main() {
 	// appTheme.icon = theme.DefaultTheme()
 
 	langCode = a.Preferences().String("lang")
-	langPrinter = message.NewPrinter(language.MustParse(langCode))
+	langTag, err := language.Parse(langCode)
+	if err != nil {
+		langCode = "en-US"
+		a.Preferences().SetString("lang", langCode)
+		langTag, _ = language.Parse(langCode)
+	}
+	langPrinter = message.NewPrinter(langTag)
 
 	setThemeColor(a.Preferences().String("theme"))
 	log.SetLevel(a.Preferences().String("debug-level"))
