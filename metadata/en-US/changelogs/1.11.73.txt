@@ -1,0 +1,3 @@
+Android: switch foreground service type to mediaPlayback for Android 14
+Settings: option to use internal DNS resolver
+Debug: clear console when toggling debug mode

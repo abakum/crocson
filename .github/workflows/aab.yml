@@ -114,8 +114,8 @@ jobs:
           fi
           echo "Extracted Build Number: $BUILD_NUMBER"
 
-          # --- arm64-only AAB (transport key, vc=Build-1) ---
-          AAB_VC=$((BUILD_NUMBER - 1))
+          # --- arm64-only AAB (transport key, vc=Build) ---
+          AAB_VC=$BUILD_NUMBER
           sed -i "s/^Build = .*/Build = $AAB_VC/" FyneApp.toml
           echo "Building arm64-only AAB (vc=$AAB_VC, transport-signed)..."
           fyne release --os android/arm64 \
@@ -136,9 +136,9 @@ jobs:
           cd $GITHUB_WORKSPACE/workspace/crocson
 
           BUILD_NUMBER=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
-          VC=$((BUILD_NUMBER - 1))
+          VC=$BUILD_NUMBER
           sed -i "s/^Build = .*/Build = $VC/" FyneApp.toml
-          echo "AAB versionCode set to $VC (Build=$BUILD_NUMBER - 1)"
+          echo "AAB versionCode set to $VC (Build=$BUILD_NUMBER)"
 
           fyne release --os android \
             --keystore /tmp/rustore-upload.keystore \

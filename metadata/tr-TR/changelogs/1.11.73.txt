@@ -1,0 +1,3 @@
+Android: Android 14 için ön plan hizmet türünü mediaPlayback olarak değiştirme
+Ayarlar: dahili DNS çözücüsünü kullanma seçeneği
+Hata ayıklama: hata ayıklama modunu değiştirirken konsolu temizleme

@@ -1,0 +1,3 @@
+Android：为适配 Android 14 将前台服务类型更改为 mediaPlayback
+设置：使用内部 DNS 解析器的选项
+调试：切换调试模式时清除控制台

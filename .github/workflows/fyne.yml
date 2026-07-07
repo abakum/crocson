@@ -592,7 +592,7 @@ jobs:
           # Loop through each target
           for i in "${!TARGETS[@]}"; do
             target="${TARGETS[$i]}"
-            VC=$((BUILD_NUMBER + i))
+            VC=$((BUILD_NUMBER + i + 1))
             echo "Building for target: $target (versionCode=$VC)"
             
             # Extract OS and ARCH from target (format: os/arch)

@@ -217,17 +217,5 @@ no-op regression on API 31+/iOS/desktop.
 - If a future Fyne upgrade changes the listability gate, this bypass becomes unnecessary but stays
   harmless (returns a genuinely listable URI).
 
-
 ---
-Изменено
-1 файл
-Может проще при таких ошибках действовать как при записи протокола только с итерацией по файлам когда сохраняется несколько файлов. Ведь 28 апи работает и 31+ работает
-
-Хорошая идея — и она существенно проще. Проверю по коду, что CREATE_DOCUMENT действительно работает на API 29 к той же локации (вы подтвердили этим: «протокол туда сохраняется»), и что newFileSave/copyToUWCProgress можно безопасно звать по одному файлу за раз. Дочитаю copyToUWCProgress (важно — кто закрывает writer и синхронно ли).
-
-copyToUWCProgress сам закрывает destination и вызывает onComplete из горутины (progress.go:466-478) — значит пофайловый цикл безопасен. И вижу, что в recv.go уже есть пофайловый save через newFileSave. Дочитаю 460–510, чтобы переиспользовать именно этот шаблон.
-
-dialogFileSave (recv.go:474) — это и есть пофайловый save через newFileSave (CREATE_DOCUMENT) с fallback на Downloads, работает на API 29. Дочитаю его до конца и вызовы, чтобы понять, как встроить onDone-хук для итерации.
-
-dialogFileSave (recv.go:474) — готовый пофайловый save через newFileSave/CREATE_DOCUMENT с fallback на Downloads; работает на API 29 (вы сами видели — «протокол туда сохраняется»). copyToUWCProgress сам закрывает writer и зовёт onComplete (progress.go:466-478) — значит последовательный перебор по файлам безопасен. Ваш вариант реально проще и не требует Java/C/JNI. Перечитаю середину плана и перепишу реализацию.
-
+ https://github.com/fyne-io/fyne/pull/6402/changes/afc3082cacc1be619665bb54ff1e3ff44ac768c3

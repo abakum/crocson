@@ -47,15 +47,15 @@ TAIL="AllowedAPKSigningKeys: 15ea332b2b0f96a2fcf1cfcb77d4352cf2ae5af64e869e9fc51
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[\\d.]+\$
 VercodeOperation:
-  - '%c'
   - '%c + 1'
   - '%c + 2'
   - '%c + 3'
+  - '%c + 4'
 UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*\"([^\"]+)\""
 
 generate_builds() {
   echo "Builds:"
-  OFF=0
+  OFF=1
   for ABI in arm arm64 386 amd64; do
     VC=$((BUILD + OFF))
     OFF=$((OFF + 1))
@@ -106,7 +106,7 @@ fi
   echo ""
   printf '%s\n' "$TAIL"
   echo "CurrentVersion: ${VERSION}"
-  echo "CurrentVersionCode: $((BUILD + 3))"
+  echo "CurrentVersionCode: $((BUILD + 4))"
 } > "$YML"
 
 echo "=== Generated recipe ==="
