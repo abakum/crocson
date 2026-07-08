@@ -1103,3 +1103,15 @@ func intentTextNotify(text *C.char) {
 		}
 	}
 }
+
+// One NV21 preview frame from the built-in QR scanner (Java -> Go).
+// Returns true to keep streaming, false to stop feeding frames.
+//
+//export cameraFrameNotify
+func cameraFrameNotify(data *C.char, length, w, h C.int) bool {
+	if data == nil || length <= 0 || w <= 0 || h <= 0 {
+		return true // ignore bad frame, keep camera going
+	}
+	b := C.GoBytes(unsafe.Pointer(data), length)
+	return cameraFrameReceived(b, int(w), int(h))
+}

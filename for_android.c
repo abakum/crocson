@@ -474,3 +474,17 @@ JNIEXPORT void Java_org_golang_app_GoNativeActivity_intentText(JNIEnv *env, jobj
 	intentTextNotify((char*)ctext);
 	(*env)->ReleaseStringUTFChars(env, text, ctext);
 }
+
+// Built-in QR scanner: hand one NV21 preview frame (byte[]) to Go.
+// Returns JNI_TRUE to keep streaming, JNI_FALSE to stop (decode hit / cancel / error).
+JNIEXPORT jboolean Java_org_golang_app_GoNativeActivity_cameraFrame(JNIEnv *env, jobject thiz, jbyteArray data, jint w, jint h) {
+	if (data == NULL) return JNI_FALSE;
+	jsize len = (*env)->GetArrayLength(env, data);
+	if (caseException(env, "cameraFrame GetArrayLength")) return JNI_FALSE;
+	if (len <= 0) return JNI_TRUE; // empty frame: ignore, keep going
+	jbyte *buf = (*env)->GetByteArrayElements(env, data, NULL);
+	if (caseException(env, "cameraFrame GetByteArrayElements") || buf == NULL) return JNI_FALSE;
+	int keep = cameraFrameNotify((char*)buf, (int)len, (int)w, (int)h);
+	(*env)->ReleaseByteArrayElements(env, data, buf, JNI_ABORT);
+	return keep ? JNI_TRUE : JNI_FALSE;
+}

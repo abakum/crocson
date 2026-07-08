@@ -7,14 +7,17 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.content.ClipData;
+import android.hardware.Camera;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 
 import java.util.ArrayList;
+import java.util.List;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -57,6 +60,11 @@ public class GoNativeActivity extends NativeActivity {
     private native void intentURI(String uri);
 
     private native void intentText(String text);
+
+    // Built-in QR scanner: feed one NV21 preview frame to Go.
+    // Returns true to keep streaming (Go re-adds the buffer),
+    // false to stop (decode hit / cancel / closed / error).
+    private native boolean cameraFrame(byte[] data, int w, int h);
 
     private void logIntentURI(String uri) {
         Log.d(TAG, "Java: intentURI sending to Go: " + uri);
@@ -228,6 +236,196 @@ public class GoNativeActivity extends NativeActivity {
             Log.e(TAG, "releaseMulticastLock failed", t);
             return false;
         }
+    }
+
+    // ----------------------------------------------------------------------
+    // Built-in QR scanner camera (Camera1). Deprecated but framework-only:
+    // fyne's android build compiles project .java against android.jar only,
+    // so CameraX/AndroidX cannot be used.
+    // ----------------------------------------------------------------------
+
+    private static final int CAMERA_PERMISSION_CODE = 201;
+
+    private static Camera qrCamera = null;
+    private static volatile boolean qrCameraRunning = false;
+    private static int qrPreviewWidth = 0;
+    private static int qrPreviewHeight = 0;
+    private static int qrFrameCount = 0;
+
+    private static final Camera.PreviewCallback qrPreviewCallback = new Camera.PreviewCallback() {
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if (!qrCameraRunning || data == null || camera == null) {
+                return;
+            }
+            int n = ++qrFrameCount;
+            if (n == 1 || n % 30 == 0) {
+                Log.d(TAG, "Java: onPreviewFrame #" + n + " " + qrPreviewWidth + "x" + qrPreviewHeight);
+            }
+            boolean keep = false;
+            try {
+                if (goNativeActivity != null) {
+                    keep = goNativeActivity.cameraFrame(data, qrPreviewWidth, qrPreviewHeight);
+                }
+            } catch (Throwable t) {
+                Log.e(TAG, "Java: cameraFrame threw: " + t.getMessage());
+                keep = false;
+            }
+            if (keep && qrCameraRunning) {
+                camera.addCallbackBuffer(data);
+            } else {
+                // stop on Go's request; release on a fresh thread to avoid
+                // "Camera is being used after release()" on the camera thread.
+                qrCameraRunning = false;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopCamera();
+                    }
+                }).start();
+            }
+        }
+    };
+
+    static boolean hasCameraPermission() {
+        try {
+            if (goNativeActivity == null) return false;
+            return goNativeActivity.checkSelfPermission("android.permission.CAMERA") == PackageManager.PERMISSION_GRANTED;
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: hasCameraPermission failed: " + t.getMessage());
+            return false;
+        }
+    }
+
+    static boolean requestCameraPermission() {
+        try {
+            if (goNativeActivity == null) return false;
+            goNativeActivity.requestPermissions(new String[]{"android.permission.CAMERA"}, CAMERA_PERMISSION_CODE);
+            return true;
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: requestCameraPermission failed: " + t.getMessage());
+            return false;
+        }
+    }
+
+    private static int findBackCameraId() {
+        int numberOfCameras = Camera.getNumberOfCameras();
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        for (int i = 0; i < numberOfCameras; i++) {
+            Camera.getCameraInfo(i, info);
+            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                return i;
+            }
+        }
+        return numberOfCameras > 0 ? 0 : -1;
+    }
+
+    static boolean startCamera() {
+        if (qrCamera != null) {
+            return true; // already running
+        }
+        int width = 0, height = 0;
+        try {
+            int id = findBackCameraId();
+            if (id < 0) {
+                Log.e(TAG, "Java: startCamera: no camera available");
+                return false;
+            }
+            Camera c = Camera.open(id);
+
+            try {
+                Camera.Parameters params = c.getParameters();
+                try {
+                    params.setPreviewFormat(ImageFormat.NV21);
+                } catch (Throwable ignored) {}
+                try {
+                    List<Camera.Size> sizes = params.getSupportedPreviewSizes();
+                    Camera.Size chosen = null;
+                    if (sizes != null && !sizes.isEmpty()) {
+                        for (Camera.Size s : sizes) {
+                            if (s.width <= 640 && s.height <= 480) {
+                                if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
+                                    chosen = s;
+                                }
+                            }
+                        }
+                        if (chosen == null) chosen = sizes.get(0);
+                        params.setPreviewSize(chosen.width, chosen.height);
+                        width = chosen.width;
+                        height = chosen.height;
+                    }
+                } catch (Throwable ignored) {}
+                try {
+                    List<String> modes = params.getSupportedFocusModes();
+                    if (modes != null && modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                    }
+                } catch (Throwable ignored) {}
+                try {
+                    c.setParameters(params);
+                } catch (Throwable ignored) {}
+            } catch (Throwable t) {
+                Log.e(TAG, "Java: startCamera configure failed: " + t.getMessage());
+            }
+
+            if (width == 0 || height == 0) {
+                Camera.Parameters p = c.getParameters();
+                if (p != null) {
+                    Camera.Size ps = p.getPreviewSize();
+                    if (ps != null) {
+                        width = ps.width;
+                        height = ps.height;
+                    }
+                }
+            }
+            try {
+                Camera.CameraInfo info = new Camera.CameraInfo();
+                Camera.getCameraInfo(id, info);
+                int rotate = (info.orientation - 90 + 360) % 360; // portrait
+                c.setDisplayOrientation(rotate);
+            } catch (Throwable ignored) {}
+
+            qrPreviewWidth = width;
+            qrPreviewHeight = height;
+            qrFrameCount = 0;
+            c.setPreviewCallbackWithBuffer(qrPreviewCallback);
+            int bufSize = Math.max(1, width) * Math.max(1, height)
+                * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
+            c.addCallbackBuffer(new byte[bufSize]);
+
+            // Headless surface target: Camera1's capture pipeline needs a surface
+            // (setPreviewDisplay/setPreviewTexture) to actually start and deliver
+            // onPreviewFrame. We have no SurfaceView, so feed a dummy texture.
+            try {
+                c.setPreviewTexture(new android.graphics.SurfaceTexture(0));
+                Log.d(TAG, "Java: startCamera setPreviewTexture(dummy) ok");
+            } catch (Throwable t) {
+                Log.e(TAG, "Java: startCamera setPreviewTexture failed: " + t.getMessage());
+            }
+
+            qrCamera = c;
+            qrCameraRunning = true;
+            c.startPreview();
+            Log.d(TAG, "Java: startCamera " + width + "x" + height);
+            return true;
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: startCamera failed: " + t.getMessage());
+            qrPreviewWidth = 0;
+            qrPreviewHeight = 0;
+            stopCamera();
+            return false;
+        }
+    }
+
+    static void stopCamera() {
+        qrCameraRunning = false;
+        Camera c = qrCamera;
+        qrCamera = null;
+        if (c == null) return;
+        try { c.setPreviewCallbackWithBuffer(null); } catch (Throwable ignored) {}
+        try { c.stopPreview(); } catch (Throwable ignored) {}
+        try { c.release(); } catch (Throwable ignored) {}
+        Log.d(TAG, "Java: stopCamera");
     }
 
     static void showToast(String message) {
@@ -994,6 +1192,7 @@ public class GoNativeActivity extends NativeActivity {
     protected void onPause() {
         Log.d(TAG, "Java: onPause");
         lifecycleEvent("pause");
+        try { stopCamera(); } catch (Throwable ignored) {} // release even if Go is slow
         super.onPause();
     }
 
@@ -1048,6 +1247,13 @@ public class GoNativeActivity extends NativeActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            boolean granted = grantResults != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            Log.d(TAG, "Java: camera permission granted=" + granted);
+            lifecycleEvent(granted ? "cameraPermissionGranted" : "cameraPermissionDenied");
+            return;
+        }
         Log.d(TAG, "Java: onRequestPermissionsResult requestCode=" + requestCode + ", grantResults=" + grantResults[0]);
         if (requestCode == 123 && pendingIntentURIs != null) {
             boolean granted = false;

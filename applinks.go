@@ -382,6 +382,7 @@ func (qr *QR) makeQRInstructions() fyne.CanvasObject {
 	vBox := container.NewVBox(labelB)
 	if isAndroid || asMobile {
 		optScan := []string{
+			builtinScanner,
 			"Default html5-QRcode",
 			"miUI Xiaomi",
 			"Samsung",
@@ -435,6 +436,16 @@ func (qr *QR) scanner() {
 		s := HTTPS + ":" + SCAN
 		err := OpenURL(s)
 		log.Debugf("%s: %v", s, err)
+		return
+	}
+	if qr.app.Preferences().String("scanner") == builtinScanner {
+		startQRScan(qr.app, qr.window, func(text string) {
+			fyne.Do(func() {
+				qr.currentText = text
+				qr.updateLink()
+				qr.Show()
+			})
+		})
 		return
 	}
 	// view 0x23000003
@@ -960,6 +971,9 @@ var (
 	scannerIsBrowser    bool
 	clipboardBeforeScan string
 )
+
+// builtinScanner is the in-app camera scanner option (Android only).
+const builtinScanner = "Built-in camera"
 
 // QR управляет всей секцией QR в настройках
 type QR struct {

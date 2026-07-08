@@ -305,3 +305,8 @@ func acquireMulticastLock() bool { return true }
 
 // releaseMulticastLock is a no-op on non-Android platforms.
 func releaseMulticastLock() bool { return true }
+
+// The built-in camera scanner is Android-only. On other platforms the option is
+// not shown, so these are unused no-ops kept for compilation parity.
+func startQRScan(_ fyne.App, _ fyne.Window, _ func(string)) {}
+func stopQRScan()                                           {}
