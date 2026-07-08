@@ -1,0 +1,1 @@
+Başlangıç: geçersiz dil kodunda oluşan çökme düzeltildi, en-US yedeği eklendi

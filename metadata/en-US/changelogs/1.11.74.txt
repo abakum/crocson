@@ -1,0 +1,1 @@
+Startup: fixed crash on invalid language code, added fallback to en-US

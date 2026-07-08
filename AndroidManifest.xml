@@ -2,8 +2,8 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1990"
-    android:versionName="1.11.73"
+    android:versionCode="1995"
+    android:versionName="1.11.74"
     package="com.github.abakum.crocson">
 
     <application

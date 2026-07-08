@@ -335,6 +335,7 @@ func main() {
 
 	langCode = lang.SystemLocale().String()
 	log.Info(langCode)
+	log.Info(runtime.GOARCH)
 	// Defaults
 	a.Preferences().SetString("lang",
 		a.Preferences().StringWithFallback("lang", langCode))
@@ -359,7 +360,7 @@ func main() {
 	a.Preferences().SetString("font",
 		a.Preferences().StringWithFallback("font", DEFAULT))
 	a.Preferences().SetString("debug-level",
-		a.Preferences().StringWithFallback("debug-level", "error"))
+		a.Preferences().StringWithFallback("debug-level", "debug")) //"error"
 	a.Preferences().SetString("pake-curve",
 		a.Preferences().StringWithFallback("pake-curve", "p256"))
 	a.Preferences().SetString("croc-hash",
