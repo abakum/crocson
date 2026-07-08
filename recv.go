@@ -114,8 +114,12 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	}
 
 	qrButton := widget.NewButtonWithIcon("", theme.ViewFullScreenIcon(), func() {
+		if (isAndroid || asMobile) && a.Preferences().String("scanner") == builtinScanner {
+			startQRScan(a, w, nil) // stay on recv; the secret is filled by qrRoute
+			return
+		}
 		if qr != nil {
-			qr.scanner()
+			qr.scanner() // desktop (OpenURL) or intent fallback — no jump to settings
 		}
 	})
 

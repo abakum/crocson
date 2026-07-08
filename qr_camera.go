@@ -42,6 +42,17 @@ var (
 	qrDialog    dialog.Dialog
 	qrOnResult  func(string)
 	qrRecvCount atomic.Int64
+	// qrCameraStarted is true while the camera hardware is running. Used by
+	// qrLifecyclePause to decide whether a pause (activity change) should close
+	// the scan dialog: the camera only runs after permission is granted, so the
+	// first-run permission-request pause (qrCameraStarted still false) is skipped.
+	qrCameraStarted bool
+	// qrRot is the number of 90° clockwise rotations to apply to each preview
+	// frame so the viewfinder matches the device orientation. Derived from the
+	// camera sensor orientation (see getCameraSensorOrientation): Camera1 delivers
+	// NV21 frames in the sensor's native landscape orientation regardless of
+	// setDisplayOrientation, so we rotate the Y plane ourselves.
+	qrRot int
 )
 
 // cameraFrameReceive is called from the camera thread (via cgo export
@@ -70,6 +81,19 @@ func cameraFrameReceived(data []byte, w, h int) bool {
 	return true
 }
 
+// rotateGray90cw rotates a grayscale buffer (w wide, h tall, stride w) 90°
+// clockwise, returning a new buffer of size h wide × w tall.
+func rotateGray90cw(src []byte, w, h int) (dst []byte, nw, nh int) {
+	nw, nh = h, w
+	dst = make([]byte, w*h)
+	for r := 0; r < w; r++ { // new row
+		for c := 0; c < h; c++ { // new col
+			dst[r*nw+c] = src[(h-1-c)*w+r]
+		}
+	}
+	return dst, nw, nh
+}
+
 func qrDecodeLoop(ctx context.Context) {
 	for {
 		select {
@@ -79,7 +103,12 @@ func qrDecodeLoop(ctx context.Context) {
 			if qrStop.Load() {
 				continue
 			}
-			gray := &image.Gray{Pix: fr.y, Stride: fr.w, Rect: image.Rect(0, 0, fr.w, fr.h)}
+			y := fr.y
+			w, h := fr.w, fr.h
+			for i := 0; i < qrRot; i++ {
+				y, w, h = rotateGray90cw(y, w, h)
+			}
+			gray := &image.Gray{Pix: y, Stride: w, Rect: image.Rect(0, 0, w, h)}
 
 			g := gray
 			fyne.Do(func() {
@@ -158,6 +187,12 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 	qrFrameCh = make(chan cameraFrame, 1)
 	qrStop.Store(false)
 	qrRecvCount.Store(0)
+	qrRot = 0
+	if o, err := callInt("getCameraSensorOrientation"); err == nil && o >= 0 {
+		// The NV21 frame arrives in the sensor's native orientation; rotating it
+		// (orientation/90) quarters CW makes it upright in portrait.
+		qrRot = (o / 90) % 4
+	}
 
 	var ctx context.Context
 	ctx, qrCancel = context.WithCancel(context.Background())
@@ -173,7 +208,7 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 	qrPreview = canvas.NewImageFromImage(black)
 	qrPreview.FillMode = canvas.ImageFillContain
 	qrPreview.SetMinSize(fyne.NewSize(qrSize, qrSize))
-	qrStatus = widget.NewLabel(lp("Point the camera at a QR code"))
+	qrStatus = widget.NewLabel(lp(builtinScanner))
 	qrStatus.Alignment = fyne.TextAlignCenter
 
 	qrShowDialog(w)
@@ -221,6 +256,25 @@ func qrBegin(w fyne.Window) {
 	if err != nil || !ok {
 		LogD("qr: startCamera failed: " + fmt.Sprint(err))
 		qrStatus.SetText(lp("Camera unavailable"))
+		return
+	}
+	qrMu.Lock()
+	qrCameraStarted = true
+	qrMu.Unlock()
+}
+
+// qrLifecyclePause is invoked from the lifecycle goroutine on activity "pause".
+// If a scan is active and the camera is running, it closes the scan dialog
+// (which stops the camera). The qrCameraStarted guard excludes the first-run
+// permission request: its system dialog also triggers onPause, but the camera
+// is never started before permission is granted. stopQRScan touches UI, so it
+// runs on the Fyne thread via fyne.Do.
+func qrLifecyclePause() {
+	qrMu.Lock()
+	closeDialog := qrActive && qrCameraStarted
+	qrMu.Unlock()
+	if closeDialog {
+		fyne.Do(func() { stopQRScan() })
 	}
 }
 
@@ -230,7 +284,7 @@ func qrShowDialog(w fyne.Window) {
 		widget.NewSeparator(),
 		qrStatus,
 	)
-	d := dialog.NewCustom(lp("Scan QR"), lp("Cancel"), content, w)
+	d := dialog.NewCustom(lp("Scan QRs"), lp("Cancel"), content, w)
 	d.SetOnClosed(func() { stopQRScan() })
 	qrDialog = d
 	d.Show()
@@ -249,6 +303,7 @@ func stopQRScan() {
 	qrMu.Lock()
 	active := qrActive
 	qrActive = false
+	qrCameraStarted = false
 	qrMu.Unlock()
 	if !active {
 		return

@@ -320,6 +320,23 @@ public class GoNativeActivity extends NativeActivity {
         return numberOfCameras > 0 ? 0 : -1;
     }
 
+    // Sensor orientation (degrees, CCW) of the back camera. Used by Go to rotate
+    // the NV21 Y plane: setDisplayOrientation only affects SurfaceView/SurfaceTexture
+    // output, NOT the raw preview bytes delivered to onPreviewFrame, so the buffer
+    // always arrives in the sensor's native (landscape) orientation.
+    static int getCameraSensorOrientation() {
+        try {
+            int id = findBackCameraId();
+            if (id < 0) return -1;
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(id, info);
+            return info.orientation;
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: getCameraSensorOrientation failed: " + t.getMessage());
+            return -1;
+        }
+    }
+
     static boolean startCamera() {
         if (qrCamera != null) {
             return true; // already running

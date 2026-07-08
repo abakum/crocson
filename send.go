@@ -1629,10 +1629,12 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							at.OnSelected(at.Selected())
 							de.Bounce(ti.Content.Refresh)
 						})
-					case "stop":
-						saveAccordionState()
-					case "permissionDialog":
-					}
+				case "stop":
+					saveAccordionState()
+				case "pause":
+					qrLifecyclePause()
+				case "permissionDialog":
+				}
 
 				case text := <-textFromIntent:
 					if text == "" {

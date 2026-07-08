@@ -176,3 +176,111 @@ Emulator test is the key discriminator: emulator reliably delivers preview frame
 - `make logcat`: confirm frame-counter lines appear; confirm `qr: decoded` on a real QR.
 - Viewfinder shows live grayscale camera, not the gradient.
 - Cancel/back/pause still release the camera (no leak).
+
+---
+
+## Follow-up fix #2: dialog hangs after the activity is paused/stopped
+
+### Symptom (on-device, confirmed via logcat)
+Preview rotation is now correct (viewfinder upright). New problem: when the activity is paused/stopped (e.g. user backgrounds the app for ~22 s), the camera is released (`Java: onPause` → `Java: stopCamera`) but the **Fyne scan dialog stays open with a frozen preview** (`qrPreview` never updated). Relevant logcat:
+```
+Java: onPause → lifecycle: pause → Java: stopCamera → Java: onStop → lifecycle: stop
+... (~22 s) ...
+Java: onRestart → lifecycle: restart/start → Java: onResume → lifecycle: resume   ← dialog still hung
+```
+
+### Root cause
+- `GoNativeActivity.onPause()` (line 1209-1213) **always** calls `stopCamera()` for *every* pause, but `qr_camera.go` **never subscribes to lifecycle events**, so the Fyne dialog stays open with a dead camera.
+- Constraint: `lifecycleFromJava` (`for_android.go:1066`, buffered cap 10) has a **single consumer** — the `select` loop in `send.go:1617`. QR lifecycle handling must be added **inside that send.go switch**.
+
+### Design decision: close the dialog on pause (no resume logic)
+Per the user's direction: on activity change, **close the scan dialog**, which in turn stops the camera (`stopQRScan` already calls `callVoid("stopCamera")` + `qrHideDialog()`). **No resume/restart on foreground** — the scan is abandoned; the user re-opens it to scan again.
+
+### The permission-dialog trap (must guard)
+`requestCameraPermission()` (`GoNativeActivity.java:300-308`) calls `requestPermissions(...)`, which shows the **system permission dialog → triggers `onPause`**. So closing on *every* `pause` would tear the scan down during the first-run permission request (before permission is granted). 
+
+Guard: only close when the **camera is actually running** (`qrCameraStarted`). The camera can only start *after* permission is granted (`qrBegin` is reached only after the `hasCameraPermission()` check in `startQRScan`). Therefore `qrCameraStarted == true` ⟹ permission already granted ⟹ no permission dialog ⟹ closing on that pause is safe. The first-run permission-request pause is naturally skipped because `qrCameraStarted` is still `false`.
+
+### Ordered task list
+
+#### 1. Go `qr_camera.go` — running flag + pause handler
+- Add `qrCameraStarted bool` to the `var (...)` block (`qr_camera.go:33`). Access it under `qrMu`.
+- In `qrBegin` (`qr_camera.go:246`): on `startCamera` success (`ok && err == nil`), set `qrCameraStarted = true` (under `qrMu`).
+- In `stopQRScan` (`qr_camera.go:278`): set `qrCameraStarted = false` inside the `active` block (after the early `if !active` return), alongside the existing teardown.
+- Add helper `qrLifecyclePause()` (called from the lifecycle goroutine, **off the Fyne thread**):
+  ```go
+  func qrLifecyclePause() {
+      qrMu.Lock()
+      close := qrActive && qrCameraStarted
+      qrMu.Unlock()
+      if close {
+          // stopQRScan touches UI (qrHideDialog) → run on the Fyne thread
+          fyne.Do(func() { stopQRScan() })
+      }
+  }
+  ```
+- **No resume handler.** Do not add `qrLifecycleResume`, `qrResumeNeeded`, or `qrWindow` — explicitly out of scope per the user.
+
+#### 2. Go `send.go:1617` — dispatch `pause` to QR
+- In the `switch event` inside the `if isAndroid { go func() { for { select { case event := <-lifecycleFromJava:` block, add a case:
+  ```go
+  case "pause":
+      qrLifecyclePause()
+  ```
+- Leave the existing `case "resume":` (line 1619) untouched (no QR resume). Do not add `qr*` calls to `stop`/`destroy` (the camera is released by Java's `onPause` already; `stopQRScan` runs on `pause`).
+
+### Why this is correct
+- **Has-permission path (the reported bug):** scan active, camera running (`qrCameraStarted == true`) → user backgrounds → `pause` → `qrLifecyclePause` closes the dialog + stops the camera. No hang. ✓
+- **First-run permission request:** `requestPermissions` → `pause`, but `qrCameraStarted == false` → `qrLifecyclePause` does nothing; dialog stays so the poller can start the camera after grant. ✓
+- **Permission denied (first run):** dialog stays showing "Camera permission denied"; the user cancels manually (or it stays — acceptable, no camera resource held since one never started). ✓
+- **Thread safety:** `qrLifecyclePause` runs on the lifecycle goroutine; it only reads flags (under `qrMu`) and queues `stopQRScan` via `fyne.Do`, so `stopQRScan`'s UI access (`qrHideDialog` → `Dialog.Hide`) happens on the Fyne thread. `callVoid("stopCamera")` uses `driver.RunNative` and is thread-safe.
+- **Idempotency:** `stopQRScan` is already idempotent (`active` flag + early return); `Java.startCamera`/`stopCamera` are idempotent (`qrCamera != null` checks). `Dialog.Hide()` firing `SetOnClosed → stopQRScan` again is a no-op.
+
+### Validation
+- `make amd64 adb` (or `make wsl arm64`) — build green (Go android + Java compile).
+- `make logcat` with the dialog open: background the app → expect `Java: onPause` / `lifecycle: pause` / `Java: stopCamera`, and the dialog is gone on return (no frozen preview). Returning to the app does **not** auto-reopen the scan (user re-taps the option).
+- First-run permission flow: grant → camera starts and scans; deny → "Camera permission denied" shown, dialog not torn down by the permission-request pause.
+- Decoded QR still routed (`textFromIntent` / `uriFromIntent`); Cancel still releases; no `Camera is being released` warnings on re-open.
+
+---
+
+## Follow-up fix #3: built-in scan from recv jumps to settings
+
+### Symptom (confirmed by user)
+Scanning from the **recv** tab with the built-in camera selected jumps the active tab to **settings** (QR section) after decode — even though the recv "secret" entry is filled correctly. With a non-built-in (intent) scanner there is **no** jump.
+
+### Root cause
+`qr.Show()` (`applinks.go:277`) = `at.SelectIndex(3)` (settings) + open the QR accordion. It is invoked from the built-in scan `onResult` (`applinks.go:446`), which `qr.scanner()` (`applinks.go:434`) passes to `startQRScan`. The recv scan button (`recv.go:116` `qrButton`, ViewFullScreenIcon → `qr.scanner()`) and the settings QR section's own "Scan QRs" button (`applinks.go:426`) **share** this `onResult`. For the settings QR section the jump is intended (display the scanned code as QR); for recv it is not.
+
+The decoded text reaches the recv flow **without** the callback: `qrRoute` (`qr_camera.go:133`) always feeds `uriFromIntent`/`textFromIntent`, consumed by the send-tab handler (`send.go:1672`) which does `entry.SetText(st)` + relay prefs — this is what fills the recv secret. So `qr.Show()` in `onResult` is pure (unwanted) navigation, not part of the secret-fill.
+
+### Out of scope (do NOT change)
+- **Send copy button (`send.go:299` `cbButton`):** its `qr.Show()` is intended — the button copies the code **and** displays its QR for the peer to scan. Leave as-is.
+- `qr.scanner()` (`applinks.go:434`): unchanged — still used by the settings QR section (intended jump + `qr.currentText` display).
+- `qrRoute` routing (`qr_camera.go:133`): unchanged; still fills the recv secret via `uriFromIntent`/`textFromIntent`.
+- Send link tap on mobile (`send.go:779` `qr.Show()`) and `applinks.go:515` (intent fallback `qr.Show()`): intended, leave as-is.
+
+### Fix
+
+#### `recv.go:116` — built-in path scans without jumping to settings
+Route the built-in case straight to `startQRScan` with a **no-op callback** (the secret is filled by `qrRoute`, which runs regardless of the callback; `qrRoute` already guards `cb != nil`):
+```go
+qrButton := widget.NewButtonWithIcon("", theme.ViewFullScreenIcon(), func() {
+	if (isAndroid || asMobile) && a.Preferences().String("scanner") == builtinScanner {
+		startQRScan(a, w, nil) // no qr.Show(): stay on recv; secret filled via qrRoute
+		return
+	}
+	if qr != nil {
+		qr.scanner() // desktop (OpenURL) or intent fallback — no jump (unchanged)
+	}
+})
+```
+- `w` is recv's window (= the single main window), so the camera dialog still overlays recv. `startQRScan(a, w, nil)`: `qrOnResult = nil`; `qrRoute` skips `cb`; dialog still closes on decode.
+- `qr.scanner()` (with its `qr.Show()` `onResult`) is left untouched — the settings QR section's "Scan QRs" button still jumps (intended).
+
+### Validation
+- `make amd64` green.
+- recv, built-in selected: scan → secret entry filled, **stay on recv** (no settings jump); camera dialog closes on decode.
+- recv, non-built-in scanner: unchanged (no jump, as before).
+- Settings QR section "Scan QRs": still jumps to settings and shows the scanned QR (unchanged).
+- Send copy button (`send.go:299`): unchanged — still copies the code and shows its QR (`qr.Show`).
