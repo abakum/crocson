@@ -13,8 +13,8 @@ github.com/abakCroc/croc/v10 v10.0.0-20260704080127-24111f72b04b h1:Ke981gxowXRG
 github.com/abakCroc/croc/v10 v10.0.0-20260704080127-24111f72b04b/go.mod h1:mAUh0yELRiQbHLWWq/5RcpJ3m5znp1AuzIn/XyHsLiE=
 github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23 h1:yA0X9G4iblGagJTUB0w7hPkfdNBdP18Qjk9BmZ0r2tU=
 github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
-github.com/abakum/fyne/v2 v2.0.0-20260706203528-afc3082cacc1 h1:nAcFYqtJqoXC0yhPbkOug8k5YHha6ObkjHtmLwPclaA=
-github.com/abakum/fyne/v2 v2.0.0-20260706203528-afc3082cacc1/go.mod h1:+ETXlHUmD90jUgSCI91+f/nITsEIkb4cdC53SyAWhlE=
+github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124 h1:AdGzG+tLp6YWn5x4P1BJlodNaCcWZ7xqsE0+mrggWUw=
+github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124/go.mod h1:+ETXlHUmD90jUgSCI91+f/nITsEIkb4cdC53SyAWhlE=
 github.com/abakum/peerdiscovery v0.0.0-20260616111543-2dd6ea38394c h1:+5MwT4IHFRUmsh6fIROh1wTC5uUI1mKGN0QmPaVusPw=
 github.com/abakum/peerdiscovery v0.0.0-20260616111543-2dd6ea38394c/go.mod h1:NpZLpqTfyq06mAFKKCKpEVox33Kp9o0CdKubaTYl+po=
 github.com/abakum/webwormhole v0.0.0-20260611173521-bc226178a1c3 h1:ucAckv4gpwp6Srv/ELD/QYk/7v4x2A0Y4vfDiV5ynlE=

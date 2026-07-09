@@ -12,6 +12,8 @@ replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc
 
 replace github.com/wlynxg/anet => github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23
 
+replace fyne.io/fyne/v2 => github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124
+
 require (
 	fyne.io/fyne/v2 v2.7.4
 	github.com/BurntSushi/toml v1.6.0
@@ -112,5 +114,3 @@ require (
 	nhooyr.io/websocket v1.8.17 // indirect
 	salsa.debian.org/vasudev/gospake2 v0.0.0-20210510093858-d91629950ad1 // indirect
 )
-
-replace fyne.io/fyne/v2 => github.com/abakum/fyne/v2 v2.0.0-20260706203528-afc3082cacc1

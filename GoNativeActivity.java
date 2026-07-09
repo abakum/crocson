@@ -78,7 +78,6 @@ public class GoNativeActivity extends NativeActivity {
 	private EditText mTextEdit;
 	private boolean ignoreKey = false;
 	private boolean keyboardUp = false;
-	private boolean expectingResult = false;
 	private ArrayList<String> pendingIntentURIs = null;
 
 	public GoNativeActivity() {
@@ -573,7 +572,6 @@ public class GoNativeActivity extends NativeActivity {
     static boolean openIntent(String intentStr) {
         try {
             android.content.Intent intent = android.content.Intent.parseUri(intentStr, android.content.Intent.URI_INTENT_SCHEME);
-            goNativeActivity.expectingResult = true;
             goNativeActivity.startActivityForResult(intent, INTENT_OPEN_CODE);
             return true;
         } catch (Exception e) {
@@ -1042,7 +1040,6 @@ public class GoNativeActivity extends NativeActivity {
             intent.setType(mimes);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
         }
-        expectingResult = true;
         startActivityForResult(Intent.createChooser(intent, "Open File"), FILE_OPEN_CODE);
     }
 
@@ -1060,7 +1057,6 @@ public class GoNativeActivity extends NativeActivity {
         }
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        expectingResult = true;
         startActivityForResult(Intent.createChooser(intent, "Save File"), FILE_SAVE_CODE);
     }
 	static int getRune(int deviceId, int keyCode, int metaState) {
@@ -1200,7 +1196,6 @@ public class GoNativeActivity extends NativeActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        expectingResult = false;
         if (requestCode == INTENT_OPEN_CODE) {
             return;
         }
@@ -1260,11 +1255,8 @@ public class GoNativeActivity extends NativeActivity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        Log.d(TAG, "Java: onUserLeaveHint expectingResult=" + expectingResult);
+        Log.d(TAG, "Java: onUserLeaveHint");
         lifecycleEvent("UserLeaveHint");
-        if (Build.VERSION.SDK_INT <= 28 && !expectingResult) {
-            finishActivity();
-        }
     }
 
     @Override
