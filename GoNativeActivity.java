@@ -251,6 +251,12 @@ public class GoNativeActivity extends NativeActivity {
     private static int qrPreviewWidth = 0;
     private static int qrPreviewHeight = 0;
     private static int qrFrameCount = 0;
+    // Reused buffer holding the centered square of the Y plane, pre-cropped on the
+    // camera thread so Go only receives the square Y (drops chroma, halves JNI
+    // traffic). Sized to min(previewW, previewH)^2; rotation-invariant (the
+    // centered square of the raw frame is the same at any grip).
+    private static byte[] qrSquareBuf = null;
+    private static int qrSquareSide = 0;
 
     private static final Camera.PreviewCallback qrPreviewCallback = new Camera.PreviewCallback() {
         @Override
@@ -265,7 +271,7 @@ public class GoNativeActivity extends NativeActivity {
             boolean keep = false;
             try {
                 if (goNativeActivity != null) {
-                    keep = goNativeActivity.cameraFrame(data, qrPreviewWidth, qrPreviewHeight);
+                    keep = goNativeActivity.feedSquareFrame(data);
                 }
             } catch (Throwable t) {
                 Log.e(TAG, "Java: cameraFrame threw: " + t.getMessage());
@@ -337,6 +343,24 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
+    // Current display rotation in degrees (0/90/180/270), relative to the
+    // device's natural orientation; -1 if unavailable. Used by Go to rotate the
+    // NV21 Y plane so the QR preview/decode matches the screen orientation.
+    static int getDeviceRotation() {
+        try {
+            if (goNativeActivity == null) return -1;
+            int r = goNativeActivity.getWindowManager().getDefaultDisplay().getRotation();
+            if (r == android.view.Surface.ROTATION_0) return 0;
+            if (r == android.view.Surface.ROTATION_90) return 90;
+            if (r == android.view.Surface.ROTATION_180) return 180;
+            if (r == android.view.Surface.ROTATION_270) return 270;
+            return -1;
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: getDeviceRotation failed: " + t.getMessage());
+            return -1;
+        }
+    }
+
     static boolean startCamera() {
         if (qrCamera != null) {
             return true; // already running
@@ -378,6 +402,26 @@ public class GoNativeActivity extends NativeActivity {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                     }
                 } catch (Throwable ignored) {}
+                // Preview FPS range — the device default can be very low on old
+                // HALs (e.g. ~3 fps on Android 9). Pick the supported range with
+                // the highest max (tie -> larger min, preferring a fixed high rate).
+                try {
+                    List<int[]> ranges = params.getSupportedPreviewFpsRange();
+                    int[] picked = null;
+                    if (ranges != null) {
+                        for (int[] r : ranges) {
+                            if (r == null || r.length < 2) continue;
+                            if (picked == null || r[1] > picked[1]
+                                    || (r[1] == picked[1] && r[0] > picked[0])) {
+                                picked = r;
+                            }
+                        }
+                    }
+                    if (picked != null) {
+                        params.setPreviewFpsRange(picked[0], picked[1]);
+                        Log.d(TAG, "Java: previewFpsRange " + picked[0] + "-" + picked[1]);
+                    }
+                } catch (Throwable ignored) {}
                 try {
                     c.setParameters(params);
                 } catch (Throwable ignored) {}
@@ -404,11 +448,19 @@ public class GoNativeActivity extends NativeActivity {
 
             qrPreviewWidth = width;
             qrPreviewHeight = height;
+            // Allocate the reused centered-square Y buffer for pre-cropping on the
+            // camera thread (halves JNI traffic: Go receives only the square Y).
+            int side = Math.max(1, Math.min(width, height));
+            qrSquareSide = side;
+            qrSquareBuf = new byte[side * side];
             qrFrameCount = 0;
             c.setPreviewCallbackWithBuffer(qrPreviewCallback);
             int bufSize = Math.max(1, width) * Math.max(1, height)
                 * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
-            c.addCallbackBuffer(new byte[bufSize]);
+            // Prime several buffers so the camera always has one ready to fill
+            // (one buffer can starve the capture pipeline). On `keep` the returned
+            // buffer is re-added, keeping the pool topped up.
+            for (int i = 0; i < 3; i++) c.addCallbackBuffer(new byte[bufSize]);
 
             // Headless surface target: Camera1's capture pipeline needs a surface
             // (setPreviewDisplay/setPreviewTexture) to actually start and deliver
@@ -438,11 +490,35 @@ public class GoNativeActivity extends NativeActivity {
         qrCameraRunning = false;
         Camera c = qrCamera;
         qrCamera = null;
+        qrSquareBuf = null;
+        qrSquareSide = 0;
         if (c == null) return;
         try { c.setPreviewCallbackWithBuffer(null); } catch (Throwable ignored) {}
         try { c.stopPreview(); } catch (Throwable ignored) {}
         try { c.release(); } catch (Throwable ignored) {}
         Log.d(TAG, "Java: stopCamera");
+    }
+
+    // Extract the centered square of the Y plane (the first w*h bytes of the NV21
+    // buffer) into the reused qrSquareBuf and hand it to Go as a side x side
+    // square. Falls back to passing the raw NV21 frame when the buffer is
+    // unavailable or the frame is too small (Go's cropCenterSquare then squares
+    // it). Returns true to keep streaming, false to stop.
+    private boolean feedSquareFrame(byte[] data) {
+        int pw = qrPreviewWidth;
+        int ph = qrPreviewHeight;
+        int side = qrSquareSide;
+        byte[] buf = qrSquareBuf;
+        if (buf != null && side > 0 && pw > 0 && ph > 0 && data.length >= pw * ph
+                && pw >= side && ph >= side) {
+            int xoff = (pw - side) / 2;
+            int yoff = (ph - side) / 2;
+            for (int r = 0; r < side; r++) {
+                System.arraycopy(data, (yoff + r) * pw + xoff, buf, r * side, side);
+            }
+            return cameraFrame(buf, side, side);
+        }
+        return cameraFrame(data, pw, ph);
     }
 
     static void showToast(String message) {

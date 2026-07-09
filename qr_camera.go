@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"image"
 	"strings"
 	"sync"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
+	log "github.com/schollz/logger"
 )
 
 // Built-in QR scanner (Camera1, Android). Java feeds NV21 preview frames here
@@ -35,6 +35,7 @@ var (
 	qrActive    bool
 	qrStop      atomic.Bool
 	qrFrameCh   chan cameraFrame
+	qrDecodeCh  chan *image.Gray
 	qrCancel    context.CancelFunc
 	qrReader    gozxing.Reader
 	qrPreview   *canvas.Image
@@ -48,11 +49,16 @@ var (
 	// first-run permission-request pause (qrCameraStarted still false) is skipped.
 	qrCameraStarted bool
 	// qrRot is the number of 90° clockwise rotations to apply to each preview
-	// frame so the viewfinder matches the device orientation. Derived from the
-	// camera sensor orientation (see getCameraSensorOrientation): Camera1 delivers
-	// NV21 frames in the sensor's native landscape orientation regardless of
-	// setDisplayOrientation, so we rotate the Y plane ourselves.
+	// frame so the viewfinder matches the current device orientation. Recomputed
+	// per decoded frame from qrSensorOrient and the live device rotation
+	// (getDeviceRotation): the NV21 Y plane always arrives in the sensor's native
+	// landscape orientation, and setDisplayOrientation only affects a surface
+	// (we have none), so we rotate the Y plane ourselves.
 	qrRot int
+	// qrSensorOrient is the back camera's fixed sensor orientation in degrees
+	// (info.orientation, ~90 on virtually all back cameras). Cached once at scan
+	// start; combined with the live device rotation to derive qrRot.
+	qrSensorOrient int
 )
 
 // cameraFrameReceive is called from the camera thread (via cgo export
@@ -68,7 +74,7 @@ func cameraFrameReceived(data []byte, w, h int) bool {
 	}
 	c := qrRecvCount.Add(1)
 	if c == 1 || c%30 == 0 {
-		LogD(fmt.Sprintf("qr: frame %dx%d #%d", w, h, c))
+		log.Debugf("frame %dx%d #%d", w, h, c)
 	}
 	// Keep only the Y(luma) plane: enough for both preview and QR decode.
 	y := make([]byte, n)
@@ -94,7 +100,37 @@ func rotateGray90cw(src []byte, w, h int) (dst []byte, nw, nh int) {
 	return dst, nw, nh
 }
 
-func qrDecodeLoop(ctx context.Context) {
+func cropCenterSquare(src []byte, w, h int) (dst []byte, nw, nh int) {
+	nw = w
+	nh = h
+	side := w
+	if h < w {
+		side = h
+	}
+	if w == h {
+		return src, w, h
+	}
+	xoff := (w - side) / 2
+	yoff := (h - side) / 2
+	dst = make([]byte, side*side)
+	for r := 0; r < side; r++ {
+		rowSrc := src[(yoff+r)*w+xoff : (yoff+r)*w+xoff+side]
+		copy(dst[r*side:r*side+side], rowSrc)
+	}
+	nw = side
+	nh = side
+	return dst, nw, nh
+}
+
+// qrPreviewLoop drains camera frames at the camera rate: crop, rotate to the
+// current device orientation, and refresh the viewfinder. Decoding (the heavy
+// part, hundreds of ms on slow devices) is NOT done here — each prepared frame
+// is handed to qrDecodeWorker via qrDecodeCh (drop-latest, non-blocking). This
+// keeps the viewfinder smooth (full camera rate) regardless of how slow the
+// per-frame QR decode is (e.g. ~2 fps decode on Android 9 still gives a smooth
+// preview, instead of freezing at the decode rate).
+func qrPreviewLoop(ctx context.Context) {
+	var lastRot time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -105,6 +141,19 @@ func qrDecodeLoop(ctx context.Context) {
 			}
 			y := fr.y
 			w, h := fr.w, fr.h
+			if w != h {
+				// Fallback: frame not pre-cropped to a square by Java.
+				y, w, h = cropCenterSquare(y, w, h)
+			}
+			// Device orientation changes slowly (human grip), so throttle the
+			// JNI query (~4x/sec) instead of once per frame. The first frame
+			// always queries (lastRot is zero). Sticky on error.
+			if time.Since(lastRot) >= 250*time.Millisecond {
+				if devRot, err := callInt("getDeviceRotation"); err == nil && devRot >= 0 {
+					qrRot = (((qrSensorOrient - devRot) % 360) + 360) % 360 / 90
+				}
+				lastRot = time.Now()
+			}
 			for i := 0; i < qrRot; i++ {
 				y, w, h = rotateGray90cw(y, w, h)
 			}
@@ -116,14 +165,37 @@ func qrDecodeLoop(ctx context.Context) {
 				qrPreview.Refresh()
 			})
 
-			bmp, err := gozxing.NewBinaryBitmapFromImage(gray)
+			// Hand the prepared frame to the decoder. Drop-latest: if the
+			// previous decode is still running, skip — no backlog, no stale
+			// queue. The decoder reads gray read-only, so this is safe to share
+			// with the Fyne render thread above.
+			select {
+			case qrDecodeCh <- g:
+			default:
+			}
+		}
+	}
+}
+
+// qrDecodeWorker runs gozxing.Decode on the latest prepared frame, independently
+// of the preview rate. A successful decode stops the camera and routes the text.
+func qrDecodeWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case g := <-qrDecodeCh:
+			if qrStop.Load() {
+				continue
+			}
+			bmp, err := gozxing.NewBinaryBitmapFromImage(g)
 			if err != nil {
 				continue
 			}
 			res, derr := qrReader.Decode(bmp, nil)
 			if derr == nil && res != nil {
 				text := strings.TrimSpace(res.GetText())
-				LogD("qr: decoded " + text)
+				log.Debugf("decoded %s", text)
 				qrStop.Store(true)
 				callVoid("stopCamera")
 				qrRoute(text)
@@ -143,13 +215,13 @@ func qrRoute(text string) {
 		select {
 		case uriFromIntent <- text:
 		default:
-			LogD("qr: uriFromIntent full")
+			log.Debug("uriFromIntent full")
 		}
 	} else {
 		select {
 		case textFromIntent <- text:
 		default:
-			LogD("qr: textFromIntent full")
+			log.Debug("textFromIntent full")
 		}
 	}
 	cb := qrOnResult
@@ -185,18 +257,20 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 	qrOnResult = onResult
 	qrReader = qrcode.NewQRCodeReader()
 	qrFrameCh = make(chan cameraFrame, 1)
+	qrDecodeCh = make(chan *image.Gray, 1)
 	qrStop.Store(false)
 	qrRecvCount.Store(0)
-	qrRot = 0
+	qrRot = 0           // recomputed (throttled) in qrPreviewLoop
+	qrSensorOrient = 90 // safe default for back cameras
 	if o, err := callInt("getCameraSensorOrientation"); err == nil && o >= 0 {
-		// The NV21 frame arrives in the sensor's native orientation; rotating it
-		// (orientation/90) quarters CW makes it upright in portrait.
-		qrRot = (o / 90) % 4
+		qrSensorOrient = o
+		log.Debugf("getCameraSensorOrientation %d", o)
 	}
 
 	var ctx context.Context
 	ctx, qrCancel = context.WithCancel(context.Background())
-	go qrDecodeLoop(ctx)
+	go qrPreviewLoop(ctx)
+	go qrDecodeWorker(ctx)
 
 	// Fully-opaque solid black placeholder (every pixel black, including alpha),
 	// so the pre-camera state is a clean black square rather than a misleading
@@ -232,7 +306,7 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 				return
 			}
 		}
-		LogD("qr: camera permission timed out")
+		log.Debug("camera permission timed out")
 		fyne.Do(func() {
 			if qrStatus != nil {
 				qrStatus.SetText(lp("Camera permission denied"))
@@ -254,7 +328,7 @@ func qrBegin(w fyne.Window) {
 	}
 	ok, err := callBoolean("startCamera")
 	if err != nil || !ok {
-		LogD("qr: startCamera failed: " + fmt.Sprint(err))
+		log.Debugf("startCamera failed: %v", err)
 		qrStatus.SetText(lp("Camera unavailable"))
 		return
 	}
@@ -313,7 +387,7 @@ func stopQRScan() {
 		qrCancel()
 	}
 	if err := callVoid("stopCamera"); err != nil {
-		LogD("qr: stopCamera: " + fmt.Sprint(err))
+		log.Debugf("stopCamera: %v", err)
 	}
 	qrHideDialog()
 	qrOnResult = nil

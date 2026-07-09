@@ -310,3 +310,4 @@ func releaseMulticastLock() bool { return true }
 // not shown, so these are unused no-ops kept for compilation parity.
 func startQRScan(_ fyne.App, _ fyne.Window, _ func(string)) {}
 func stopQRScan()                                           {}
+func qrLifecyclePause()                                    {}
