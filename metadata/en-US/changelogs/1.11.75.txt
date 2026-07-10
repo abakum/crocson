@@ -1,0 +1,3 @@
+Android 9: fixed EGL crash on app resume
+Android 10: fixed crash saving all received files to directory
+Android: added built-in QR scanner

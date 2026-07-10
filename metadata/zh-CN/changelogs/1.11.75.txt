@@ -1,0 +1,3 @@
+Android 9: 修复应用恢复时的 EGL 崩溃
+Android 10: 修复将所有接收文件保存到目录时的崩溃
+Android: 添加内置 QR 扫描仪

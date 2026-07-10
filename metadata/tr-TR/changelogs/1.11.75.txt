@@ -1,0 +1,3 @@
+Android 9: uygulama devam ettirildiğinde EGL çökmesi düzeltildi
+Android 10: alınan tüm dosyaları dizine kaydederken oluşan çökme düzeltildi
+Android: yerleşik QR tarayıcı eklendi
