@@ -12,7 +12,7 @@ replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc
 
 replace github.com/wlynxg/anet => github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23
 
-// replace fyne.io/fyne/v2 => github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124
+replace fyne.io/fyne/v2 => github.com/abakCroc/fyne/v2 v2.7.5-0.20260710110233-6c538e67b808
 
 require (
 	fyne.io/fyne/v2 v2.7.4

@@ -37,8 +37,8 @@ WW_MODULE := webwormhole.io
 WW_FORK := github.com/abakum/webwormhole
 WW_VERSION := $(shell go list -m -f '{{.Version}}' $(WW_FORK)@master 2>/dev/null)
 ANET_FORK := github.com/abakum/anet
-FYNE_FORK := github.com/abakum/fyne/v2
-FYNE_VERSION := $(shell go list -m -f '{{.Version}}' $(FYNE_FORK)@develop 2>/dev/null)
+FYNE_FORK := github.com/abakCroc/fyne/v2
+FYNE_VERSION := $(shell go list -m -f '{{.Version}}' $(FYNE_FORK)@fix-v2.7.4 2>/dev/null)
 
 repo:
 	@if [ -z "$(CROC_VERSION)" ]; then echo "ERROR: Cannot resolve $(CROC_FORK)@main"; exit 1; fi
@@ -57,7 +57,7 @@ repo:
 	if [ -z "$$ANET_VERSION" ]; then echo "ERROR: Cannot resolve $(ANET_FORK)@main"; exit 1; fi; \
 	echo "  $(ANET_FORK) $$ANET_VERSION"; \
 	go mod edit -replace=github.com/wlynxg/anet=$(ANET_FORK)@$$ANET_VERSION
-	@if [ -z "$(FYNE_VERSION)" ]; then echo "ERROR: Cannot resolve $(FYNE_FORK)@develop"; exit 1; fi
+	@if [ -z "$(FYNE_VERSION)" ]; then echo "ERROR: Cannot resolve $(FYNE_FORK)@fix-v2.7.4"; exit 1; fi
 	@echo "  $(FYNE_FORK) $(FYNE_VERSION)"
 	@go mod edit -replace=fyne.io/fyne/v2=$(FYNE_FORK)@$(FYNE_VERSION)
 	@go mod tidy
@@ -70,7 +70,7 @@ local:
 	@go mod edit -replace=github.com/psanford/wormhole-william=../wormhole-william
 	@go mod edit -replace=webwormhole.io=../webwormhole
 	@go mod edit -replace=github.com/wlynxg/anet=../anet
-	@go mod edit -replace=fyne.io/fyne/v2=../fyne
+	@go mod edit -replace=fyne.io/fyne/v2=../abakCroc/fyne
 	@go mod tidy
 	@echo "Done."
 

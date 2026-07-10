@@ -2,8 +2,6 @@ filippo.io/cpace v0.0.0-20210101143347-24d601e2e469 h1:+gAICE3DIgwMKUzUuVCjd5R4w
 filippo.io/cpace v0.0.0-20210101143347-24d601e2e469/go.mod h1:b8UFwXF0HGYD8OWBGJEPwu3IMDHqTpzCtGFtY2xRwTU=
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
 filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
-fyne.io/fyne/v2 v2.7.4 h1:OVCI5mT+Onb2kA4wlmGA5pLCqKik9f4NDb5jiR1OMTc=
-fyne.io/fyne/v2 v2.7.4/go.mod h1:ZD1mmhBY75mSa97IXl3MPlICd1uNHfCXYh5hKIlVOII=
 fyne.io/systray v1.12.2 h1:Y8DZxgLHsVQt6rY9Zrkkg+j67S7vv/1F2viOWKPpVeA=
 fyne.io/systray v1.12.2/go.mod h1:RVwqP9nYMo7h5zViCBHri2FgjXF7H2cub7MAq4NSoLs=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
@@ -11,6 +9,8 @@ github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/abakCroc/croc/v10 v10.0.0-20260704080127-24111f72b04b h1:Ke981gxowXRG5ggeKn6xroKt4gbhUl0Il6quphNckrM=
 github.com/abakCroc/croc/v10 v10.0.0-20260704080127-24111f72b04b/go.mod h1:mAUh0yELRiQbHLWWq/5RcpJ3m5znp1AuzIn/XyHsLiE=
+github.com/abakCroc/fyne/v2 v2.7.5-0.20260710110233-6c538e67b808 h1:hd/PGWwm+mafY/Icg10ZVitS/LAo5dRXpx4XpqayGnA=
+github.com/abakCroc/fyne/v2 v2.7.5-0.20260710110233-6c538e67b808/go.mod h1:ZD1mmhBY75mSa97IXl3MPlICd1uNHfCXYh5hKIlVOII=
 github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23 h1:yA0X9G4iblGagJTUB0w7hPkfdNBdP18Qjk9BmZ0r2tU=
 github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/abakum/peerdiscovery v0.0.0-20260616111543-2dd6ea38394c h1:+5MwT4IHFRUmsh6fIROh1wTC5uUI1mKGN0QmPaVusPw=
