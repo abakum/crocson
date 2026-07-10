@@ -12,7 +12,7 @@ replace webwormhole.io => github.com/abakum/webwormhole v0.0.0-20260611173521-bc
 
 replace github.com/wlynxg/anet => github.com/abakum/anet v0.0.0-20260611221740-26109fc88d23
 
-replace fyne.io/fyne/v2 => github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124
+// replace fyne.io/fyne/v2 => github.com/abakum/fyne/v2 v2.0.0-20260709215836-b27ff02bb124
 
 require (
 	fyne.io/fyne/v2 v2.7.4
@@ -41,8 +41,6 @@ require (
 	filippo.io/cpace v0.0.0-20210101143347-24d601e2e469 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	fyne.io/systray v1.12.2 // indirect
-	github.com/FyshOS/fancyfs v0.0.1 // indirect
-	github.com/anthonynsimon/bild v0.14.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
@@ -56,6 +54,7 @@ require (
 	github.com/fyne-io/image v0.1.1 // indirect
 	github.com/fyne-io/oksvg v0.2.0 // indirect
 	github.com/go-gl/gl v0.0.0-20260331235117-4566fea9a276 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.1.0.20260627172858-eb9c312d9d47 // indirect
 	github.com/go-text/render v0.2.1 // indirect
 	github.com/go-text/typesetting v0.3.4 // indirect
