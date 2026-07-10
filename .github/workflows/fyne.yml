@@ -159,6 +159,7 @@ jobs:
     # Run only if 'all' or 'linux' is selected
     if: ${{ github.event.inputs.build_target == 'all' || github.event.inputs.build_target == 'linux' }}
     runs-on: ubuntu-latest # Runs on Ubuntu to build natively for Linux
+    timeout-minutes: 10
     steps:
       # Step 1: Checkout the main repository directly into workspace/crocson
       - name: Checkout main repository (crocson)
