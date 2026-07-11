@@ -366,6 +366,33 @@ public class GoNativeActivity extends NativeActivity {
         return numberOfCameras > 0 ? 0 : -1;
     }
 
+    private static Camera.Size getCameraPreviewSize() {
+        try {
+            int camId = findBackCameraId();
+            if (camId < 0) return null;
+            Camera cam = Camera.open(camId);
+            Camera.Parameters params = cam.getParameters();
+            List<Camera.Size> sizes = params.getSupportedPreviewSizes();
+            cam.release();
+            
+            Camera.Size chosen = null;
+            if (sizes != null && !sizes.isEmpty()) {
+                for (Camera.Size s : sizes) {
+                    if (s.width <= 640 && s.height <= 480) {
+                        if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
+                            chosen = s;
+                        }
+                    }
+                }
+                if (chosen == null) chosen = sizes.get(0);
+                return chosen;
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: getCameraPreviewSize failed: " + t.getMessage());
+        }
+        return null;
+    }
+
     // Sensor orientation (degrees, CCW) of the back camera. Used by Go to rotate
     // the NV21 Y plane: setDisplayOrientation only affects SurfaceView/SurfaceTexture
     // output, NOT the raw preview bytes delivered to onPreviewFrame, so the buffer
@@ -438,16 +465,22 @@ public class GoNativeActivity extends NativeActivity {
                     
                     Log.d(TAG, "Java: showCameraDialog screen size=" + screenW + "x" + screenH);
                     
-                    // Вычисляем размер диалога: 640x480, но не больше 90% экрана
-                    // с сохранением пропорций 4:3
-                    int dialogW = 480; 
-                    int dialogH = 640;
-
+                    Camera.Size previewSize = getCameraPreviewSize();
+                    int cameraW = 640, cameraH = 480;
+                    if (previewSize != null) {
+                        cameraW = previewSize.width;
+                        cameraH = previewSize.height;
+                    }
+                    
+                    Log.d(TAG, "Java: camera preview resolution=" + cameraW + "x" + cameraH);
+                    
+                    int dialogW = cameraW;
+                    int dialogH = cameraH;
+                    
                     boolean isLandscape = screenW > screenH;
-
-                    if (isLandscape) {
-                        dialogW = 640;
-                        dialogH = 480;
+                    if (!isLandscape) {
+                        dialogW = cameraH;
+                        dialogH = cameraW;
                     }
                     
                     // Оставляем 10% запаса для системных баров
@@ -646,6 +679,9 @@ public class GoNativeActivity extends NativeActivity {
 
             qrPreviewWidth = width;
             qrPreviewHeight = height;
+            
+            updateDialogSizeToCameraResolution(width, height);
+            
             int side = Math.max(1, Math.min(width, height));
             qrSquareSide = side;
             qrSquareBuf = new byte[side * side];
@@ -696,6 +732,64 @@ public class GoNativeActivity extends NativeActivity {
         qrCameraHandler.post(new Runnable() {
             @Override
             public void run() { try { c.setDisplayOrientation(rotate); } catch (Throwable ignored) {} }
+        });
+    }
+
+    private static void updateDialogSizeToCameraResolution(final int cameraW, final int cameraH) {
+        if (goNativeActivity == null) return;
+        goNativeActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (qrDialog == null || !qrDialog.isShowing()) return;
+                
+                try {
+                    android.graphics.Point screenSize = new android.graphics.Point();
+                    goNativeActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
+                    int screenW = screenSize.x;
+                    int screenH = screenSize.y;
+                    
+                    boolean isLandscape = screenW > screenH;
+                    
+                    int dialogW, dialogH;
+                    int maxW = (int)(screenW * 0.9);
+                    int maxH = (int)(screenH * 0.9);
+                    
+                    if (isLandscape) {
+                        dialogW = Math.min(cameraW, maxW);
+                        dialogH = Math.min(cameraH, maxH);
+                    } else {
+                        dialogW = Math.min(cameraH, maxW);
+                        dialogH = Math.min(cameraW, maxH);
+                    }
+                    
+                    dialogW = (dialogW / 2) * 2;
+                    dialogH = (dialogH / 2) * 2;
+                    
+                    Window window = qrDialog.getWindow();
+                    if (window != null) {
+                        window.setLayout(dialogW, dialogH);
+                        Log.d(TAG, "Java: dialog resized to camera resolution " + dialogW + "x" + dialogH);
+                    }
+                    
+                    if (qrSurface != null) {
+                        ViewGroup.LayoutParams params = qrSurface.getLayoutParams();
+                        if (params.width != dialogW || params.height != dialogH) {
+                            params.width = dialogW;
+                            params.height = dialogH;
+                            qrSurface.setLayoutParams(params);
+                            
+                            SurfaceHolder holder = qrSurface.getHolder();
+                            if (holder != null) {
+                                holder.setFixedSize(dialogW, dialogH);
+                                Log.d(TAG, "Java: surface holder resized to " + dialogW + "x" + dialogH);
+                            }
+                        }
+                    }
+                    
+                } catch (Throwable t) {
+                    Log.e(TAG, "Java: updateDialogSizeToCameraResolution failed: " + t.getMessage());
+                }
+            }
         });
     }
 
@@ -1477,63 +1571,20 @@ public class GoNativeActivity extends NativeActivity {
         });
     }
 
-@Override
+    @Override
     public void onConfigurationChanged(Configuration config) {
         super.onConfigurationChanged(config);
         updateTheme(config);
         
         // Обновляем размер диалога при повороте
         if (qrDialog != null && qrDialog.isShowing()) {
-            updateDialogSize();
+            updateDialogSizeToCameraResolution(qrPreviewWidth, qrPreviewHeight);
+
         }
         
         if (qrDialogShown) reapplyPreviewOrientation();
     }
 
-    private void updateDialogSize() {
-        if (qrDialog == null || goNativeActivity == null) return;
-        
-        try {
-            android.graphics.Point screenSize = new android.graphics.Point();
-            goNativeActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
-            int screenW = screenSize.x;
-            int screenH = screenSize.y;
-            
-            boolean isLandscape = screenW > screenH;
-            
-            int dialogW, dialogH;
-            int maxW = (int)(screenW * 0.9);
-            int maxH = (int)(screenH * 0.9);
-            
-            if (isLandscape) {
-                dialogW = Math.min(640, maxW);
-                dialogH = Math.min(480, maxH);
-            } else {
-                dialogW = Math.min(480, maxW);
-                dialogH = Math.min(640, maxH);
-            }
-            
-            dialogW = (dialogW / 2) * 2;
-            dialogH = (dialogH / 2) * 2;
-            
-            Window window = qrDialog.getWindow();
-            if (window != null) {
-                window.setLayout(dialogW, dialogH);
-                Log.d(TAG, "Java: dialog resized to " + dialogW + "x" + dialogH);
-            }
-            
-            // Обновляем SurfaceView
-            if (qrSurface != null) {
-                ViewGroup.LayoutParams params = qrSurface.getLayoutParams();
-                params.width = dialogW;
-                params.height = dialogH;
-                qrSurface.setLayoutParams(params);
-            }
-            
-        } catch (Throwable t) {
-            Log.e(TAG, "Java: updateDialogSize failed: " + t.getMessage());
-        }
-    }
 
     protected void updateTheme(Configuration config) {
         boolean dark = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
