@@ -11,58 +11,45 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	log "github.com/schollz/logger"
 )
 
-// Built-in QR scanner (Camera1, Android). Java feeds NV21 preview frames here
-// via the JNI bridge; the Y(luma) plane is decoded with gozxing (ZXing port,
-// has perspective correction). The viewfinder is rendered in Fyne.
-
-type cameraFrame struct {
-	y    []byte
-	w, h int
-}
+// Built-in QR scanner (Camera1, Android). The camera preview is rendered in a
+// native Android Dialog (TextureView color surface), NOT in Fyne — that gives
+// the camera a real, consumed surface (no dummy-texture stall on old HALs) and
+// keeps the heavy rendering off the Go/GL thread. Java still feeds the NV21 Y
+// plane here via the JNI bridge for QR decode with gozxing (ZXing port, has
+// perspective correction). Decode is the only Go per-frame work.
 
 var (
-	qrMu        sync.Mutex
-	qrActive    bool
-	qrStop      atomic.Bool
-	qrFrameCh   chan cameraFrame
-	qrDecodeCh  chan *image.Gray
-	qrCancel    context.CancelFunc
-	qrReader    gozxing.Reader
-	qrPreview   *canvas.Image
-	qrStatus    *widget.Label
-	qrDialog    dialog.Dialog
-	qrOnResult  func(string)
+	qrMu       sync.Mutex
+	qrActive   bool
+	qrStop     atomic.Bool
+	qrDecodeCh chan *image.Gray
+	qrCancel   context.CancelFunc
+	qrReader   gozxing.Reader
+	qrOnResult func(string)
 	qrRecvCount atomic.Int64
-	// qrCameraStarted is true while the camera hardware is running. Used by
-	// qrLifecyclePause to decide whether a pause (activity change) should close
-	// the scan dialog: the camera only runs after permission is granted, so the
-	// first-run permission-request pause (qrCameraStarted still false) is skipped.
+	// qrCameraStarted is true while the native camera Dialog is up. Guards
+	// qrLifecyclePause: only dismiss on a pause that happens while actually
+	// scanning (the first-run permission-request pause happens before any camera
+	// Dialog is shown -> qrCameraStarted still false -> no-op).
 	qrCameraStarted bool
-	// qrRot is the number of 90° clockwise rotations to apply to each preview
-	// frame so the viewfinder matches the current device orientation. Recomputed
-	// per decoded frame from qrSensorOrient and the live device rotation
-	// (getDeviceRotation): the NV21 Y plane always arrives in the sensor's native
-	// landscape orientation, and setDisplayOrientation only affects a surface
-	// (we have none), so we rotate the Y plane ourselves.
-	qrRot int
-	// qrSensorOrient is the back camera's fixed sensor orientation in degrees
-	// (info.orientation, ~90 on virtually all back cameras). Cached once at scan
-	// start; combined with the live device rotation to derive qrRot.
+	// qrRot is the number of 90 deg CW rotations to apply to the Y plane for QR
+	// DECODE so gozxing sees an upright code. Recomputed (throttled) in
+	// qrDecodeWorker from qrSensorOrient and the live device rotation. The visible
+	// preview is rotated natively by setDisplayOrientation; only the raw
+	// onPreviewFrame bytes (used for decode) arrive in sensor-native orientation.
+	qrRot          int
 	qrSensorOrient int
 )
 
-// cameraFrameReceive is called from the camera thread (via cgo export
-// cameraFrameNotify in for_android.go) for each NV21 preview frame.
+// cameraFrameReceived is called from the camera thread (via cgo export
+// cameraFrameNotify in for_android.go) for each NV21 preview frame, already
+// pre-cropped to a centered square Y by Java.
 // Returns true to keep streaming, false to tell Java to stop feeding frames.
 func cameraFrameReceived(data []byte, w, h int) bool {
 	if qrStop.Load() {
@@ -76,11 +63,12 @@ func cameraFrameReceived(data []byte, w, h int) bool {
 	if c == 1 || c%30 == 0 {
 		log.Debugf("frame %dx%d #%d", w, h, c)
 	}
-	// Keep only the Y(luma) plane: enough for both preview and QR decode.
-	y := make([]byte, n)
-	copy(y, data[:n])
+	// data is already a fresh owned slice from C.GoBytes; the Y plane is its
+	// first w*h bytes, so wrap it directly (no extra make+copy). The decoder is
+	// the only consumer and reads it read-only.
+	g := &image.Gray{Pix: data[:n], Stride: w, Rect: image.Rect(0, 0, w, h)}
 	select {
-	case qrFrameCh <- cameraFrame{y: y, w: w, h: h}:
+	case qrDecodeCh <- g:
 	default:
 		// decoder busy (drop-latest): back-pressure, but keep the camera streaming
 	}
@@ -122,32 +110,29 @@ func cropCenterSquare(src []byte, w, h int) (dst []byte, nw, nh int) {
 	return dst, nw, nh
 }
 
-// qrPreviewLoop drains camera frames at the camera rate: crop, rotate to the
-// current device orientation, and refresh the viewfinder. Decoding (the heavy
-// part, hundreds of ms on slow devices) is NOT done here — each prepared frame
-// is handed to qrDecodeWorker via qrDecodeCh (drop-latest, non-blocking). This
-// keeps the viewfinder smooth (full camera rate) regardless of how slow the
-// per-frame QR decode is (e.g. ~2 fps decode on Android 9 still gives a smooth
-// preview, instead of freezing at the decode rate).
-func qrPreviewLoop(ctx context.Context) {
+// qrDecodeWorker consumes prepared Y frames and runs gozxing.Decode, which is
+// the only heavy per-frame work. The visible preview is rendered natively, so
+// decode runs independently of the preview rate (a slow decode never freezes
+// the preview). On a successful decode it stops the camera and routes the text.
+func qrDecodeWorker(ctx context.Context) {
 	var lastRot time.Time
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case fr := <-qrFrameCh:
+		case g := <-qrDecodeCh:
 			if qrStop.Load() {
 				continue
 			}
-			y := fr.y
-			w, h := fr.w, fr.h
+			y := g.Pix
+			w, h := g.Rect.Dx(), g.Rect.Dy()
 			if w != h {
 				// Fallback: frame not pre-cropped to a square by Java.
 				y, w, h = cropCenterSquare(y, w, h)
 			}
 			// Device orientation changes slowly (human grip), so throttle the
-			// JNI query (~4x/sec) instead of once per frame. The first frame
-			// always queries (lastRot is zero). Sticky on error.
+			// JNI query (~4x/sec) instead of once per frame. First frame always
+			// queries (lastRot is zero). Sticky on error.
 			if time.Since(lastRot) >= 250*time.Millisecond {
 				if devRot, err := callInt("getDeviceRotation"); err == nil && devRot >= 0 {
 					qrRot = (((qrSensorOrient - devRot) % 360) + 360) % 360 / 90
@@ -157,38 +142,8 @@ func qrPreviewLoop(ctx context.Context) {
 			for i := 0; i < qrRot; i++ {
 				y, w, h = rotateGray90cw(y, w, h)
 			}
-			gray := &image.Gray{Pix: y, Stride: w, Rect: image.Rect(0, 0, w, h)}
-
-			g := gray
-			fyne.Do(func() {
-				qrPreview.Image = g
-				qrPreview.Refresh()
-			})
-
-			// Hand the prepared frame to the decoder. Drop-latest: if the
-			// previous decode is still running, skip — no backlog, no stale
-			// queue. The decoder reads gray read-only, so this is safe to share
-			// with the Fyne render thread above.
-			select {
-			case qrDecodeCh <- g:
-			default:
-			}
-		}
-	}
-}
-
-// qrDecodeWorker runs gozxing.Decode on the latest prepared frame, independently
-// of the preview rate. A successful decode stops the camera and routes the text.
-func qrDecodeWorker(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case g := <-qrDecodeCh:
-			if qrStop.Load() {
-				continue
-			}
-			bmp, err := gozxing.NewBinaryBitmapFromImage(g)
+			dec := &image.Gray{Pix: y, Stride: w, Rect: image.Rect(0, 0, w, h)}
+			bmp, err := gozxing.NewBinaryBitmapFromImage(dec)
 			if err != nil {
 				continue
 			}
@@ -197,7 +152,8 @@ func qrDecodeWorker(ctx context.Context) {
 				text := strings.TrimSpace(res.GetText())
 				log.Debugf("decoded %s", text)
 				qrStop.Store(true)
-				callVoid("stopCamera")
+				qrFinish()
+				callVoid("dismissCameraDialog")
 				qrRoute(text)
 				return
 			}
@@ -225,12 +181,9 @@ func qrRoute(text string) {
 		}
 	}
 	cb := qrOnResult
-	fyne.Do(func() {
-		qrHideDialog()
-		if cb != nil {
-			cb(text)
-		}
-	})
+	if cb != nil {
+		fyne.Do(func() { cb(text) })
+	}
 }
 
 func hasCameraPermission() bool {
@@ -242,8 +195,8 @@ func requestCameraPermission() {
 	callBoolean("requestCameraPermission")
 }
 
-// startQRScan opens the in-app camera viewfinder and scans until a QR is found
-// or the user cancels. onResult (may be nil) is invoked on the Fyne thread with
+// startQRScan opens the native camera Dialog and scans until a QR is found or
+// the user cancels. onResult (may be nil) is invoked on the Fyne thread with
 // the decoded text.
 func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 	qrMu.Lock()
@@ -256,11 +209,10 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 
 	qrOnResult = onResult
 	qrReader = qrcode.NewQRCodeReader()
-	qrFrameCh = make(chan cameraFrame, 1)
 	qrDecodeCh = make(chan *image.Gray, 1)
 	qrStop.Store(false)
 	qrRecvCount.Store(0)
-	qrRot = 0           // recomputed (throttled) in qrPreviewLoop
+	qrRot = 0 // recomputed (throttled) in qrDecodeWorker
 	qrSensorOrient = 90 // safe default for back cameras
 	if o, err := callInt("getCameraSensorOrientation"); err == nil && o >= 0 {
 		qrSensorOrient = o
@@ -269,26 +221,10 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 
 	var ctx context.Context
 	ctx, qrCancel = context.WithCancel(context.Background())
-	go qrPreviewLoop(ctx)
 	go qrDecodeWorker(ctx)
 
-	// Fully-opaque solid black placeholder (every pixel black, including alpha),
-	// so the pre-camera state is a clean black square rather than a misleading
-	// transparent-pixel gradient.
-	black := image.NewRGBA(image.Rect(0, 0, 2, 2))
-	for i := 0; i < len(black.Pix); i += 4 {
-		black.Pix[i+3] = 255 // alpha = opaque (RGB already 0,0,0)
-	}
-	qrPreview = canvas.NewImageFromImage(black)
-	qrPreview.FillMode = canvas.ImageFillContain
-	qrPreview.SetMinSize(fyne.NewSize(qrSize, qrSize))
-	qrStatus = widget.NewLabel(lp(builtinScanner))
-	qrStatus.Alignment = fyne.TextAlignCenter
-
-	qrShowDialog(w)
-
 	if hasCameraPermission() {
-		qrBegin(w)
+		qrShowCamera()
 		return
 	}
 
@@ -302,16 +238,13 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 				return // cancelled
 			}
 			if hasCameraPermission() {
-				fyne.Do(func() { qrBegin(w) })
+				qrShowCamera()
 				return
 			}
 		}
 		log.Debug("camera permission timed out")
-		fyne.Do(func() {
-			if qrStatus != nil {
-				qrStatus.SetText(lp("Camera permission denied"))
-			}
-		})
+		callVoidString("showToast", lp("Camera permission denied"))
+		qrFinish()
 	}()
 }
 
@@ -321,15 +254,18 @@ func qrStillActive() bool {
 	return qrActive
 }
 
-// qrBegin starts the camera; on failure shows a message in the viewfinder.
-func qrBegin(w fyne.Window) {
+// qrShowCamera opens the native camera Dialog (Java) and marks the scan as
+// running. The Dialog shows immediately; the camera opens asynchronously once
+// the TextureView surface is ready (a later "cameraOpenFailed" lifecycle event
+// handles open failure). Caller must have CAMERA permission already granted.
+func qrShowCamera() {
 	if !qrStillActive() {
 		return
 	}
-	ok, err := callBoolean("startCamera")
-	if err != nil || !ok {
-		log.Debugf("startCamera failed: %v", err)
-		qrStatus.SetText(lp("Camera unavailable"))
+	if err := callVoid("showCameraDialog"); err != nil {
+		log.Debugf("showCameraDialog failed: %v", err)
+		callVoidString("showToast", lp("Camera unavailable"))
+		qrFinish()
 		return
 	}
 	qrMu.Lock()
@@ -337,43 +273,10 @@ func qrBegin(w fyne.Window) {
 	qrMu.Unlock()
 }
 
-// qrLifecyclePause is invoked from the lifecycle goroutine on activity "pause".
-// If a scan is active and the camera is running, it closes the scan dialog
-// (which stops the camera). The qrCameraStarted guard excludes the first-run
-// permission request: its system dialog also triggers onPause, but the camera
-// is never started before permission is granted. stopQRScan touches UI, so it
-// runs on the Fyne thread via fyne.Do.
-func qrLifecyclePause() {
-	qrMu.Lock()
-	closeDialog := qrActive && qrCameraStarted
-	qrMu.Unlock()
-	if closeDialog {
-		fyne.Do(func() { stopQRScan() })
-	}
-}
-
-func qrShowDialog(w fyne.Window) {
-	content := container.NewVBox(
-		container.NewCenter(qrPreview),
-		widget.NewSeparator(),
-		qrStatus,
-	)
-	d := dialog.NewCustom(lp("Scan QRs"), lp("Cancel"), content, w)
-	d.SetOnClosed(func() { stopQRScan() })
-	qrDialog = d
-	d.Show()
-}
-
-func qrHideDialog() {
-	if qrDialog != nil {
-		d := qrDialog
-		qrDialog = nil
-		d.Hide()
-	}
-}
-
-// stopQRScan releases the camera and tears down the decode loop. Idempotent.
-func stopQRScan() {
+// qrFinish tears down the Go scan state (goroutines, flags, callback). It does
+// NOT touch the native camera Dialog — callers decide whether to dismiss it via
+// dismissCameraDialog. Idempotent.
+func qrFinish() {
 	qrMu.Lock()
 	active := qrActive
 	qrActive = false
@@ -386,9 +289,43 @@ func stopQRScan() {
 	if qrCancel != nil {
 		qrCancel()
 	}
-	if err := callVoid("stopCamera"); err != nil {
-		log.Debugf("stopCamera: %v", err)
-	}
-	qrHideDialog()
 	qrOnResult = nil
+}
+
+// qrLifecyclePause is invoked from the lifecycle goroutine on activity "pause".
+// If a scan is active and the camera Dialog is up, it dismisses the Dialog
+// (which stops the camera) and tears down the Go state. The qrCameraStarted
+// guard excludes the first-run permission request: its system dialog also
+// triggers onPause, but the camera Dialog is never shown before permission is
+// granted (qrCameraStarted still false). No resume: the scan is abandoned; the
+// user re-opens it to scan again.
+func qrLifecyclePause() {
+	qrMu.Lock()
+	closeDialog := qrActive && qrCameraStarted
+	qrMu.Unlock()
+	if closeDialog {
+		callVoid("dismissCameraDialog")
+		qrFinish()
+	}
+}
+
+// qrLifecycleCancel is invoked on the "qrCancel" lifecycle event (user tapped
+// Cancel or pressed Back). Java has already dismissed the Dialog + stopped the
+// camera; here we only tear down the Go state.
+func qrLifecycleCancel() {
+	qrFinish()
+}
+
+// qrCameraOpenFailed is invoked on the "cameraOpenFailed" lifecycle event: Java
+// could not open/start the camera. The Dialog is already dismissed by Java.
+func qrCameraOpenFailed() {
+	callVoidString("showToast", lp("Camera unavailable"))
+	qrFinish()
+}
+
+// stopQRScan dismisses the native camera Dialog and tears down the decode loop.
+// Idempotent.
+func stopQRScan() {
+	qrFinish()
+	callVoid("dismissCameraDialog")
 }

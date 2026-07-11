@@ -1633,6 +1633,10 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					saveAccordionState()
 				case "pause":
 					qrLifecyclePause()
+				case "qrCancel":
+					qrLifecycleCancel()
+				case "cameraOpenFailed":
+					qrCameraOpenFailed()
 				case "permissionDialog":
 				}
 

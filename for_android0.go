@@ -311,3 +311,5 @@ func releaseMulticastLock() bool { return true }
 func startQRScan(_ fyne.App, _ fyne.Window, _ func(string)) {}
 func stopQRScan()                                           {}
 func qrLifecyclePause()                                    {}
+func qrLifecycleCancel()                                   {}
+func qrCameraOpenFailed()                                  {}

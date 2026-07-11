@@ -1,12 +1,15 @@
 package org.golang.app;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.NativeActivity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.content.ClipData;
@@ -15,6 +18,9 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.SystemClock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +31,17 @@ import android.text.method.DigitsKeyListener;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyCharacterMap;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.KeyEvent;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -257,6 +269,33 @@ public class GoNativeActivity extends NativeActivity {
     private static byte[] qrSquareBuf = null;
     private static int qrSquareSide = 0;
 
+    // Dedicated camera thread: Camera.open()/config/startPreview/release must
+    // never run on the UI or GL thread (blocking -> ANR / visual freeze). All
+    // camera hardware ops happen on this HandlerThread's Handler.
+    private static HandlerThread qrCameraThread = null;
+    private static Handler qrCameraHandler = null;
+    // Native full-screen Dialog hosting a SurfaceView color preview. The camera
+    // is given the SurfaceView's Surface (setPreviewDisplay) — a real, consumed
+    // native surface (separate window, like Fyne's own GLSurfaceView) instead of
+    // a dummy unconsumed SurfaceTexture: that is what keeps the capture pipeline
+    // from stalling on old Camera1->Camera2 HALs (Android 9/10 freeze). SurfaceView
+    // is used (not TextureView) because a TextureView surface never materializes
+    // in this GL/Fyne NativeActivity (black preview on emulator + device).
+    private static Dialog qrDialog = null;
+    private static SurfaceView qrSurface = null;
+    // True while the camera Dialog is up & the camera is running. Guards the
+    // lifecycle "pause" dismiss (skips the first-run permission-request pause,
+    // which happens before any camera Dialog is shown).
+    private static volatile boolean qrDialogShown = false;
+    // Back-camera sensor orientation (degrees), cached at camera open so
+    // reapplyPreviewOrientation can recompute the display angle on rotation
+    // without re-querying CameraInfo.
+    private static int qrSensorOrientJava = 90;
+    // Decode-feed throttle: preview is rendered natively at full rate, so Go only
+    // needs a few fps for QR decode. Timestamp (uptimeMillis) of the last frame
+    // forwarded to Go; frames arriving sooner than 100 ms are dropped here.
+    private static long qrLastDecodeFeedMs = 0;
+
     private static final Camera.PreviewCallback qrPreviewCallback = new Camera.PreviewCallback() {
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
@@ -267,27 +306,29 @@ public class GoNativeActivity extends NativeActivity {
             if (n == 1 || n % 30 == 0) {
                 Log.d(TAG, "Java: onPreviewFrame #" + n + " " + qrPreviewWidth + "x" + qrPreviewHeight);
             }
-            boolean keep = false;
-            try {
-                if (goNativeActivity != null) {
-                    keep = goNativeActivity.feedSquareFrame(data);
+            // Throttle decode feed to ~10 fps: preview is a native color surface
+            // now, Go only needs a few frames/sec for QR decode. This cuts JNI
+            // traffic + Go GC pressure ~3x while keeping the visible preview full
+            // rate. When throttled, just re-add the buffer and keep streaming.
+            boolean keep = true;
+            if (SystemClock.uptimeMillis() - qrLastDecodeFeedMs >= 100) {
+                qrLastDecodeFeedMs = SystemClock.uptimeMillis();
+                try {
+                    if (goNativeActivity != null) {
+                        keep = goNativeActivity.feedSquareFrame(data);
+                    }
+                } catch (Throwable t) {
+                    Log.e(TAG, "Java: cameraFrame threw: " + t.getMessage());
+                    keep = false;
                 }
-            } catch (Throwable t) {
-                Log.e(TAG, "Java: cameraFrame threw: " + t.getMessage());
-                keep = false;
             }
             if (keep && qrCameraRunning) {
                 camera.addCallbackBuffer(data);
             } else {
-                // stop on Go's request; release on a fresh thread to avoid
-                // "Camera is being used after release()" on the camera thread.
+                // stop on Go's request; release off the camera callback thread
+                // (dismissCameraDialog posts stop to the camera HandlerThread).
                 qrCameraRunning = false;
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        stopCamera();
-                    }
-                }).start();
+                dismissCameraDialog();
             }
         }
     };
@@ -360,15 +401,129 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
-    static boolean startCamera() {
-        if (qrCamera != null) {
-            return true; // already running
+    // Lazily start the dedicated camera HandlerThread. Camera.open()/config/
+    // startPreview/release must run off the UI and GL threads (blocking there
+    // -> ANR / visual freeze, which was part of the Android 9/10 hang).
+    private static void ensureCameraThread() {
+        if (qrCameraThread == null) {
+            qrCameraThread = new HandlerThread("qrCamera");
+            qrCameraThread.start();
+            qrCameraHandler = new Handler(qrCameraThread.getLooper());
         }
+    }
+
+    // Show the native full-screen camera Dialog: a SurfaceView color preview
+    // (real consumed native surface -> no dummy-texture stall) + hint + Cancel.
+    // The camera is opened on the camera thread once the SurfaceView's surface is
+    // ready (surfaceCreated). Called from Go (callVoid), so Dialog creation runs on
+    // the UI thread.
+    static void showCameraDialog() {
+        ensureCameraThread();
+        if (goNativeActivity == null) return;
+        goNativeActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (qrDialog != null) { qrDialogShown = true; return; } // already up
+                final Activity act = goNativeActivity;
+                try {
+                    final Dialog d = new Dialog(act);
+                    d.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                    if (d.getWindow() != null) {
+                        d.getWindow().setLayout(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT);
+                        d.getWindow().setBackgroundDrawable(
+                                new android.graphics.drawable.ColorDrawable(Color.BLACK));
+                    }
+                    // Fyne's own GLSurfaceView), so surfaceCreated fires reliably
+                    // in this GL-driven app, unlike a TextureView (black preview).
+                    SurfaceView surface = new SurfaceView(act);
+                    surface.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    final SurfaceView sv = surface;
+                    sv.getHolder().addCallback(new SurfaceHolder.Callback() {
+                        public void surfaceCreated(SurfaceHolder h) {
+                            Log.d(TAG, "Java: surfaceCreated");
+                            startCameraOnThread(h);
+                        }
+                        public void surfaceChanged(SurfaceHolder h, int f, int w, int hh) {}
+                        public void surfaceDestroyed(SurfaceHolder h) {
+                            // dismiss is idempotent; covers surface loss cleanly.
+                            dismissCameraDialog();
+                        }
+                    });
+                    Button cancel = new Button(act);
+                    cancel.setText("❌");
+                    cancel.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View v) { cancelCameraDialog(); }
+                    });
+                    TextView hint = new TextView(act);
+                    // hint.setText("Point at a QR code");
+                    // hint.setTextColor(Color.WHITE);
+                    // hint.setGravity(Gravity.CENTER);
+                    // hint.setPadding(0, 48, 0, 48);
+
+                    FrameLayout root = new FrameLayout(act);
+                    root.setLayoutParams(new ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    root.addView(sv); // lowest z: hint/cancel draw on top of it
+                    FrameLayout.LayoutParams hintLp = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                    hintLp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                    root.addView(hint, hintLp);
+                    FrameLayout.LayoutParams cancelLp = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                    cancelLp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+                    cancelLp.bottomMargin = 64;
+                    root.addView(cancel, cancelLp);
+
+                    qrSurface = sv;
+                    d.setContentView(root);
+                    d.setCancelable(true);
+                    d.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        public void onCancel(DialogInterface di) { cancelCameraDialog(); }
+                    });
+                    qrDialog = d;
+                    qrDialogShown = true;
+                    d.show();
+                    Log.d(TAG, "Java: showCameraDialog shown");
+                } catch (Throwable t) {
+                    Log.e(TAG, "Java: showCameraDialog failed: " + t.getMessage());
+                    failCameraOpen();
+                }
+            }
+        });
+    }
+
+    // Cancel (Cancel button / hardware Back): dismiss + release, then tell Go.
+    private static void cancelCameraDialog() {
+        dismissCameraDialog();
+        if (goNativeActivity != null) goNativeActivity.lifecycleEvent("qrCancel");
+    }
+
+    private static void startCameraOnThread(final SurfaceHolder h) {
+        ensureCameraThread();
+        qrCameraHandler.post(new Runnable() {
+            @Override
+            public void run() { startCameraWithHolder(h); }
+        });
+    }
+
+    // Open + configure the back camera against the given (real) SurfaceHolder
+    // and start streaming. Runs on the camera HandlerThread.
+    private static boolean startCameraWithHolder(SurfaceHolder h) {
+        if (qrCamera != null) return true; // already running
         int width = 0, height = 0;
+        int rotate = 90; // display orientation (refined below; hoisted for sizeDialogToCamera)
         try {
             int id = findBackCameraId();
             if (id < 0) {
                 Log.e(TAG, "Java: startCamera: no camera available");
+                failCameraOpen();
                 return false;
             }
             Camera c = Camera.open(id);
@@ -401,9 +556,10 @@ public class GoNativeActivity extends NativeActivity {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                     }
                 } catch (Throwable ignored) {}
-                // Preview FPS range — the device default can be very low on old
-                // HALs (e.g. ~3 fps on Android 9). Pick the supported range with
-                // the highest max (tie -> larger min, preferring a fixed high rate).
+                // Preview FPS range — pick the range with the highest max, and among
+                // those the smallest min (most flexible), so auto-exposure can adapt.
+                // Forcing the fixed 30000-30000 (the old tie-break) is fragile on old
+                // HALs and is what produced the ~15 fps / freeze on Android 9/10.
                 try {
                     List<int[]> ranges = params.getSupportedPreviewFpsRange();
                     int[] picked = null;
@@ -411,7 +567,7 @@ public class GoNativeActivity extends NativeActivity {
                         for (int[] r : ranges) {
                             if (r == null || r.length < 2) continue;
                             if (picked == null || r[1] > picked[1]
-                                    || (r[1] == picked[1] && r[0] > picked[0])) {
+                                    || (r[1] == picked[1] && r[0] < picked[0])) {
                                 picked = r;
                             }
                         }
@@ -441,18 +597,34 @@ public class GoNativeActivity extends NativeActivity {
             try {
                 Camera.CameraInfo info = new Camera.CameraInfo();
                 Camera.getCameraInfo(id, info);
-                int rotate = (info.orientation - 90 + 360) % 360; // portrait
+                qrSensorOrientJava = info.orientation;
+                // Back-camera formula (Android docs): rotate by
+                // (sensorOrientation - displayRotation). getDeviceRotation() is the
+                // same source the pre-change Go qrRot used (=> 1x 90 deg CW in
+                // portrait), so preview and decode agree. Portrait => 90 deg CW.
+                int degrees = getDeviceRotation();
+                if (degrees < 0) degrees = 0;
+                rotate = (info.orientation - degrees + 360) % 360;
                 c.setDisplayOrientation(rotate);
             } catch (Throwable ignored) {}
 
+            // Real, consumed native surface: the SurfaceView's Surface (a separate
+            // window) consumes the preview, so the capture pipeline never stalls
+            // (unlike the old dummy unconsumed SurfaceTexture(0)).
+            try {
+                c.setPreviewDisplay(h);
+                Log.d(TAG, "Java: startCamera setPreviewDisplay ok");
+            } catch (Throwable t) {
+                Log.e(TAG, "Java: startCamera setPreviewDisplay failed: " + t.getMessage());
+            }
+
             qrPreviewWidth = width;
             qrPreviewHeight = height;
-            // Allocate the reused centered-square Y buffer for pre-cropping on the
-            // camera thread (halves JNI traffic: Go receives only the square Y).
             int side = Math.max(1, Math.min(width, height));
             qrSquareSide = side;
             qrSquareBuf = new byte[side * side];
             qrFrameCount = 0;
+            qrLastDecodeFeedMs = 0;
             c.setPreviewCallbackWithBuffer(qrPreviewCallback);
             int bufSize = Math.max(1, width) * Math.max(1, height)
                 * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
@@ -460,16 +632,6 @@ public class GoNativeActivity extends NativeActivity {
             // (one buffer can starve the capture pipeline). On `keep` the returned
             // buffer is re-added, keeping the pool topped up.
             for (int i = 0; i < 3; i++) c.addCallbackBuffer(new byte[bufSize]);
-
-            // Headless surface target: Camera1's capture pipeline needs a surface
-            // (setPreviewDisplay/setPreviewTexture) to actually start and deliver
-            // onPreviewFrame. We have no SurfaceView, so feed a dummy texture.
-            try {
-                c.setPreviewTexture(new android.graphics.SurfaceTexture(0));
-                Log.d(TAG, "Java: startCamera setPreviewTexture(dummy) ok");
-            } catch (Throwable t) {
-                Log.e(TAG, "Java: startCamera setPreviewTexture failed: " + t.getMessage());
-            }
 
             qrCamera = c;
             qrCameraRunning = true;
@@ -480,8 +642,63 @@ public class GoNativeActivity extends NativeActivity {
             Log.e(TAG, "Java: startCamera failed: " + t.getMessage());
             qrPreviewWidth = 0;
             qrPreviewHeight = 0;
-            stopCamera();
+            failCameraOpen();
             return false;
+        }
+    }
+
+    private static void failCameraOpen() {
+        qrCameraRunning = false;
+        qrDialogShown = false;
+        dismissCameraDialog();
+        if (goNativeActivity != null) goNativeActivity.lifecycleEvent("cameraOpenFailed");
+    }
+
+    // Recompute + apply the preview display orientation for the current device
+    // rotation. Called from onConfigurationChanged while the camera Dialog is up,
+    // since configChanges="orientation|..." absorbs rotation without recreating
+    // the activity (so a single setDisplayOrientation at open would go stale).
+    // Mirrors the pre-change Go behavior of re-reading getDeviceRotation per
+    // frame. setDisplayOrientation only rotates the surface display, never the
+    // onPreviewFrame bytes (Go's qrRot keeps decode upright independently).
+    private static void reapplyPreviewOrientation() {
+        final Camera c = qrCamera;
+        if (c == null) return;
+        int degrees = getDeviceRotation();
+        if (degrees < 0) degrees = 0;
+        final int rotate = (qrSensorOrientJava - degrees + 360) % 360;
+        qrCameraHandler.post(new Runnable() {
+            @Override
+            public void run() { try { c.setDisplayOrientation(rotate); } catch (Throwable ignored) {} }
+        });
+    }
+
+    // Idempotent: dismiss the native camera Dialog and release the camera. Safe
+    // to call when nothing is open. Called from Go (decode hit / pause), from
+    // cancel, and from onPause.
+    static void dismissCameraDialog() {
+        qrDialogShown = false;
+        ensureCameraThread();
+        qrCameraHandler.post(new Runnable() {
+            @Override
+            public void run() { stopCamera(); }
+        });
+        if (goNativeActivity != null) {
+            goNativeActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Dialog d = qrDialog;
+                    qrDialog = null;
+                    qrSurface = null;
+                    if (d != null) {
+                        try { if (d.isShowing()) d.dismiss(); } catch (Throwable ignored) {}
+                    }
+                    Log.d(TAG, "Java: dismissCameraDialog done");
+                }
+            });
+        } else {
+            qrDialog = null;
+            qrSurface = null;
         }
     }
 
@@ -1238,6 +1455,7 @@ public class GoNativeActivity extends NativeActivity {
     public void onConfigurationChanged(Configuration config) {
         super.onConfigurationChanged(config);
         updateTheme(config);
+        if (qrDialogShown) reapplyPreviewOrientation();
     }
 
     protected void updateTheme(Configuration config) {
@@ -1277,7 +1495,7 @@ public class GoNativeActivity extends NativeActivity {
     protected void onPause() {
         Log.d(TAG, "Java: onPause");
         lifecycleEvent("pause");
-        try { stopCamera(); } catch (Throwable ignored) {} // release even if Go is slow
+        try { dismissCameraDialog(); } catch (Throwable ignored) {} // release + dismiss even if Go is slow
         super.onPause();
     }
 
