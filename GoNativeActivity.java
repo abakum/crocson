@@ -404,7 +404,7 @@ public class GoNativeActivity extends NativeActivity {
     // Lazily start the dedicated camera HandlerThread. Camera.open()/config/
     // startPreview/release must run off the UI and GL threads (blocking there
     // -> ANR / visual freeze, which was part of the Android 9/10 hang).
-    private static void ensureCameraThread() {
+   private static void ensureCameraThread() {
         if (qrCameraThread == null) {
             qrCameraThread = new HandlerThread("qrCamera");
             qrCameraThread.start();
@@ -423,76 +423,102 @@ public class GoNativeActivity extends NativeActivity {
         goNativeActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (qrDialog != null) { qrDialogShown = true; return; } // already up
+                if (qrDialog != null) { 
+                    qrDialogShown = true; 
+                    Log.d(TAG, "Java: showCameraDialog already shown, skipping");
+                    return; 
+                }
                 final Activity act = goNativeActivity;
                 try {
+                    // Получаем размеры экрана
+                    android.graphics.Point screenSize = new android.graphics.Point();
+                    act.getWindowManager().getDefaultDisplay().getSize(screenSize);
+                    int screenW = screenSize.x;
+                    int screenH = screenSize.y;
+                    
+                    Log.d(TAG, "Java: showCameraDialog screen size=" + screenW + "x" + screenH);
+                    
+                    // Вычисляем размер диалога: 640x480, но не больше 90% экрана
+                    // с сохранением пропорций 4:3
+                    int dialogW = 480; 
+                    int dialogH = 640;
+
+                    boolean isLandscape = screenW > screenH;
+
+                    if (isLandscape) {
+                        dialogW = 640;
+                        dialogH = 480;
+                    }
+                    
+                    // Оставляем 10% запаса для системных баров
+                    int maxW = (int)(screenW * 0.9);
+                    int maxH = (int)(screenH * 0.9);
+                    
+                    if (dialogW > maxW || dialogH > maxH) {
+                        float scaleW = (float) maxW / dialogW;
+                        float scaleH = (float) maxH / dialogH;
+                        float scale = Math.min(scaleW, scaleH);
+                        dialogW = (int) (dialogW * scale);
+                        dialogH = (int) (dialogH * scale);
+                        // Делаем чётными для избежания проблем с камерой
+                        dialogW = (dialogW / 2) * 2;
+                        dialogH = (dialogH / 2) * 2;
+                    }
+                    
+                    Log.d(TAG, "Java: showCameraDialog calculated dialog size=" + dialogW + "x" + dialogH);
+
+                    final int finalW = dialogW;
+                    final int finalH = dialogH;
+
                     final Dialog d = new Dialog(act);
                     d.requestWindowFeature(Window.FEATURE_NO_TITLE);
                     if (d.getWindow() != null) {
-                        d.getWindow().setLayout(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT);
+                        d.getWindow().setLayout(finalW, finalH);
                         d.getWindow().setBackgroundDrawable(
                                 new android.graphics.drawable.ColorDrawable(Color.BLACK));
+                        // Центрируем диалог
+                        d.getWindow().setGravity(Gravity.CENTER);
                     }
                     // Fyne's own GLSurfaceView), so surfaceCreated fires reliably
                     // in this GL-driven app, unlike a TextureView (black preview).
                     SurfaceView surface = new SurfaceView(act);
-                    surface.setLayoutParams(new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    surface.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
                     final SurfaceView sv = surface;
                     sv.getHolder().addCallback(new SurfaceHolder.Callback() {
                         public void surfaceCreated(SurfaceHolder h) {
-                            Log.d(TAG, "Java: surfaceCreated");
+                            Log.d(TAG, "Java: surfaceCreated, setting fixed size " + finalW + "x" + finalH);
+                            h.setFixedSize(finalW, finalH);
                             startCameraOnThread(h);
                         }
-                        public void surfaceChanged(SurfaceHolder h, int f, int w, int hh) {}
+                        public void surfaceChanged(SurfaceHolder h, int f, int w, int hh) {
+                            Log.d(TAG, "Java: surfaceChanged format=" + f + " size=" + w + "x" + hh);
+                        }
                         public void surfaceDestroyed(SurfaceHolder h) {
-                            // dismiss is idempotent; covers surface loss cleanly.
+                            Log.d(TAG, "Java: surfaceDestroyed");
                             dismissCameraDialog();
                         }
                     });
-                    Button cancel = new Button(act);
-                    cancel.setText("❌");
-                    cancel.setOnClickListener(new View.OnClickListener() {
-                        public void onClick(View v) { cancelCameraDialog(); }
-                    });
-                    TextView hint = new TextView(act);
-                    // hint.setText("Point at a QR code");
-                    // hint.setTextColor(Color.WHITE);
-                    // hint.setGravity(Gravity.CENTER);
-                    // hint.setPadding(0, 48, 0, 48);
 
                     FrameLayout root = new FrameLayout(act);
-                    root.setLayoutParams(new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT));
-                    root.addView(sv); // lowest z: hint/cancel draw on top of it
-                    FrameLayout.LayoutParams hintLp = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                    hintLp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                    root.addView(hint, hintLp);
-                    FrameLayout.LayoutParams cancelLp = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                    cancelLp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-                    cancelLp.bottomMargin = 64;
-                    root.addView(cancel, cancelLp);
+                    root.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
+                    root.setBackgroundColor(Color.BLACK);
+                    root.addView(sv);
 
                     qrSurface = sv;
                     d.setContentView(root);
                     d.setCancelable(true);
                     d.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                        public void onCancel(DialogInterface di) { cancelCameraDialog(); }
+                        public void onCancel(DialogInterface di) { 
+                            Log.d(TAG, "Java: dialog cancelled");
+                            cancelCameraDialog(); 
+                        }
                     });
                     qrDialog = d;
                     qrDialogShown = true;
                     d.show();
-                    Log.d(TAG, "Java: showCameraDialog shown");
+                    Log.d(TAG, "Java: showCameraDialog shown successfully " + finalW + "x" + finalH);
                 } catch (Throwable t) {
-                    Log.e(TAG, "Java: showCameraDialog failed: " + t.getMessage());
+                    Log.e(TAG, "Java: showCameraDialog failed: " + t.getMessage(), t);
                     failCameraOpen();
                 }
             }
@@ -1451,11 +1477,62 @@ public class GoNativeActivity extends NativeActivity {
         });
     }
 
-    @Override
+@Override
     public void onConfigurationChanged(Configuration config) {
         super.onConfigurationChanged(config);
         updateTheme(config);
+        
+        // Обновляем размер диалога при повороте
+        if (qrDialog != null && qrDialog.isShowing()) {
+            updateDialogSize();
+        }
+        
         if (qrDialogShown) reapplyPreviewOrientation();
+    }
+
+    private void updateDialogSize() {
+        if (qrDialog == null || goNativeActivity == null) return;
+        
+        try {
+            android.graphics.Point screenSize = new android.graphics.Point();
+            goNativeActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
+            int screenW = screenSize.x;
+            int screenH = screenSize.y;
+            
+            boolean isLandscape = screenW > screenH;
+            
+            int dialogW, dialogH;
+            int maxW = (int)(screenW * 0.9);
+            int maxH = (int)(screenH * 0.9);
+            
+            if (isLandscape) {
+                dialogW = Math.min(640, maxW);
+                dialogH = Math.min(480, maxH);
+            } else {
+                dialogW = Math.min(480, maxW);
+                dialogH = Math.min(640, maxH);
+            }
+            
+            dialogW = (dialogW / 2) * 2;
+            dialogH = (dialogH / 2) * 2;
+            
+            Window window = qrDialog.getWindow();
+            if (window != null) {
+                window.setLayout(dialogW, dialogH);
+                Log.d(TAG, "Java: dialog resized to " + dialogW + "x" + dialogH);
+            }
+            
+            // Обновляем SurfaceView
+            if (qrSurface != null) {
+                ViewGroup.LayoutParams params = qrSurface.getLayoutParams();
+                params.width = dialogW;
+                params.height = dialogH;
+                qrSurface.setLayoutParams(params);
+            }
+            
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: updateDialogSize failed: " + t.getMessage());
+        }
     }
 
     protected void updateTheme(Configuration config) {

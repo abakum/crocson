@@ -25,13 +25,13 @@ import (
 // perspective correction). Decode is the only Go per-frame work.
 
 var (
-	qrMu       sync.Mutex
-	qrActive   bool
-	qrStop     atomic.Bool
-	qrDecodeCh chan *image.Gray
-	qrCancel   context.CancelFunc
-	qrReader   gozxing.Reader
-	qrOnResult func(string)
+	qrMu        sync.Mutex
+	qrActive    bool
+	qrStop      atomic.Bool
+	qrDecodeCh  chan *image.Gray
+	qrCancel    context.CancelFunc
+	qrReader    gozxing.Reader
+	qrOnResult  func(string)
 	qrRecvCount atomic.Int64
 	// qrCameraStarted is true while the native camera Dialog is up. Guards
 	// qrLifecyclePause: only dismiss on a pause that happens while actually
@@ -59,10 +59,10 @@ func cameraFrameReceived(data []byte, w, h int) bool {
 	if n <= 0 || len(data) < n {
 		return true // ignore bad frame, keep camera going
 	}
-	c := qrRecvCount.Add(1)
-	if c == 1 || c%30 == 0 {
-		log.Debugf("frame %dx%d #%d", w, h, c)
-	}
+	// c := qrRecvCount.Add(1)
+	// if c == 1 || c%30 == 0 {
+	// 	log.Debugf("frame %dx%d #%d", w, h, c)
+	// }
 	// data is already a fresh owned slice from C.GoBytes; the Y plane is its
 	// first w*h bytes, so wrap it directly (no extra make+copy). The decoder is
 	// the only consumer and reads it read-only.
@@ -212,7 +212,7 @@ func startQRScan(a fyne.App, w fyne.Window, onResult func(string)) {
 	qrDecodeCh = make(chan *image.Gray, 1)
 	qrStop.Store(false)
 	qrRecvCount.Store(0)
-	qrRot = 0 // recomputed (throttled) in qrDecodeWorker
+	qrRot = 0           // recomputed (throttled) in qrDecodeWorker
 	qrSensorOrient = 90 // safe default for back cameras
 	if o, err := callInt("getCameraSensorOrientation"); err == nil && o >= 0 {
 		qrSensorOrient = o
