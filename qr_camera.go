@@ -59,10 +59,10 @@ func cameraFrameReceived(data []byte, w, h int) bool {
 	if n <= 0 || len(data) < n {
 		return true // ignore bad frame, keep camera going
 	}
-	// c := qrRecvCount.Add(1)
-	// if c == 1 || c%30 == 0 {
-	// 	log.Debugf("frame %dx%d #%d", w, h, c)
-	// }
+	c := qrRecvCount.Add(1)
+	if c == 1 || c%30 == 0 {
+		log.Debugf("frame %dx%d #%d", w, h, c)
+	}
 	// data is already a fresh owned slice from C.GoBytes; the Y plane is its
 	// first w*h bytes, so wrap it directly (no extra make+copy). The decoder is
 	// the only consumer and reads it read-only.

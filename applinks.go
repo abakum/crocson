@@ -383,7 +383,7 @@ func (qr *QR) makeQRInstructions() fyne.CanvasObject {
 	if isAndroid || asMobile {
 		optScan := []string{
 			builtinScanner,
-			"html5-QRcode",
+			"Default HTML5 QR Code",
 			"miUI Xiaomi",
 			"Samsung",
 			"OPlus",

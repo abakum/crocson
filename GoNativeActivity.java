@@ -48,6 +48,10 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
+
+
 public class GoNativeActivity extends NativeActivity {
 	private static GoNativeActivity goNativeActivity;
 	private static final String TAG = "croc";
@@ -365,7 +369,7 @@ public class GoNativeActivity extends NativeActivity {
         }
         return numberOfCameras > 0 ? 0 : -1;
     }
-
+  
     private static Camera.Size getCameraPreviewSize() {
         try {
             int camId = findBackCameraId();
@@ -374,11 +378,26 @@ public class GoNativeActivity extends NativeActivity {
             Camera.Parameters params = cam.getParameters();
             List<Camera.Size> sizes = params.getSupportedPreviewSizes();
             cam.release();
+
+            int screenW = 640;
+            int screenH = 480;
+            final Activity act = goNativeActivity;
+            try {
+                android.graphics.Point screenSize = new android.graphics.Point();
+                act.getWindowManager().getDefaultDisplay().getSize(screenSize);
+                screenW = screenSize.x;
+                screenH = screenSize.y;
+            } catch (Throwable ignored) {}
+            
+            // Берем максимальную сторону экрана для сравнения
+            int maxScreen = Math.max(screenW, screenH);
             
             Camera.Size chosen = null;
             if (sizes != null && !sizes.isEmpty()) {
                 for (Camera.Size s : sizes) {
-                    if (s.width <= 640 && s.height <= 480) {
+                    // Сравниваем максимальную сторону кадра с максимальной стороной экрана
+                    int maxSize = Math.max(s.width, s.height);
+                    if (maxSize <= maxScreen) {
                         if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
                             chosen = s;
                         }
@@ -428,6 +447,7 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
+
     // Lazily start the dedicated camera HandlerThread. Camera.open()/config/
     // startPreview/release must run off the UI and GL threads (blocking there
     // -> ANR / visual freeze, which was part of the Android 9/10 hang).
@@ -439,11 +459,68 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
-    // Show the native full-screen camera Dialog: a SurfaceView color preview
-    // (real consumed native surface -> no dummy-texture stall) + hint + Cancel.
-    // The camera is opened on the camera thread once the SurfaceView's surface is
-    // ready (surfaceCreated). Called from Go (callVoid), so Dialog creation runs on
-    // the UI thread.
+    // Кастомный оверлей для отрисовки затенения и рамки квадрата
+    static class QrOverlayView extends View {
+        private final Paint shadowPaint;
+        private final Paint windowPaint;
+
+        public QrOverlayView(Context context) {
+            super(context);
+            
+            setWillNotDraw(false);
+            setBackgroundColor(Color.TRANSPARENT);
+             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            }
+
+            shadowPaint = new Paint();
+            shadowPaint.setColor(Color.parseColor("#66000000")); // 40% черный
+            shadowPaint.setStyle(Paint.Style.FILL);
+
+            windowPaint = new Paint();
+            windowPaint.setAntiAlias(true);
+            windowPaint.setColor(Color.parseColor("#40FFFFFF")); // 25% белый
+            windowPaint.setStyle(Paint.Style.STROKE);
+            windowPaint.setStrokeWidth(4);
+        }
+
+        // Этот метод вызывается Android автоматически при любом изменении размеров экрана/повороте
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            invalidate(); // Принудительно заставляем View вызвать onDraw с новыми размерами
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+
+            int width = getWidth();
+            int height = getHeight();
+
+            // Если размеры еще не инициализированы, пропускаем шаг
+            if (width == 0 || height == 0) return;
+
+            if (width < height) {
+                // 1. ПОРТРЕТ: Окно во всю ширину. Затеняем только верх и низ.
+                float top = (height - width) / 2f;
+                float bottom = top + width;
+
+                canvas.drawRect(0, 0, width, top, shadowPaint);
+                canvas.drawRect(0, bottom, width, height, shadowPaint);
+                canvas.drawRect(0, top, width, bottom, windowPaint);
+            } else {
+                // 2. ЛАНДШАФТ: Окно во всю высоту. Затеняем только бока.
+                float left = (width - height) / 2f;
+                float right = left + height;
+
+                canvas.drawRect(0, 0, left, height, shadowPaint);
+                canvas.drawRect(right, 0, width, height, shadowPaint);
+                canvas.drawRect(left, 0, right, height, windowPaint);
+            }
+        }
+    }
+
     static void showCameraDialog() {
         ensureCameraThread();
         if (goNativeActivity == null) return;
@@ -483,20 +560,6 @@ public class GoNativeActivity extends NativeActivity {
                         dialogH = cameraW;
                     }
                     
-                    // Оставляем 10% запаса для системных баров
-                    int maxW = (int)(screenW * 0.9);
-                    int maxH = (int)(screenH * 0.9);
-                    
-                    if (dialogW > maxW || dialogH > maxH) {
-                        float scaleW = (float) maxW / dialogW;
-                        float scaleH = (float) maxH / dialogH;
-                        float scale = Math.min(scaleW, scaleH);
-                        dialogW = (int) (dialogW * scale);
-                        dialogH = (int) (dialogH * scale);
-                        // Делаем чётными для избежания проблем с камерой
-                        dialogW = (dialogW / 2) * 2;
-                        dialogH = (dialogH / 2) * 2;
-                    }
                     
                     Log.d(TAG, "Java: showCameraDialog calculated dialog size=" + dialogW + "x" + dialogH);
 
@@ -512,10 +575,10 @@ public class GoNativeActivity extends NativeActivity {
                         // Центрируем диалог
                         d.getWindow().setGravity(Gravity.CENTER);
                     }
-                    // Fyne's own GLSurfaceView), so surfaceCreated fires reliably
-                    // in this GL-driven app, unlike a TextureView (black preview).
+                    
                     SurfaceView surface = new SurfaceView(act);
                     surface.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
+                    surface.setZOrderMediaOverlay(true);
                     final SurfaceView sv = surface;
                     sv.getHolder().addCallback(new SurfaceHolder.Callback() {
                         public void surfaceCreated(SurfaceHolder h) {
@@ -534,8 +597,19 @@ public class GoNativeActivity extends NativeActivity {
 
                     FrameLayout root = new FrameLayout(act);
                     root.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
-                    root.setBackgroundColor(Color.BLACK);
+                    root.setBackgroundColor(Color.TRANSPARENT);
+                    
+                    // 1. Добавляем превью камеры вниз
                     root.addView(sv);
+
+                    // 2. Добавляем полупрозрачный оверлей с прозрачным окном поверх камеры
+                    QrOverlayView overlayView = new QrOverlayView(act);
+                    // overlayView.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
+                    overlayView.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, 
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    ));
+                     root.addView(overlayView);
 
                     qrSurface = sv;
                     d.setContentView(root);
@@ -557,7 +631,7 @@ public class GoNativeActivity extends NativeActivity {
             }
         });
     }
-
+    
     // Cancel (Cancel button / hardware Back): dismiss + release, then tell Go.
     private static void cancelCameraDialog() {
         dismissCameraDialog();
@@ -592,12 +666,25 @@ public class GoNativeActivity extends NativeActivity {
                 try {
                     params.setPreviewFormat(ImageFormat.NV21);
                 } catch (Throwable ignored) {}
+
                 try {
+                    int screenW = 640;
+                    int screenH = 480;
+                    final Activity act = goNativeActivity;
+                    try {
+                        android.graphics.Point screenSize = new android.graphics.Point();
+                        act.getWindowManager().getDefaultDisplay().getSize(screenSize);
+                        screenW = screenSize.x;
+                        screenH = screenSize.y;
+                    } catch (Throwable ignored) {}
+
                     List<Camera.Size> sizes = params.getSupportedPreviewSizes();
                     Camera.Size chosen = null;
                     if (sizes != null && !sizes.isEmpty()) {
+                        int maxScreen = Math.max(screenW, screenH);
                         for (Camera.Size s : sizes) {
-                            if (s.width <= 640 && s.height <= 480) {
+                            int maxSize = Math.max(s.width, s.height);
+                            if (maxSize <= maxScreen) {
                                 if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
                                     chosen = s;
                                 }
@@ -747,23 +834,17 @@ public class GoNativeActivity extends NativeActivity {
                     goNativeActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
                     int screenW = screenSize.x;
                     int screenH = screenSize.y;
+ 
+                    int dialogW = cameraW;
+                    int dialogH = cameraH;
                     
                     boolean isLandscape = screenW > screenH;
-                    
-                    int dialogW, dialogH;
-                    int maxW = (int)(screenW * 0.9);
-                    int maxH = (int)(screenH * 0.9);
-                    
-                    if (isLandscape) {
-                        dialogW = Math.min(cameraW, maxW);
-                        dialogH = Math.min(cameraH, maxH);
-                    } else {
-                        dialogW = Math.min(cameraH, maxW);
-                        dialogH = Math.min(cameraW, maxH);
+                    if (!isLandscape) {
+                        dialogW = cameraH;
+                        dialogH = cameraW;
                     }
+
                     
-                    dialogW = (dialogW / 2) * 2;
-                    dialogH = (dialogH / 2) * 2;
                     
                     Window window = qrDialog.getWindow();
                     if (window != null) {
