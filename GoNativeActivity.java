@@ -578,7 +578,7 @@ public class GoNativeActivity extends NativeActivity {
                     
                     SurfaceView surface = new SurfaceView(act);
                     surface.setLayoutParams(new ViewGroup.LayoutParams(finalW, finalH));
-                    surface.setZOrderMediaOverlay(true);
+                    // surface.setZOrderMediaOverlay(true);
                     final SurfaceView sv = surface;
                     sv.getHolder().addCallback(new SurfaceHolder.Callback() {
                         public void surfaceCreated(SurfaceHolder h) {
