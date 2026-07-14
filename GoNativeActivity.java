@@ -1710,6 +1710,17 @@ public class GoNativeActivity extends NativeActivity {
         applyStatusBarIcons();
     }
 
+    // Re-applies the system dark state on foreground return. On API 29 (Android 10) a uiMode change
+    // toggled from the quick-settings shade is not delivered as onConfigurationChanged before/at
+    // resume, leaving the Fyne content theme and the status bar stale. No-op when unchanged.
+    private void reconcileSystemTheme() {
+        Configuration cfg = getResources().getConfiguration();
+        boolean dark = (cfg.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        if (dark != systemDark) {
+            updateTheme(cfg);
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -1736,6 +1747,7 @@ public class GoNativeActivity extends NativeActivity {
         super.onResume();
         Log.d(TAG, "Java: onResume");
         lifecycleEvent("resume");
+        reconcileSystemTheme();
     }
 
     @Override

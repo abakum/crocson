@@ -1,128 +1,146 @@
-# Fix invisible Android status bar icons (light Fyne theme) — mode-based runtime adaptation
+# Invisible Android status bar icons + Android-10 (API 29) dark-mode-on-return regression — mode-based runtime adaptation
 
 ## Context / root cause
-- Symptom: status bar icons invisible on light/system Fyne themes; visible on dark.
-  Version-independent (Android 9 Yandex + Android 14 Xiaomi).
+- Status bar icons were invisible on light/system Fyne themes (visible on dark). Version-independent.
 - Custom `fyne package` links `aapt2 ... -I android-36/android.jar --auto-add-overlay -R
-  compiled_res.zip`, baking API-36 edge-to-edge / transparent status bar into the APK (all
-  devices). The Fyne fork never sets `windowLightStatusBar` → default white icons are
-  invisible on a light Fyne bg. The binres build (no `-I`) has no bug.
-- `windowLightStatusBar` has no `auto`; `statusBarColor` has no `background` keyword and is
-  ignored on edge-to-edge. AppCompat/Material `DayNight` + `setDefaultNightMode` are
-  unavailable (no AndroidX; Fyne Java compiles against `android.jar` only) and blind to
-  Fyne's forced themes.
+  compiled_res.zip`, baking API-36 edge-to-edge / transparent status bar into the APK. The Fyne
+  fork never sets `windowLightStatusBar` → default white icons are invisible on a light Fyne bg.
+- `windowLightStatusBar` has no `auto`; `statusBarColor` is ignored on edge-to-edge. AppCompat /
+  Material `DayNight` is unavailable (no AndroidX).
 
-## Decision (mode-based)
-- Go pushes only the theme MODE to Java (system/light/dark) from `setThemeColor`. Java
-  applies the status bar on its own lifecycle hooks (`onCreate` + `onConfigurationChanged`
-  via the existing `updateTheme`). This covers the foreground system-dark-flip case (via
-  `onConfigurationChanged`, since `configChanges` includes `uiMode`) that a Go-applied /
-  color-based design misses, and removes Fyne lifecycle coupling.
-- Trade-off: status bar color is fixed white/black (not the exact Fyne bg); cosmetic,
-  ignored on edge-to-edge. `themes.xml` (`values/` + `values-night/`) stays as the static
-  baseline.
+### Android 10 (API 29) regression — the focus-return bug
+- **Symptom:** toggle system dark mode via the quick-settings shade → on Android 14 the app
+  (content theme **and** status bar) updates immediately; on Android 10 (API 29) it does **not**
+  change when returning to the app.
+- **Cause:** `updateTheme(config)` is the single chokepoint that drives *both* the Fyne content
+  theme (via the native `setDarkMode(dark)` call — Java→Go, declared `GoNativeActivity.java:75`)
+  **and** the status bar (`systemDark` + `applyStatusBarIcons()`). It runs only from `onCreate`
+  (`:1559`) and `onConfigurationChanged` (`:1694`). On API 29 a `uiMode` change toggled from the
+  shade is not delivered as `onConfigurationChanged` before/at resume — it is dropped or deferred
+  indefinitely — so `updateTheme` never runs and both the content theme and status bar stay stale.
+  Android 14 delivers the config change promptly → no issue.
+- **Diagnostic corroboration:** on the same Android 10 device, toggling *color inversion*
+  (accessibility) from the shade updates everything **immediately**, while toggling *system dark
+  mode* does not. This isolates the bug precisely — color inversion is a compositor/display
+  transformation (no `Configuration`/`uiMode` change, no app involvement, no config event → applies
+  on every Android version); `UI_MODE_NIGHT` is a `Configuration` change the app must react to via
+  `onConfigurationChanged` → `updateTheme`. Rendering itself is fine — only the `uiMode`
+  config-reaction path is broken on API 29, which is exactly what the `onResume` reconciler
+  re-reads. (Color inversion needs no app handling → **out of scope**.)
+- Consequence: status-bar-only is **not** a coherent fix — content and status bar share the same
+  chokepoint. Fixing one means re-running `updateTheme` (fixes both).
 
-## Changes
+## Decision (mode-based + resume reconcile)
+- Go pushes only the theme MODE to Java (system/light/dark) from `setThemeColor`. Java applies the
+  status bar on its own lifecycle hooks (`onCreate` + `onConfigurationChanged` via the existing
+  `updateTheme`). Java owns system-theme detection end to end; no Fyne-lifecycle coupling.
+- **NEW (this amendment):** add a reconciler in Java `onResume` that re-reads
+  `Configuration.uiMode` and, if it differs from the cached `systemDark`, re-runs the existing
+  `updateTheme`. This closes the API-29 gap on every foreground return; guarded by a change check
+  so a normal resume (theme unchanged) is a no-op.
+- Trade-off: status bar color is fixed white/black (not the exact Fyne bg); cosmetic, ignored on
+  edge-to-edge. `themes.xml` (`values/` + `values-night/`) stays as the static baseline.
 
-### 1. `res/values/themes.xml` + `res/values-night/themes.xml` — static baseline
-- `values/themes.xml` style `Light`, parent `@android:style/Theme.Light.NoTitleBar`:
-  `windowLightStatusBar=true` (dark icons) + `statusBarColor=@android:color/white`.
-- `values-night/themes.xml` style `Light` (same name; auto-resolves under system dark):
-  `windowLightStatusBar=false` (light icons) + `statusBarColor=@android:color/black`.
-- Correct static baseline for the "system" theme before Go runs; runtime overrides forced
-  themes.
+## Current state (as of commit `994b3c4` + working tree) — for the implementer
+The mode-based refactor is **already implemented**; the only remaining work is the `onResume`
+reconciler (this plan's change).
+- ✅ Go mode-based: `theme.go` (`themeMode` + `setAppThemeMode(themeMode(...))` hook in
+  `setThemeColor`); `for_android.go` / `for_android0.go` `setAppThemeMode` bridge. The earlier
+  color-based helpers (`applyStatusBar` / `setStatusBarBackground` / `colorToARGB`) were removed.
+- ✅ Java mode-based: `appThemeMode` / `systemDark` fields, `setAppThemeMode`,
+  `applyStatusBarIcons`, `updateTheme` hook (`onCreate:1559` + `onConfigurationChanged:1694`).
+- ✅ `res/values/themes.xml` + `res/values-night/themes.xml`: style **`DeviceDefault`** (NOT
+  `Light` as an earlier draft of this plan said) —
+  `values/`: parent `@android:style/Theme.DeviceDefault.Light.NoActionBar`,
+  `windowLightStatusBar=true`, `statusBarColor=@android:color/white`;
+  `values-night/`: parent `@android:style/Theme.DeviceDefault.NoActionBar`,
+  `windowLightStatusBar=false`, `statusBarColor=@android:color/black`.
+  `AndroidManifest.xml:19` uses `android:theme="@style/DeviceDefault"` and declares
+  `configChanges="...|uiMode"` (`:16`); `targetSdkVersion=36` (not the cause).
+- ❌ MISSING: `onResume` reconciler — the API-29 fix below.
 
-### 2. `AndroidManifest.xml`
-- `android:theme="@style/Light"` (keep); `android:targetSdkVersion="36"` (keep; not the
-  cause).
+## Change to make
 
-### 3. Go — push mode from `setThemeColor`
-- `theme.go`: in `setThemeColor(themeName)`, after the switch, call
-  `setAppThemeMode(themeMode(themeName))`. Add:
-  ```go
-  func themeMode(name string) int32 {
-      switch name {
-      case "system": return 0
-      case "light":  return 1
-      default:       return 2 // grey, dark, black
-      }
-  }
-  ```
-- `for_android.go` (`//go:build android`):
-  ```go
-  func setAppThemeMode(mode int32) {
-      if err := callVoidInt("setAppThemeMode", mode); err != nil {
-          log.Errorf("setAppThemeMode: %v", err)
-      }
-  }
-  ```
-  Reuses existing `callVoidInt` + its C bridge (`for_android.c`/`for_android.h`); Java
-  method signature is `(I)V`.
-- `for_android0.go` (`//go:build !android`): `func setAppThemeMode(mode int32) {}`.
-- Triggers are covered via the `setThemeColor` callers: startup (`main.go:408`) + user
-  theme change (`settings.go:65`). No Fyne lifecycle hooks.
+### Java — `onResume` reconciler (`GoNativeActivity.java:1735`)
+Replace the no-op `onResume` body with a guarded reconcile:
 
-### 4. Java — apply on lifecycle (`GoNativeActivity.java`)
-- Fields: `private static int appThemeMode = 0;` (0=system, 1=light, 2=dark) and
-  `private static boolean systemDark = false;`.
-- `static void setAppThemeMode(int mode)` → store `appThemeMode = mode;` + call
-  `applyStatusBarIcons()`.
-- In `updateTheme(Configuration config)` (already runs on `onCreate` +
-  `onConfigurationChanged`), after `setDarkMode(dark)`: `systemDark = dark;
-  applyStatusBarIcons();`.
-- `static void applyStatusBarIcons()`:
-  - `lightBg = (appThemeMode == 1) || (appThemeMode == 0 && !systemDark);`
-  - `runOnUiThread`: `window.setStatusBarColor(lightBg ? Color.WHITE : Color.BLACK)`
-    (cosmetic; no-op on edge-to-edge); then set `windowLightStatusBar`:
-    - API ≥ R: `WindowInsetsController.setSystemBarsAppearance(lightBg ?
-      APPEARANCE_LIGHT_STATUS_BARS : 0, APPEARANCE_LIGHT_STATUS_BARS)`.
-    - else: `View.setSystemUiVisibility` toggle `SYSTEM_UI_FLAG_LIGHT_STATUS_BAR`.
-- Import `android.view.WindowInsetsController` (API 30 class; only referenced inside the
-  `SDK_INT >= R` branch). `Color`/`Window`/`View`/`Build` already imported.
+```java
+@Override
+protected void onResume() {
+    super.onResume();
+    Log.d(TAG, "Java: onResume");
+    lifecycleEvent("resume");
+    reconcileSystemTheme();
+}
+```
 
-## Working-tree state (IMPORTANT for the implementer)
-The repo is mid-refactor and INCONSISTENT:
-- Java (`GoNativeActivity.java`) is ALREADY mode-based (`setAppThemeMode` /
-  `applyStatusBarIcons` / fields / `updateTheme` hook). Keep; verify it compiles.
-- Go is STILL color-based from a first attempt: `applyStatusBar` / `setStatusBarBackground`
-  / `colorToARGB` in `theme.go`; `setStatusBarBackground` bridge in `for_android.go` /
-  `for_android0.go`; `applyStatusBar(a)` calls in `main.go` (after `SetTheme`),
-  `settings.go` (themeSelect), `send.go` (`OnEnteredForeground`).
-- Reconcile Go to section 3: replace the color-based helpers with `themeMode` + the
-  `setAppThemeMode` call in `setThemeColor`; replace the `setStatusBarBackground` bridge
-  (both files) with `setAppThemeMode`; DELETE the `applyStatusBar(a)` trigger calls in
-  `main.go`/`settings.go`/`send.go`. As-is the build passes but the feature is broken at
-  runtime (Go calls `setStatusBarBackground`, which Java no longer defines; Java's
-  `setAppThemeMode` is never called).
+Add:
+
+```java
+/**
+ * Re-applies the system dark state on foreground return. Fixes API 29 (Android 10), where a
+ * uiMode change toggled from the quick-settings shade is not delivered as
+ * onConfigurationChanged before/at resume, leaving the Fyne content theme and the status bar
+ * stale. No-op when the system theme has not changed.
+ */
+private void reconcileSystemTheme() {
+    Configuration cfg = getResources().getConfiguration();
+    boolean dark = (cfg.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    if (dark != systemDark) {
+        updateTheme(cfg); // re-runs setDarkMode (native -> Fyne content) + applyStatusBarIcons
+    }
+}
+```
+
+Why this is minimal and correct:
+- Reuses the existing `updateTheme(cfg)` chokepoint — no new state, no Fyne-lifecycle coupling.
+  `updateTheme` calls `setDarkMode(dark)` (native → Fyne re-renders content), sets
+  `systemDark = dark`, then `applyStatusBarIcons()`. One call fixes content **and** status bar.
+- The `dark != systemDark` guard makes every normal resume a no-op (no needless Fyne refresh);
+  it only fires when a system uiMode change was missed.
+- Baseline is correct: `onCreate:1559` already initializes `systemDark` via `updateTheme`, so the
+  first `onResume` compares against the real value (no spurious refresh on first launch).
+- `onResume` is the single correct hook — it runs after `onStart` (first launch) and after
+  `onRestart` (return from background); no need to duplicate in `onStart`/`onRestart`.
+- Threading: `onResume` runs on the UI thread, same as `onCreate`/`onConfigurationChanged`.
+  `setDarkMode` JNI is synchronous (same as today); `applyStatusBarIcons` already posts
+  `runOnUiThread` (fine when called from the UI thread). No new threading concerns.
 
 ## Validation
-1. `go vet ./...` (linux, uses `for_android0.go` stub) — exit 0.
-2. `javac -cp <android-36>/android.jar GoNativeActivity.java` — exit 0 (deprecation note
-   for the API<30 flags is expected).
-3. aapt2 compile `res/` + `aapt2 link -I <android-36>/android.jar --auto-add-overlay -R
-   compiled.zip --manifest AndroidManifest.xml` — no "resource not found".
+1. `go vet ./...` (linux, uses `for_android0.go` stub) — exit 0. (Unchanged; this change is Java-only.)
+2. `javac -cp <android-36>/android.jar GoNativeActivity.java` — exit 0 (deprecation note for the
+   API<30 flags is expected).
+3. aapt2 compile `res/` + `aapt2 link -I <android-36>/android.jar --auto-add-overlay -R compiled.zip
+   --manifest AndroidManifest.xml` — no "resource not found".
 4. `make arm64` (with `go` + `fyne` on PATH) — APK builds.
-5. Install on Xiaomi Android 14 + Yandex Android 9: for each theme
+5. Install on Xiaomi Android 14 + an Android 10 (API 29) device: for each theme
    (system/light/grey/dark/black) icons visible (dark on light bg, light on dark bg).
 6. Switch theme at runtime → updates immediately.
-7. Toggle system dark mode (incl. via quick-settings while foreground) →
-   `onConfigurationChanged` → icons correct (system theme; forced themes unaffected).
-8. Regression: no black bottom nav bar (only status bar touched); Fyne content below the
-   status bar (`insetsChanged`/`updateLayout`).
+7. **API-29 regression (primary target):** on the Android 10 device, open the app, pull the
+   quick-settings shade, toggle system dark → return to the app → **both** the Fyne content theme
+   and the status bar icons update correctly. Repeat light↔dark both directions. Then, with the
+   system theme unchanged, background/return → confirm no flicker / spurious refresh (guard works).
+8. **Android 14:** same shade-toggle test → still updates immediately (no regression); confirm the
+   guard is a no-op when theme unchanged.
+9. Regression: no black bottom nav bar (only status bar touched); Fyne content below the status bar
+   (`insetsChanged`/`updateLayout`).
 
 ## Risks / notes
 - `setStatusBarColor` is a no-op on edge-to-edge (API 35+) — by design; `windowLightStatusBar`
-  is the operative fix.
+  (via `applyStatusBarIcons`) is the operative fix.
 - At Java `onCreate`, `appThemeMode` defaults to 0 (system) until Go pushes the saved mode
-  (from `setThemeColor` at `main.go:408`, before `ShowAndRun`); for a saved forced dark/black
-  theme there may be a brief flash until the push — the window is not yet visible, so
-  generally not seen.
-- If `callVoidInt` runs before the JNI bridge is ready, it errors + logs; `updateTheme`
-  re-applies on the next config change using the stored mode (once Go has pushed it).
+  (`setThemeColor` at startup, before `ShowAndRun`); brief flash possible for a saved forced
+  dark/black theme, but the window is not yet visible.
+- `reconcileSystemTheme` reuses `updateTheme`; if (defensively) `setDarkMode` is invoked with the
+  same value as before, Fyne treats it as a refresh — harmless. The guard prevents this in normal
+  operation.
 - Does not change the `-I android-36` build; adapts at runtime.
 
 ## Out of scope
-- Patching the Fyne fork to set status bar appearance for all apps.
+- **Color inversion (accessibility):** compositor/display transformation, not a `Configuration` or
+  `uiMode` change. Applies to rendered pixels system-wide with no app involvement and no config
+  event → works on every Android version already (confirmed on API 29). Nothing to do here.
+- Patching the Fyne fork to set status bar appearance / detect uiMode for all apps.
 - AppCompat/Material `DayNight` (no AndroidX; blind to Fyne forced themes).
 - Changing the `-I android-36` build to `android-34` or binres.
 
