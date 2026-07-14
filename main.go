@@ -356,7 +356,7 @@ func main() {
 	// a.Preferences().SetBool("disable-compression",
 	// 	a.Preferences().BoolWithFallback("disable-compression", false))
 	a.Preferences().SetString("theme",
-		a.Preferences().StringWithFallback("theme", "light"))
+		a.Preferences().StringWithFallback("theme", "system"))
 	a.Preferences().SetString("font",
 		a.Preferences().StringWithFallback("font", DEFAULT))
 	a.Preferences().SetString("debug-level",

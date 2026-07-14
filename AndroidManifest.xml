@@ -16,7 +16,7 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
             android:label="crocson"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:theme="@style/DeviceDefault"
             android:resizeableActivity="true">
             
             <meta-data

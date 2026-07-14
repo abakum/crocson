@@ -38,6 +38,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.KeyEvent;
@@ -952,6 +953,41 @@ public class GoNativeActivity extends NativeActivity {
         return Build.VERSION.SDK_INT;
     }
 
+    private static int appThemeMode = 0;
+    private static boolean systemDark = false;
+
+    static void setAppThemeMode(int mode) {
+        appThemeMode = mode;
+        applyStatusBarIcons();
+    }
+
+    static void applyStatusBarIcons() {
+        final GoNativeActivity act = goNativeActivity;
+        if (act == null) return;
+        final boolean lightBg = (appThemeMode == 1) || (appThemeMode == 0 && !systemDark);
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Window window = act.getWindow();
+                if (window == null) return;
+                try { window.setStatusBarColor(lightBg ? Color.WHITE : Color.BLACK); } catch (Throwable ignored) {}
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    WindowInsetsController c = window.getInsetsController();
+                    if (c != null) {
+                        int flag = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+                        c.setSystemBarsAppearance(lightBg ? flag : 0, flag);
+                    }
+                } else {
+                    View v = window.getDecorView();
+                    int f = v.getSystemUiVisibility();
+                    if (lightBg) f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    else f &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    v.setSystemUiVisibility(f);
+                }
+            }
+        });
+    }
+
     static String getFileName(String uriStr) {
         try {
             android.net.Uri uri = android.net.Uri.parse(uriStr);
@@ -1670,6 +1706,8 @@ public class GoNativeActivity extends NativeActivity {
     protected void updateTheme(Configuration config) {
         boolean dark = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         setDarkMode(dark);
+        systemDark = dark;
+        applyStatusBarIcons();
     }
 
     @Override

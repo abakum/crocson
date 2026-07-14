@@ -71,4 +71,16 @@ func setThemeColor(themeName string) {
 		appTheme.color = theme.LightTheme()
 		appTheme.icon = theme.LightTheme()
 	}
+	setAppThemeMode(themeMode(themeName))
+}
+
+func themeMode(name string) int32 {
+	switch name {
+	case "system":
+		return 0
+	case "light":
+		return 1
+	default:
+		return 2
+	}
 }

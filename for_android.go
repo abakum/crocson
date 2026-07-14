@@ -277,6 +277,12 @@ func callVoidInt(method string, arg int32) error {
 	})
 }
 
+func setAppThemeMode(mode int32) {
+	if err := callVoidInt("setAppThemeMode", mode); err != nil {
+		log.Errorf("setAppThemeMode: %v", err)
+	}
+}
+
 func callBooleanStringLong(method string, strArg string, longArg int64) (bool, error) {
 	var result bool
 	err := driver.RunNative(func(ctx interface{}) error {
