@@ -300,6 +300,13 @@ public class GoNativeActivity extends NativeActivity {
     // needs a few fps for QR decode. Timestamp (uptimeMillis) of the last frame
     // forwarded to Go; frames arriving sooner than 100 ms are dropped here.
     private static long qrLastDecodeFeedMs = 0;
+    // Preview-size bounds {largeBound, smallBound} derived from the physical display
+    // edges minus total system insets, captured on the UI thread in showCameraDialog
+    // and read by startCameraWithHolder on the camera thread (so the camera thread
+    // never touches Display/WindowInsets). Orientation-independent -> the chosen
+    // preview fits in BOTH portrait and landscape (no overflow after rotation).
+    private static volatile int qrBoundLarge = 0;
+    private static volatile int qrBoundSmall = 0;
 
     private static final Camera.PreviewCallback qrPreviewCallback = new Camera.PreviewCallback() {
         @Override
@@ -371,7 +378,7 @@ public class GoNativeActivity extends NativeActivity {
         return numberOfCameras > 0 ? 0 : -1;
     }
   
-    private static Camera.Size getCameraPreviewSize() {
+    private static Camera.Size getCameraPreviewSize(int largeBound, int smallBound) {
         try {
             int camId = findBackCameraId();
             if (camId < 0) return null;
@@ -380,33 +387,8 @@ public class GoNativeActivity extends NativeActivity {
             List<Camera.Size> sizes = params.getSupportedPreviewSizes();
             cam.release();
 
-            int screenW = 640;
-            int screenH = 480;
-            final Activity act = goNativeActivity;
-            try {
-                android.graphics.Point screenSize = new android.graphics.Point();
-                act.getWindowManager().getDefaultDisplay().getSize(screenSize);
-                screenW = screenSize.x;
-                screenH = screenSize.y;
-            } catch (Throwable ignored) {}
-            
-            // Берем максимальную сторону экрана для сравнения
-            int maxScreen = Math.max(screenW, screenH);
-            
-            Camera.Size chosen = null;
-            if (sizes != null && !sizes.isEmpty()) {
-                for (Camera.Size s : sizes) {
-                    // Сравниваем максимальную сторону кадра с максимальной стороной экрана
-                    int maxSize = Math.max(s.width, s.height);
-                    if (maxSize <= maxScreen) {
-                        if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
-                            chosen = s;
-                        }
-                    }
-                }
-                if (chosen == null) chosen = sizes.get(0);
-                return chosen;
-            }
+            Camera.Size chosen = choosePreviewSize(sizes, largeBound, smallBound);
+            if (chosen != null) return chosen;
         } catch (Throwable t) {
             Log.e(TAG, "Java: getCameraPreviewSize failed: " + t.getMessage());
         }
@@ -446,6 +428,79 @@ public class GoNativeActivity extends NativeActivity {
             Log.e(TAG, "Java: getDeviceRotation failed: " + t.getMessage());
             return -1;
         }
+    }
+
+    // Usable screen size (px) minus current system insets (status bar / nav bar).
+    // UI-thread only. Falls back to raw getSize() when insets are unavailable.
+    private static int[] getUsableScreenSize() {
+        int screenW = 640;
+        int screenH = 480;
+        try {
+            android.graphics.Point p = new android.graphics.Point();
+            goNativeActivity.getWindowManager().getDefaultDisplay().getSize(p);
+            screenW = p.x;
+            screenH = p.y;
+            WindowInsets insets = goNativeActivity.getWindow().getDecorView().getRootWindowInsets();
+            if (insets != null) {
+                screenW -= (insets.getSystemWindowInsetLeft() + insets.getSystemWindowInsetRight());
+                screenH -= (insets.getSystemWindowInsetTop() + insets.getSystemWindowInsetBottom());
+            }
+        } catch (Throwable ignored) {}
+        if (screenW < 1) screenW = 1;
+        if (screenH < 1) screenH = 1;
+        return new int[]{screenW, screenH};
+    }
+
+    // Orientation-independent bounds {largeBound, smallBound} for camera preview dims,
+    // from the physical display edges minus total system insets. UI-thread only.
+    // Using physical edges (not current-orientation W/H) makes a preview chosen here
+    // fit in BOTH portrait and landscape, so it cannot overflow after rotation:
+    // shortEdge - sumInsets <= usable small side in any orientation (sumInsets >= the
+    // bars on the short edge in any orientation). Conservative on some devices but
+    // never overflows.
+    private static int[] getPreviewBounds() {
+        int realW = 1080, realH = 1920;
+        int sum = 0;
+        try {
+            android.graphics.Point p = new android.graphics.Point();
+            goNativeActivity.getWindowManager().getDefaultDisplay().getRealSize(p);
+            realW = p.x;
+            realH = p.y;
+            WindowInsets insets = goNativeActivity.getWindow().getDecorView().getRootWindowInsets();
+            if (insets != null) {
+                sum = (insets.getSystemWindowInsetTop() + insets.getSystemWindowInsetBottom()
+                        + insets.getSystemWindowInsetLeft() + insets.getSystemWindowInsetRight());
+            }
+        } catch (Throwable ignored) {}
+        int shortEdge = Math.min(realW, realH);
+        int longEdge = Math.max(realW, realH);
+        int smallBound = Math.max(1, shortEdge - sum);
+        int largeBound = Math.max(1, longEdge - sum);
+        return new int[]{largeBound, smallBound};
+    }
+
+    // Largest-area preview whose sides fit largeBound x smallBound (orientation-
+    // independent physical-edge bounds); falls back to the smallest-area preview if
+    // none fits. null if no sizes.
+    private static Camera.Size choosePreviewSize(List<Camera.Size> sizes, int largeBound, int smallBound) {
+        if (sizes == null || sizes.isEmpty()) return null;
+        Camera.Size best = null;
+        Camera.Size smallest = sizes.get(0);
+        for (Camera.Size s : sizes) {
+            int area = s.width * s.height;
+            if (area < smallest.width * smallest.height) smallest = s;
+            if (Math.max(s.width, s.height) <= largeBound && Math.min(s.width, s.height) <= smallBound) {
+                if (best == null || area > best.width * best.height) best = s;
+            }
+        }
+        return best != null ? best : smallest;
+    }
+
+    // Dialog W/H for a camera resolution, swapping dimensions in portrait so the
+    // landscape-sensor preview matches the upright screen orientation.
+    private static int[] computeDialogSize(int screenW, int screenH, int camW, int camH) {
+        if (screenW > screenH) return new int[]{camW, camH};
+        return new int[]{camH, camW};
     }
 
 
@@ -535,33 +590,30 @@ public class GoNativeActivity extends NativeActivity {
                 }
                 final Activity act = goNativeActivity;
                 try {
-                    // Получаем размеры экрана
-                    android.graphics.Point screenSize = new android.graphics.Point();
-                    act.getWindowManager().getDefaultDisplay().getSize(screenSize);
-                    int screenW = screenSize.x;
-                    int screenH = screenSize.y;
-                    
-                    Log.d(TAG, "Java: showCameraDialog screen size=" + screenW + "x" + screenH);
-                    
-                    Camera.Size previewSize = getCameraPreviewSize();
+                    int[] usable = getUsableScreenSize();
+                    int screenW = usable[0];
+                    int screenH = usable[1];
+                    int[] bounds = getPreviewBounds();
+                    int largeBound = bounds[0];
+                    int smallBound = bounds[1];
+                    qrBoundLarge = largeBound;
+                    qrBoundSmall = smallBound;
+
+                    Log.d(TAG, "Java: showCameraDialog usable size=" + screenW + "x" + screenH + " bounds large=" + largeBound + " small=" + smallBound);
+
+                    Camera.Size previewSize = getCameraPreviewSize(largeBound, smallBound);
                     int cameraW = 640, cameraH = 480;
                     if (previewSize != null) {
                         cameraW = previewSize.width;
                         cameraH = previewSize.height;
                     }
-                    
+
                     Log.d(TAG, "Java: camera preview resolution=" + cameraW + "x" + cameraH);
-                    
-                    int dialogW = cameraW;
-                    int dialogH = cameraH;
-                    
-                    boolean isLandscape = screenW > screenH;
-                    if (!isLandscape) {
-                        dialogW = cameraH;
-                        dialogH = cameraW;
-                    }
-                    
-                    
+
+                    int[] dialog = computeDialogSize(screenW, screenH, cameraW, cameraH);
+                    int dialogW = dialog[0];
+                    int dialogH = dialog[1];
+
                     Log.d(TAG, "Java: showCameraDialog calculated dialog size=" + dialogW + "x" + dialogH);
 
                     final int finalW = dialogW;
@@ -669,29 +721,11 @@ public class GoNativeActivity extends NativeActivity {
                 } catch (Throwable ignored) {}
 
                 try {
-                    int screenW = 640;
-                    int screenH = 480;
-                    final Activity act = goNativeActivity;
-                    try {
-                        android.graphics.Point screenSize = new android.graphics.Point();
-                        act.getWindowManager().getDefaultDisplay().getSize(screenSize);
-                        screenW = screenSize.x;
-                        screenH = screenSize.y;
-                    } catch (Throwable ignored) {}
-
                     List<Camera.Size> sizes = params.getSupportedPreviewSizes();
-                    Camera.Size chosen = null;
-                    if (sizes != null && !sizes.isEmpty()) {
-                        int maxScreen = Math.max(screenW, screenH);
-                        for (Camera.Size s : sizes) {
-                            int maxSize = Math.max(s.width, s.height);
-                            if (maxSize <= maxScreen) {
-                                if (chosen == null || (s.width * s.height) > (chosen.width * chosen.height)) {
-                                    chosen = s;
-                                }
-                            }
-                        }
-                        if (chosen == null) chosen = sizes.get(0);
+                    int lg = qrBoundLarge > 0 ? qrBoundLarge : 640;
+                    int sm = qrBoundSmall > 0 ? qrBoundSmall : 480;
+                    Camera.Size chosen = choosePreviewSize(sizes, lg, sm);
+                    if (chosen != null) {
                         params.setPreviewSize(chosen.width, chosen.height);
                         width = chosen.width;
                         height = chosen.height;
@@ -831,19 +865,13 @@ public class GoNativeActivity extends NativeActivity {
                 if (qrDialog == null || !qrDialog.isShowing()) return;
                 
                 try {
-                    android.graphics.Point screenSize = new android.graphics.Point();
-                    goNativeActivity.getWindowManager().getDefaultDisplay().getSize(screenSize);
-                    int screenW = screenSize.x;
-                    int screenH = screenSize.y;
- 
-                    int dialogW = cameraW;
-                    int dialogH = cameraH;
-                    
-                    boolean isLandscape = screenW > screenH;
-                    if (!isLandscape) {
-                        dialogW = cameraH;
-                        dialogH = cameraW;
-                    }
+                    int[] usable = getUsableScreenSize();
+                    int screenW = usable[0];
+                    int screenH = usable[1];
+
+                    int[] dialog = computeDialogSize(screenW, screenH, cameraW, cameraH);
+                    int dialogW = dialog[0];
+                    int dialogH = dialog[1];
 
                     
                     
@@ -910,6 +938,8 @@ public class GoNativeActivity extends NativeActivity {
         qrCamera = null;
         qrSquareBuf = null;
         qrSquareSide = 0;
+        qrBoundLarge = 0;
+        qrBoundSmall = 0;
         if (c == null) return;
         try { c.setPreviewCallbackWithBuffer(null); } catch (Throwable ignored) {}
         try { c.stopPreview(); } catch (Throwable ignored) {}
