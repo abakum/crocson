@@ -378,23 +378,6 @@ public class GoNativeActivity extends NativeActivity {
         return numberOfCameras > 0 ? 0 : -1;
     }
   
-    private static Camera.Size getCameraPreviewSize(int largeBound, int smallBound) {
-        try {
-            int camId = findBackCameraId();
-            if (camId < 0) return null;
-            Camera cam = Camera.open(camId);
-            Camera.Parameters params = cam.getParameters();
-            List<Camera.Size> sizes = params.getSupportedPreviewSizes();
-            cam.release();
-
-            Camera.Size chosen = choosePreviewSize(sizes, largeBound, smallBound);
-            if (chosen != null) return chosen;
-        } catch (Throwable t) {
-            Log.e(TAG, "Java: getCameraPreviewSize failed: " + t.getMessage());
-        }
-        return null;
-    }
-
     // Sensor orientation (degrees, CCW) of the back camera. Used by Go to rotate
     // the NV21 Y plane: setDisplayOrientation only affects SurfaceView/SurfaceTexture
     // output, NOT the raw preview bytes delivered to onPreviewFrame, so the buffer
@@ -601,12 +584,7 @@ public class GoNativeActivity extends NativeActivity {
 
                     Log.d(TAG, "Java: showCameraDialog usable size=" + screenW + "x" + screenH + " bounds large=" + largeBound + " small=" + smallBound);
 
-                    Camera.Size previewSize = getCameraPreviewSize(largeBound, smallBound);
                     int cameraW = 640, cameraH = 480;
-                    if (previewSize != null) {
-                        cameraW = previewSize.width;
-                        cameraH = previewSize.height;
-                    }
 
                     Log.d(TAG, "Java: camera preview resolution=" + cameraW + "x" + cameraH);
 

@@ -161,8 +161,12 @@ func qrDecodeWorker(ctx context.Context) {
 	}
 }
 
-// qrRoute delivers the decoded text through the existing intent channels so the
-// send-tab handler picks it up (textFromIntent for codes, uriFromIntent for IO-links).
+// qrRoute delivers the decoded text: IO-links go to uriFromIntent (send-tab
+// fromURI handler fills the secret/relay config); anything else is copied to the
+// clipboard and the settings QR tab is opened (qr.SetClipboard + qr.Show), so a
+// scanned link can be tapped to follow and plain text can be read — instead of
+// being dropped into the send bin. (Share-dialog text stays separate: it still
+// reaches textFromIntent via intentTextNotify in for_android.go.)
 func qrRoute(text string) {
 	if text == "" {
 		return
@@ -173,12 +177,20 @@ func qrRoute(text string) {
 		default:
 			log.Debug("uriFromIntent full")
 		}
-	} else {
-		select {
-		case textFromIntent <- text:
-		default:
-			log.Debug("textFromIntent full")
+		if at != nil && len(at.Items) > 1 {
+			fyne.Do(func() {
+				at.SelectIndex(1)
+			})
 		}
+	} else {
+		fyne.Do(func() {
+			if qr != nil {
+				qr.SetClipboard(text)
+				qr.Show()
+			} else {
+				log.Debug("qrRoute: qr not built, skipping clipboard/Show")
+			}
+		})
 	}
 	cb := qrOnResult
 	if cb != nil {
