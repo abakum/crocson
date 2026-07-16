@@ -3,5 +3,7 @@
     <style name="DeviceDefault" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

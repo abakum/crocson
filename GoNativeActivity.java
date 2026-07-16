@@ -966,10 +966,10 @@ public class GoNativeActivity extends NativeActivity {
 
     static void setAppThemeMode(int mode) {
         appThemeMode = mode;
-        applyStatusBarIcons();
+        applySystemBarsAppearance();
     }
 
-    static void applyStatusBarIcons() {
+    static void applySystemBarsAppearance() {
         final GoNativeActivity act = goNativeActivity;
         if (act == null) return;
         final boolean lightBg = (appThemeMode == 1) || (appThemeMode == 0 && !systemDark);
@@ -979,17 +979,23 @@ public class GoNativeActivity extends NativeActivity {
                 Window window = act.getWindow();
                 if (window == null) return;
                 try { window.setStatusBarColor(lightBg ? Color.WHITE : Color.BLACK); } catch (Throwable ignored) {}
+                try { window.setNavigationBarColor(lightBg ? Color.WHITE : Color.BLACK); } catch (Throwable ignored) {}
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     WindowInsetsController c = window.getInsetsController();
                     if (c != null) {
-                        int flag = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-                        c.setSystemBarsAppearance(lightBg ? flag : 0, flag);
+                        int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                                 | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                        c.setSystemBarsAppearance(lightBg ? mask : 0, mask);
                     }
                 } else {
                     View v = window.getDecorView();
                     int f = v.getSystemUiVisibility();
                     if (lightBg) f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
                     else f &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        if (lightBg) f |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                        else f &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                    }
                     v.setSystemUiVisibility(f);
                 }
             }
@@ -1715,7 +1721,7 @@ public class GoNativeActivity extends NativeActivity {
         boolean dark = (config.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         setDarkMode(dark);
         systemDark = dark;
-        applyStatusBarIcons();
+        applySystemBarsAppearance();
     }
 
     // Re-applies the system dark state on foreground return. On API 29 (Android 10) a uiMode change
