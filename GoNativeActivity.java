@@ -264,6 +264,13 @@ public class GoNativeActivity extends NativeActivity {
 
     private static Camera qrCamera = null;
     private static volatile boolean qrCameraRunning = false;
+    // Состояние фонарика QR-камеры. Инвертируется тапом по оверлею превью;
+    // применяется на камерном потоке как FLASH_MODE_TORCH/OFF. Сбрасывается в OFF
+    // при остановке камеры (один переключатель на живую сессию).
+    private static volatile boolean qrFlashOn = false;
+    // Задняя камера поддерживает FLASH_MODE_TORCH (запрос один раз в startCameraWithHolder).
+    // Гарант для toggleCameraFlash (молчаливый no-op если false).
+    private static volatile boolean qrFlashTorchSupported = false;
     private static int qrPreviewWidth = 0;
     private static int qrPreviewHeight = 0;
     private static int qrFrameCount = 0;
@@ -642,6 +649,11 @@ public class GoNativeActivity extends NativeActivity {
                     ));
                      root.addView(overlayView);
 
+                    overlayView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) { toggleCameraFlash(); }
+                    });
+
                     qrSurface = sv;
                     d.setContentView(root);
                     d.setCancelable(true);
@@ -715,6 +727,11 @@ public class GoNativeActivity extends NativeActivity {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                     }
                 } catch (Throwable ignored) {}
+                try {
+                    List<String> flashModes = params.getSupportedFlashModes();
+                    qrFlashTorchSupported = flashModes != null
+                            && flashModes.contains(Camera.Parameters.FLASH_MODE_TORCH);
+                } catch (Throwable ignored) { qrFlashTorchSupported = false; }
                 // Preview FPS range — pick the range with the highest max, and among
                 // those the smallest min (most flexible), so auto-exposure can adapt.
                 // Forcing the fixed 30000-30000 (the old tie-break) is fragile on old
@@ -798,6 +815,8 @@ public class GoNativeActivity extends NativeActivity {
             qrCamera = c;
             qrCameraRunning = true;
             c.startPreview();
+            // Уважать последний тап пользователя (напр. тап в окне до открытия камеры).
+            applyCameraFlash(c);
             Log.d(TAG, "Java: startCamera " + width + "x" + height);
             return true;
         } catch (Throwable t) {
@@ -814,6 +833,37 @@ public class GoNativeActivity extends NativeActivity {
         qrDialogShown = false;
         dismissCameraDialog();
         if (goNativeActivity != null) goNativeActivity.lifecycleEvent("cameraOpenFailed");
+    }
+
+    // Переключить фонарик. Вызывается из click-listener'а оверлея (UI-поток).
+    // Инвертирует желаемое состояние и применяет на камерном потоке (все camera-операции
+    // только на qrCameraHandler). Молчаливый no-op, если задняя камера без FLASH_MODE_TORCH.
+    private static void toggleCameraFlash() {
+        if (!qrFlashTorchSupported) return;
+        qrFlashOn = !qrFlashOn;
+        final boolean on = qrFlashOn;
+        ensureCameraThread();
+        qrCameraHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Camera c = qrCamera;
+                if (c != null) applyCameraFlash(c, on);
+            }
+        });
+    }
+
+    // Применить текущее qrFlashOn к открытой камере. Камерный поток.
+    private static void applyCameraFlash(Camera c) { applyCameraFlash(c, qrFlashOn); }
+
+    private static void applyCameraFlash(Camera c, boolean on) {
+        try {
+            Camera.Parameters params = c.getParameters();
+            params.setFlashMode(on ? Camera.Parameters.FLASH_MODE_TORCH
+                                   : Camera.Parameters.FLASH_MODE_OFF);
+            c.setParameters(params);
+        } catch (Throwable t) {
+            Log.e(TAG, "Java: setFlashMode failed: " + t.getMessage());
+        }
     }
 
     // Recompute + apply the preview display orientation for the current device
@@ -918,6 +968,8 @@ public class GoNativeActivity extends NativeActivity {
         qrSquareSide = 0;
         qrBoundLarge = 0;
         qrBoundSmall = 0;
+        qrFlashOn = false;
+        qrFlashTorchSupported = false;
         if (c == null) return;
         try { c.setPreviewCallbackWithBuffer(null); } catch (Throwable ignored) {}
         try { c.stopPreview(); } catch (Throwable ignored) {}

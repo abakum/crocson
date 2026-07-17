@@ -1231,7 +1231,10 @@ func (qr *QR) showTextDialog(text string) {
 		container.NewBorder(
 			wrapButton,
 			container.New(layout.NewCenterLayout(),
-				container.NewHBox(copyBtn, widget.NewLabel(""), cancelBtn),
+				container.NewVBox(
+					container.NewHBox(copyBtn, widget.NewLabel(""), cancelBtn),
+					widget.NewLabel(""),
+				),
 			), nil, nil,
 			container.NewVScroll(textEntry),
 		),
