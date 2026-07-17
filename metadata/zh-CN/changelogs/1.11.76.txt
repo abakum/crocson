@@ -1,0 +1,2 @@
+Android: 状态栏和导航栏适应应用主题
+Android: 改进了 QR 扫描仪

@@ -1,0 +1,2 @@
+Android: status bar and navigation bar adapt to app theme
+Android: improved QR scanner

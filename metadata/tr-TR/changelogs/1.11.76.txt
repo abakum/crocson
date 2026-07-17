@@ -1,0 +1,2 @@
+Android: durum çubuğu ve gezinme çubuğu uygulama temasına uyum sağlıyor
+Android: QR tarayıcı geliştirildi
