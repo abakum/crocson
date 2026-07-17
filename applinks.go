@@ -328,7 +328,9 @@ func (qr *QR) updateLink() {
 		}
 	} else {
 		qr.link.SetURL(nil)
-		qr.link.OnTapped = qr.showTextDialog
+		qr.link.OnTapped = func() {
+			qr.showTextDialog(qr.currentText)
+		}
 	}
 }
 
@@ -1195,9 +1197,9 @@ func (qr *QR) GetAccordionItem() *widget.AccordionItem {
 	return qr.accordionItem
 }
 
-func (qr *QR) showTextDialog() {
+func (qr *QR) showTextDialog(text string) {
 	textEntry := widget.NewMultiLineEntry()
-	textEntry.SetText(qr.currentText)
+	textEntry.SetText(text)
 	textEntry.Wrapping = fyne.TextWrapWord
 	TextWrapWord := true
 
@@ -1215,16 +1217,30 @@ func (qr *QR) showTextDialog() {
 		textEntry.Refresh()
 	})
 
-	dialog := dialog.NewCustom(
-		"Clipboard",
-		"OK",
+	var d dialog.Dialog
+	copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {
+		qr.app.Clipboard().SetContent(textEntry.Text)
+		d.Hide()
+	})
+	cancelBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
+		d.Hide()
+	})
+
+	dialog := dialog.NewCustomWithoutButtons(
+		"",
 		container.NewBorder(
 			wrapButton,
-			nil, nil, nil,
+			container.New(layout.NewCenterLayout(),
+				// container.NewVBox(
+				container.NewHBox(copyBtn, cancelBtn),
+				// widget.NewLabel(""),
+				// ),
+			), nil, nil,
 			container.NewVScroll(textEntry),
 		),
 		qr.window,
 	)
+	d = dialog
 	if !(isAndroid || asMobile || qr.window.FullScreen()) {
 		current := qr.window.Canvas().Size()
 		qr.window.Resize(current.AddWidthHeight(current.Width, 0))

@@ -55,7 +55,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		addEntry func(dst string, f func(d *widget.Button, p *widget.ProgressBar,
 			s *widget.Button,
 			l *widget.Label)) (newentry *fyne.Container)
-		dialogFileSave func(src string, parent fyne.Window, textDialog bool)
+		dialogFileSave func(src string, parent fyne.Window)
 		join           = func(elem ...string) string {
 			return filepath.FromSlash(filepath.Join(append([]string{tempDir, RECV}, elem...)...))
 		}
@@ -315,7 +315,8 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}
 		saveButton := widget.NewButtonWithIcon("", iconSB, func() {
 			if clipString != "" {
-				a.Clipboard().SetContent(clipString)
+				qr.showTextDialog(clipString)
+				return
 			}
 			if isMobile || asMobile {
 				// На Андроиде свернём каталог в  файл
@@ -344,14 +345,14 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 								removeEntry(dst, feDir, true)
 							}
 							fyne.Do(func() {
-								dialogFileSave(pathZip, w, false)
+								dialogFileSave(pathZip, w)
 							})
 						})
 					}
 					return
 				}
 			}
-			dialogFileSave(dst, w, clipString != "")
+			dialogFileSave(dst, w)
 		}) //saveButton
 
 		deleteButton := widget.NewButtonWithIcon("", icon, func() {
@@ -475,7 +476,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		}()
 	}
 
-	dialogFileSave = func(src string, parent fyne.Window, textDialog bool) {
+	dialogFileSave = func(src string, parent fyne.Window) {
 		fe, ok := load(&fileentries, src)
 		if !ok {
 			return
@@ -516,13 +517,10 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				fyne.Do(func() {
 					topline.SetText(lp("Saved all files to") + " Download")
 				})
-			} else if destination == nil {
-				log.Debug("folder selection canceled")
-				if textDialog {
-					qr.showTextDialog()
-				}
-				return
-			}
+		} else if destination == nil {
+			log.Debug("folder selection canceled")
+			return
+		}
 
 			if destination == nil {
 				u, cl, err = ChildDownload(child)
