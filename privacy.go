@@ -84,7 +84,7 @@ func showPrivacyConsent(a fyne.App, w fyne.Window, onResult func(bool)) {
 		centered(widget.NewHyperlink("隐私政策", policyURL("zh-CN"))),
 		centered(widget.NewHyperlink("Политика конфиденциальности", policyURL("ru-RU"))),
 		centered(widget.NewLabel("")),
-		centered(container.NewHBox(accept, decline)),
+		centered(container.NewHBox(accept, widget.NewLabel(""), decline)),
 	)
 
 	d = dialog.NewCustomWithoutButtons(lp("Accept"), content, w)
