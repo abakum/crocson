@@ -53,8 +53,7 @@ VercodeOperation:
   - '%c + 4'
 UpdateCheckData: FyneApp.toml|Build\\s*=\\s*(\\d+)|FyneApp.toml|Version\\s*=\\s*\"([^\"]+)\""
 
-generate_builds() {
-  echo "Builds:"
+generate_new_builds() {
   OFF=1
   for ABI in arm arm64 386 amd64; do
     VC=$((BUILD + OFF))
@@ -91,23 +90,57 @@ BEOF
   done
 }
 
-BUILDS=$(generate_builds)
+extract_history() {
+  # $1 = recipe yml, $2 = current versionName whose entries to drop
+  local yml="$1" ver="$2"
+  [ -f "$yml" ] || return 0
+  sed -n '/^Builds:/,/^AllowedAPKSigningKeys:/p' "$yml" \
+    | sed -e '1d' -e '/^AllowedAPKSigningKeys:/d' \
+    | awk -v RS='' -v ORS='\n\n' -v v="$ver" '
+        {
+          val = ""
+          n = split($0, lines, "\n")
+          for (i = 1; i <= n; i++) {
+            if (lines[i] ~ /^  - versionName:/) {
+              val = lines[i]
+              sub(/^  - versionName:[[:space:]]*/, "", val)
+              sub(/[[:space:]]*$/, "", val)
+              break
+            }
+          }
+          if (val == v) next
+          print
+        }
+      '
+}
+
+NEW_BUILDS=$(generate_new_builds)
 
 if [ -f "$YML" ]; then
   HEADER=$(sed '/^Builds:/q' "$YML" | sed '$d')
+  HISTORY=$(extract_history "$YML" "$VERSION")
 else
   HEADER="$HEADER_DEFAULT"
+  HISTORY=""
 fi
+
+HISTORY_COUNT=$(printf '%s\n' "$HISTORY" | grep -c '^  - versionName:' || true)
 
 {
   printf '%s\n' "$HEADER"
   echo ""
-  printf '%s\n' "$BUILDS"
+  echo "Builds:"
+  if [ -n "$HISTORY" ]; then
+    printf '%s\n\n' "$HISTORY"
+  fi
+  printf '%s\n' "$NEW_BUILDS"
   echo ""
   printf '%s\n' "$TAIL"
   echo "CurrentVersion: ${VERSION}"
   echo "CurrentVersionCode: $((BUILD + 4))"
 } > "$YML"
+
+echo "Preserved ${HISTORY_COUNT} history build(s), added 4 for v${VERSION}"
 
 echo "=== Generated recipe ==="
 cat "$YML"
