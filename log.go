@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -234,6 +235,11 @@ func logTabItem(a fyne.App, w fyne.Window) *container.TabItem {
 
 			if destination == nil {
 				u, cl, err = ChildDownload(child)
+				if errors.Is(err, ErrPermissionPending) && isAndroid {
+					log.Debug("Permission pending for log export, adding to pending saves")
+					AddPendingSave("log_export", child, nil, nil, w)
+					return
+				}
 				if err != nil {
 					log.Errorf("append child %s to Downloads: %v", child, err)
 					return

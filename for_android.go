@@ -1003,10 +1003,22 @@ func CreateFileInDownloads(fileName, mimeType string) (string, error) {
 		return "", fmt.Errorf("failed to create file: %w", err)
 	}
 	if result == "" {
-		return "", fmt.Errorf("empty result from createFileInDownloads")
+		return "", ErrPermissionPending
 	}
 
 	return result, nil
+}
+
+func AddPendingSave(src, dest string, lu fyne.ListableURI, fe *fyne.Container, w fyne.Window) {
+	ps := &PendingSave{
+		Src:  src,
+		Dest: dest,
+		LU:   lu,
+		FE:   fe,
+		W:    w,
+	}
+	pendingSaves.Store(src, ps)
+	log.Debug("Added pending save: ", src)
 }
 
 func ChildDownload(component string) (child fyne.URI, cleanup func(), err error) {
@@ -1014,7 +1026,7 @@ func ChildDownload(component string) (child fyne.URI, cleanup func(), err error)
 
 	uri, err := CreateFileInDownloads(component, "")
 	if err != nil {
-		err = fmt.Errorf("createFileInDownloads failed: %v", err)
+		err = fmt.Errorf("createFileInDownloads failed: %w", err)
 		return
 	}
 

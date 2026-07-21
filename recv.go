@@ -29,6 +29,25 @@ import (
 	log "github.com/schollz/logger"
 )
 
+var (
+	processPendingSaves func()
+	clearPendingSaves   func()
+)
+
+// ErrPermissionPending indicates that storage permission is being requested
+var ErrPermissionPending = errors.New("permission request pending")
+
+// PendingSave represents a file save operation waiting for storage permission
+type PendingSave struct {
+	Src  string
+	Dest string
+	LU   fyne.ListableURI
+	FE   *fyne.Container
+	W    fyne.Window
+}
+
+var pendingSaves sync.Map
+
 func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	var (
 		cosED,
@@ -517,10 +536,10 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				fyne.Do(func() {
 					topline.SetText(lp("Saved all files to") + " Download")
 				})
-		} else if destination == nil {
-			log.Debug("folder selection canceled")
-			return
-		}
+			} else if destination == nil {
+				log.Debug("folder selection canceled")
+				return
+			}
 
 			if destination == nil {
 				u, cl, err = ChildDownload(child)
@@ -972,16 +991,16 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			cdLock.Store(0)
 			return
 		}
-	log.SetLevel(debugString(a))
-	log.Debug("croc client created")
+		log.SetLevel(debugString(a))
+		log.Debug("croc client created")
 
-	// Hold a WifiManager.MulticastLock while local peer discovery runs so the
-	// wifi driver delivers inbound multicast datagrams. Required only on
-	// Android; no-op on other platforms. croc discovers peers during Receive
-	// when local is not disabled.
-	if !opt.DisableLocal {
-		acquireMulticastLock()
-	}
+		// Hold a WifiManager.MulticastLock while local peer discovery runs so the
+		// wifi driver delivers inbound multicast datagrams. Required only on
+		// Android; no-op on other platforms. croc discovers peers during Receive
+		// when local is not disabled.
+		if !opt.DisableLocal {
+			acquireMulticastLock()
+		}
 
 		if a.Preferences().Bool("remember") {
 			p := NewPreferences(a.Preferences())
@@ -1076,13 +1095,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							log.Infof("enabled port forwarding")
 						}
 					}
-				if client.Step2FileInfoTransferred {
-					if once {
-						// Начало приёма
-						once = false
-						caffeinated = true
-						caffeinate(1)
-						toplineW.SetText(lp("Receiving file"))
+					if client.Step2FileInfoTransferred {
+						if once {
+							// Начало приёма
+							once = false
+							caffeinated = true
+							caffeinate(1)
+							toplineW.SetText(lp("Receiving file"))
 
 							for i, fi := range client.FilesToTransfer {
 								if isMobile || asMobile {
@@ -1237,7 +1256,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				// Обычный файл — с относительным путём (сохраняем структуру каталогов)
 				child := relFromRoot(src)
 				var (
-					u   fyne.URI
+					u    fyne.URI
 					uerr error
 				)
 				if lu != nil {
@@ -1311,6 +1330,13 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				}
 			} else {
 				u, cl, uerr = ChildDownload(child)
+				if errors.Is(uerr, ErrPermissionPending) {
+					log.Debug("Permission pending, adding to pending saves: ", src)
+					if isAndroid {
+						AddPendingSave(src, child, lu, fe, w)
+					}
+					return
+				}
 				if p, perr := storage.Parent(u); perr == nil {
 					lu, perr = storage.ListerForURI(p)
 					if perr != nil {
@@ -1403,6 +1429,123 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			return
 		}
 		ShowFolderOpen(filesSave, w)
+	}
+
+	processPendingSaves = func() {
+		if !isAndroid {
+			return
+		}
+		var snapshot []*PendingSave
+		pendingSaves.Range(func(key, value interface{}) bool {
+			snapshot = append(snapshot, value.(*PendingSave))
+			return true
+		})
+		if len(snapshot) == 0 {
+			return
+		}
+
+		n := int32(len(snapshot))
+		var remaining int32 = n
+		var succeeded int32
+		finishOne := func(ok bool) {
+			if ok {
+				atomic.AddInt32(&succeeded, 1)
+			}
+			if atomic.AddInt32(&remaining, -1) == 0 && atomic.LoadInt32(&succeeded) == n {
+				fyne.Do(func() {
+					topline.SetText(lp("Saved all files to") + " Download")
+					NewToast(w, lp("Saved all files to")+" Download").Show()
+				})
+			}
+		}
+
+		for _, ps := range snapshot {
+			log.Debug("Processing pending save: ", ps.Src)
+
+			uri, err := CreateFileInDownloads(ps.Dest, "")
+			if err != nil {
+				log.Errorf("Pending save failed for %s: %v", ps.Src, err)
+				pendingSaves.Delete(ps.Src)
+				fyne.Do(func() {
+					if ps.W != nil {
+						NewToast(ps.W, fmt.Sprintf("Error saving %s: %v", ps.Dest, err)).Show()
+					}
+				})
+				finishOne(false)
+				continue
+			}
+
+			child, err := storage.ParseURI(uri)
+			if err != nil {
+				log.Errorf("Failed to parse pending URI %s: %v", uri, err)
+				pendingSaves.Delete(ps.Src)
+				finishOne(false)
+				continue
+			}
+
+			destination, err := storage.Writer(child)
+			if err != nil {
+				log.Errorf("Failed to create writer for pending save %s: %v", ps.Src, err)
+				pendingSaves.Delete(ps.Src)
+				fyne.Do(func() {
+					if ps.W != nil {
+						NewToast(ps.W, fmt.Sprintf("Error saving %s: %v", ps.Dest, err)).Show()
+					}
+				})
+				finishOne(false)
+				continue
+			}
+
+			copyFrom := func(src string) {
+				copyToUWCProgress(destination, src, ps.FE, func(err error) {
+					destination.Close()
+					if err != nil {
+						log.Errorf("Pending copy failed %s %s: %v", src, destination.URI(), err)
+						fyne.Do(func() {
+							if ps.W != nil {
+								NewToast(ps.W, fmt.Sprintf("Error saving %s: %v", ps.Dest, err)).Show()
+							}
+						})
+						finishOne(false)
+						return
+					}
+					log.Debugf("Pending copy %s %s", src, destination.URI())
+					removeEntry(src, ps.FE, true)
+					pendingSaves.Delete(ps.Src)
+					finishOne(true)
+				})
+			}
+
+			if isLinkDir(ps.Src) {
+				pathZip := ps.Src + DOTZIP
+				ZipDirectoryProgress(pathZip, ps.Src, ps.FE, func(err error) {
+					if err != nil {
+						log.Errorf("Pending zip %s %s: %v", ps.Src, pathZip, err)
+						removeEntry(pathZip, ps.FE, true)
+						pendingSaves.Delete(ps.Src)
+						finishOne(false)
+						return
+					}
+					if feDir, ok := load(&fileentries, ps.Src); ok {
+						removeEntry(ps.Src, feDir, true)
+					}
+					copyFrom(pathZip)
+				})
+				continue
+			}
+			copyFrom(ps.Src)
+		}
+	}
+
+	clearPendingSaves = func() {
+		if !isAndroid {
+			return
+		}
+		pendingSaves.Range(func(key, value interface{}) bool {
+			pendingSaves.Delete(key)
+			return true
+		})
+		log.Debug("Cleared pending saves")
 	}
 
 	top := container.NewVBox(

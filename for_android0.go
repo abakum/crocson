@@ -18,6 +18,12 @@ import (
 
 var lifecycleFromJava chan string
 
+func AddPendingSave(_, _ string, _ fyne.ListableURI, _ *fyne.Container, _ fyne.Window) {}
+
+func CreateFileInDownloads(fileName, mimeType string) (string, error) {
+	return "", errors.New("CreateFileInDownloads is a no-op on non-Android platforms")
+}
+
 func uriBase(uri fyne.URI) string {
 	return sanitizeFileName(uri.Name())
 }
@@ -313,6 +319,6 @@ func setAppThemeMode(mode int32) {}
 // not shown, so these are unused no-ops kept for compilation parity.
 func startQRScan(_ fyne.App, _ fyne.Window, _ func(string)) {}
 func stopQRScan()                                           {}
-func qrLifecyclePause()                                    {}
-func qrLifecycleCancel()                                   {}
-func qrCameraOpenFailed()                                  {}
+func qrLifecyclePause()                                     {}
+func qrLifecycleCancel()                                    {}
+func qrCameraOpenFailed()                                   {}

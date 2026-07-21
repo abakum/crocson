@@ -1629,16 +1629,27 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 							at.OnSelected(at.Selected())
 							de.Bounce(ti.Content.Refresh)
 						})
-				case "stop":
-					saveAccordionState()
-				case "pause":
-					qrLifecyclePause()
-				case "qrCancel":
-					qrLifecycleCancel()
-				case "cameraOpenFailed":
-					qrCameraOpenFailed()
-				case "permissionDialog":
-				}
+					case "stop":
+						saveAccordionState()
+					case "pause":
+						qrLifecyclePause()
+					case "qrCancel":
+						qrLifecycleCancel()
+					case "cameraOpenFailed":
+						qrCameraOpenFailed()
+					case "permissionDialog":
+					case "storagePermissionGranted":
+						if processPendingSaves != nil {
+							go processPendingSaves()
+						}
+					case "storagePermissionDenied":
+						if clearPendingSaves != nil {
+							clearPendingSaves()
+						}
+						fyne.Do(func() {
+							NewToast(w, lp("Storage permission required")).Show()
+						})
+					}
 
 				case text := <-textFromIntent:
 					if text == "" {

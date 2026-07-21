@@ -96,6 +96,7 @@ public class GoNativeActivity extends NativeActivity {
 	private boolean ignoreKey = false;
 	private boolean keyboardUp = false;
 	private ArrayList<String> pendingIntentURIs = null;
+	private static boolean permissionRequested = false;
 
 	public GoNativeActivity() {
 		super();
@@ -1159,11 +1160,14 @@ public class GoNativeActivity extends NativeActivity {
                 return createFileInDownloadsModern(fileName, mimeType);
             } else {
                 if (goNativeActivity.checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != 0) {
-                    goNativeActivity.requestPermissions(new String[]{
-                        "android.permission.READ_EXTERNAL_STORAGE",
-                        "android.permission.WRITE_EXTERNAL_STORAGE"
-                    }, 123);
-                    return null;
+                    if (!permissionRequested) {
+                        goNativeActivity.requestPermissions(new String[]{
+                            "android.permission.READ_EXTERNAL_STORAGE",
+                            "android.permission.WRITE_EXTERNAL_STORAGE"
+                        }, 123);
+                        permissionRequested = true;
+                    }
+                    return "";
                 }
                 return createFileInDownloadsLegacy(fileName);
             }
@@ -1623,6 +1627,7 @@ public class GoNativeActivity extends NativeActivity {
 		super.onCreate(savedInstanceState);
 		setupEntry();
 		updateTheme(getResources().getConfiguration());
+		permissionRequested = false;
 		Log.d(TAG, "Java: onCreate");
 		lifecycleEvent("create");
 
@@ -1883,19 +1888,22 @@ public class GoNativeActivity extends NativeActivity {
             return;
         }
         Log.d(TAG, "Java: onRequestPermissionsResult requestCode=" + requestCode + ", grantResults=" + grantResults[0]);
-        if (requestCode == 123 && pendingIntentURIs != null) {
-            boolean granted = false;
-            for (int result : grantResults) {
-                if (result == PackageManager.PERMISSION_GRANTED) granted = true;
-            }
-            Log.d(TAG, "Java: permissionResult granted=" + granted + ", pending URIs=" + pendingIntentURIs.size());
-            if (granted) {
-                for (String uri : pendingIntentURIs) {
-                    Log.d(TAG, "Java: permissionResult sending URI=" + uri);
-                    logIntentURI(uri);
+        if (requestCode == 123) {
+            boolean granted = grantResults != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            Log.d(TAG, "Java: storage permission granted=" + granted);
+            lifecycleEvent(granted ? "storagePermissionGranted" : "storagePermissionDenied");
+            permissionRequested = false;
+            if (pendingIntentURIs != null) {
+                Log.d(TAG, "Java: permissionResult granted=" + granted + ", pending URIs=" + pendingIntentURIs.size());
+                if (granted) {
+                    for (String uri : pendingIntentURIs) {
+                        Log.d(TAG, "Java: permissionResult sending URI=" + uri);
+                        logIntentURI(uri);
+                    }
                 }
+                pendingIntentURIs = null;
             }
-            pendingIntentURIs = null;
         }
     }
 
