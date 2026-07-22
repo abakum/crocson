@@ -437,7 +437,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		dst = filepath.FromSlash(dst)
 		// log.Debugf("addEntry %s", dst)
 		if _, ok := load(&fileentries, dst); ok {
-			// log.Debugf("exists %s", dst)
+			log.Warnf("exists %s", dst)
 			return nil
 		}
 		base := filepath.Base(dst)
