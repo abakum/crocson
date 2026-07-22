@@ -437,7 +437,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		dst = filepath.FromSlash(dst)
 		// log.Debugf("addEntry %s", dst)
 		if _, ok := load(&fileentries, dst); ok {
-			log.Warnf("exists %s", dst)
+			// log.Debugf("exists %s", dst)
 			return nil
 		}
 		base := filepath.Base(dst)
@@ -1789,6 +1789,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 						uPath := uriPath(u)
 						fe := addEntry(dst, nil)
 						if fe == nil {
+							log.Warnf("exists %s", dst)
 							continue
 						}
 						if fi, err := os.Stat(uPath); err == nil {
@@ -1867,6 +1868,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					}
 					fe := addEntry(dst, nil)
 					if fe == nil {
+						log.Warnf("exists %s", dst)
 						continue
 					}
 

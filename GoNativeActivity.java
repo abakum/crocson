@@ -1056,17 +1056,42 @@ public class GoNativeActivity extends NativeActivity {
     }
 
     static String getFileName(String uriStr) {
+        // 1) Direct query — works for document URIs (.../document/msf:56) and
+        //    MediaStore URIs, returning each child's OWN name. For a raw tree
+        //    root this throws/returns nothing; the helper swallows that so we
+        //    fall through to the rebuild below.
+        String name = queryDisplayName(uriStr);
+        if (name != null && !name.isEmpty()) return name;
+
+        // 2) Bare SAF tree-root: rebuild the document URI from the tree document
+        //    id and query that. Child document URIs already returned at step 1,
+        //    so getTreeDocumentId never collapses a child onto the root.
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriStr);
+            String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
+            android.net.Uri docUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(uri, treeDocId);
+            if (docUri != null) {
+                name = queryDisplayName(docUri.toString());
+                if (name != null && !name.isEmpty()) return name;
+            }
+        } catch (Exception ignored) {
+            // not a tree URI -> nothing else to try
+        }
+        return null;
+    }
+
+    private static String queryDisplayName(String uriStr) {
         try {
             android.net.Uri uri = android.net.Uri.parse(uriStr);
             String[] projection = {android.provider.OpenableColumns.DISPLAY_NAME};
             android.database.Cursor cursor = goNativeActivity.getContentResolver().query(uri, projection, null, null, null);
             if (cursor != null) {
                 try {
-                    if (cursor.moveToFirst()) return cursor.getString(0);
+                    if (cursor.moveToFirst() && cursor.getString(0) != null) return cursor.getString(0);
                 } finally { cursor.close(); }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Java: getFileName failed: " + e.getMessage());
+            Log.e(TAG, "Java: queryDisplayName failed: " + e.getMessage());
         }
         return null;
     }
