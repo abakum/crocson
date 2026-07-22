@@ -28,6 +28,10 @@ func uriBase(uri fyne.URI) string {
 	return sanitizeFileName(uri.Name())
 }
 
+func uriPath(uri fyne.URI) string {
+	return uri.Path()
+}
+
 func IsFilePickerSupported() (bool, error) { return !noDialogs, nil }
 func IsSaveDialogSupported() (bool, error) { return !noDialogs, nil }
 

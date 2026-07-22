@@ -1786,17 +1786,18 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 					name := uriBase(u)
 					dst := join(name)
 					if u.Scheme() == "file" {
+						uPath := uriPath(u)
 						fe := addEntry(dst, nil)
 						if fe == nil {
 							continue
 						}
-						if fi, err := os.Stat(u.Path()); err == nil {
+						if fi, err := os.Stat(uPath); err == nil {
 							if fi.IsDir() {
 								go func() {
 									var wg sync.WaitGroup
 									log.Debugf("copyFiles: %v",
-										copyFiles(storage.NewFileURI(u.Path()), dst, func(u fyne.URI, dstPath string) error {
-											src := u.Path()
+										copyFiles(storage.NewFileURI(uPath), dst, func(u fyne.URI, dstPath string) error {
+											src := uriPath(u)
 											rel, err := filepath.Rel(join(), dstPath)
 											if err != nil {
 												rel = dstPath
@@ -1836,7 +1837,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 								}()
 								continue
 							}
-							CopyFileProgress(u.Path(), dst, fe, func(err error) {
+							CopyFileProgress(uPath, dst, fe, func(err error) {
 								showPage()
 								if err != nil {
 									log.Errorf("copy %s %s: %s", u, dst, err)

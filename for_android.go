@@ -718,6 +718,15 @@ func uriBase(uri fyne.URI) string {
 	return base(uri.Path())
 }
 
+func uriPath(uri fyne.URI) string {
+	path := uri.Path()
+	decoded, err := url.PathUnescape(path)
+	if err != nil {
+		return path
+	}
+	return decoded
+}
+
 func base(path string) string {
 	decoded, err := url.PathUnescape(path)
 	if err != nil {
