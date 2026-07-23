@@ -101,10 +101,6 @@ func copyFiles(srcURI fyne.URI, dstDir string, copyFile CopyFile) error {
 			// Сохраняем - Store безопасен для конкурентного доступа
 			visited.Store(currentStr, true)
 
-			if isAndroid && deep > 1 {
-				return fmt.Errorf("walk deep %d", deep)
-			}
-
 			children, err := List(current)
 			if err != nil {
 				return fmt.Errorf("walk list %s: %w", current, err)

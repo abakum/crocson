@@ -1295,14 +1295,25 @@ public class GoNativeActivity extends NativeActivity {
         return -1;
     }
 
+    // document-id каталога, ЧЬИХ детей нужно получить:
+    //   вложенный документ (.../tree/<root>/document/<child>) -> getDocumentId -> <child>
+    //   голый tree-root      (.../tree/<root>)                -> getTreeDocumentId -> <root>
+    private static String listParentDocumentId(android.net.Uri uri) {
+        try {
+            return android.provider.DocumentsContract.getDocumentId(uri);
+        } catch (Exception ignored) {
+            return android.provider.DocumentsContract.getTreeDocumentId(uri);
+        }
+    }
+
     static int countChildren(String uriStr) {
         try {
             android.net.Uri uri = android.net.Uri.parse(uriStr);
             android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
             android.net.Uri childUri = null;
             try {
-                String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
-                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, treeDocId);
+                String parentDocId = listParentDocumentId(uri);
+                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, parentDocId);
             } catch (Exception e1) {
                 try {
                     String docId = android.provider.DocumentsContract.getDocumentId(uri);
@@ -1329,8 +1340,8 @@ public class GoNativeActivity extends NativeActivity {
             android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
             android.net.Uri childUri = null;
             try {
-                String treeDocId = android.provider.DocumentsContract.getTreeDocumentId(uri);
-                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, treeDocId);
+                String parentDocId = listParentDocumentId(uri);
+                childUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(uri, parentDocId);
                 android.database.Cursor testCursor = resolver.query(childUri, new String[]{"_display_name", "document_id"}, null, null, null);
                 if (testCursor != null) { testCursor.close(); }
                 else {
