@@ -4,8 +4,8 @@ Website = "https://github.com/abakum/crocson/releases"
 Icon = "res/mipmap-xxxhdpi-v4/icon.png"
 Name = "crocson"
 ID = "com.github.abakum.crocson"
-Version = "1.11.76"
-Build = 2005
+Version = "1.11.77"
+Build = 2010
 
 [Source]
 Repo = "https://github.com/abakum/crocson"

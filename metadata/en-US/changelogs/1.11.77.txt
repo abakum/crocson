@@ -1,0 +1,6 @@
+Android: torch toggle added to the QR scanner
+Android: received folders are saved as nested trees instead of ZIP archives
+Android: reading the file tree of a selected folder is no longer depth-limited
+Android 9: file saving is deferred until storage permission is granted
+Android 9: fixed Cyrillic paths from file:// (Total Commander)
+Receiver: clipboard text is shown in a viewer window instead of being copied directly

@@ -1,0 +1,6 @@
+Android: QR 扫描仪新增手电筒切换
+Android: 接收的文件夹以嵌套树结构保存，而非 ZIP 压缩包
+Android: 读取所选文件夹的文件树不再有深度限制
+Android 9: 文件保存推迟到授予存储权限之后
+Android 9: 修正 file:// 中的西里尔字符路径（Total Commander）
+接收: 剪贴板文本改在查看窗口中显示，而非直接复制

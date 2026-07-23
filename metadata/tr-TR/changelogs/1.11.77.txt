@@ -1,0 +1,6 @@
+Android: QR tarayıcıya el feneri düğmesi eklendi
+Android: alınan klasörler ZIP arşivi yerine iç içe ağaç yapısıyla kaydediliyor
+Android: seçili klasörün dosya ağacını okuma derinlik sınırı kaldırıldı
+Android 9: depolama izni verilene kadar dosya kaydı erteleniyor
+Android 9: file:// içindeki Kiril karakterli yollar düzeltildi (Total Commander)
+Alıcı: pano metni doğrudan kopyalamak yerine bir görüntüleyici penceresinde gösteriliyor
