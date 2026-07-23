@@ -85,6 +85,12 @@ func ChildViaMediaStore(parent fyne.URI, component string) (child fyne.URI, clea
 	return
 }
 
+func ChildTreeNested(parent fyne.URI, relPath string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+	err = fmt.Errorf("not supported")
+	return
+}
+
 func createViaMediaStoreFromFileURI(_ fyne.URI) (fyne.URI, error) {
 	return nil, fmt.Errorf("not supported")
 }

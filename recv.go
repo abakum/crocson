@@ -78,8 +78,9 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		join           = func(elem ...string) string {
 			return filepath.FromSlash(filepath.Join(append([]string{tempDir, RECV}, elem...)...))
 		}
-		ShowFilesSave func()
-		filesSave     func(lu fyne.ListableURI, err error)
+		ShowFilesSave   func()
+		filesSave       func(lu fyne.ListableURI, err error)
+		saveEntryMobile func(srcDir string, lu fyne.ListableURI, fe *fyne.Container, done func(ok bool))
 	)
 	var (
 		cancelButton   *widget.Button
@@ -337,39 +338,51 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				qr.showTextDialog(clipString)
 				return
 			}
-			if isMobile || asMobile {
-				// На Андроиде свернём каталог в  файл
-				if isLinkDir(dst) {
-					pathZip := dst + DOTZIP
-					if _, err := os.Stat(pathZip); err == nil {
-						log.Errorf("exists %s", pathZip)
-						return
-					}
-
-					if fe := addEntry(pathZip, nil); fe != nil {
-						ZipDirectoryProgress(pathZip, dst, fe, func(err error) {
-							if err != nil {
-								log.Errorf("zip %s %s: %v", dst, pathZip, err)
-								removeEntry(pathZip, fe, true)
-								return
+			if (isMobile || asMobile) && isLinkDir(dst) {
+				// Сохраняем каталог деревом, как на десктопе (без zip).
+				// Сначала каталогпикер; если не поддерживается — в Download.
+				finishDir := func(lu fyne.ListableURI) {
+					feDir, _ := load(&fileentries, dst)
+					saveEntryMobile(dst, lu, feDir, func(ok bool) {
+						if !ok {
+							return
+						}
+						if feDir == nil {
+							feDir, _ = load(&fileentries, dst)
+						}
+						removeEntry(dst, feDir, true)
+						fyne.Do(func() {
+							if mapEmpty(&fileentries) {
+								if lu != nil {
+									topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+								} else {
+									topline.SetText(lp("Saved all files to") + " Download")
+								}
 							}
-							log.Debugf("zip %s %s", dst, pathZip)
-
-							if _, err := os.Stat(pathZip); err != nil {
-								log.Errorf("stat %s: %v", pathZip, err)
-								return
-							}
-
-							if feDir, ok := load(&fileentries, dst); ok {
-								removeEntry(dst, feDir, true)
-							}
-							fyne.Do(func() {
-								dialogFileSave(pathZip, w)
-							})
 						})
-					}
+					})
+				}
+				supported, ferr := IsFolderPickerSupported()
+				if ferr != nil {
+					log.Errorf("folder picker: %v", ferr)
+					supported = false
+				}
+				if !supported {
+					finishDir(nil)
 					return
 				}
+				ShowFolderOpen(func(lu fyne.ListableURI, err error) {
+					if err != nil {
+						log.Errorf("folder selection: %v", err)
+						return
+					}
+					if lu == nil {
+						log.Debug("folder selection canceled")
+						return
+					}
+					finishDir(lu)
+				}, w)
+				return
 			}
 			dialogFileSave(dst, w)
 		}) //saveButton
@@ -490,6 +503,90 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 			// все wg.Add выполняются синхронно внутри copyFiles в этой же горутине,
 			// поэтому к моменту Wait они все уже сделаны
+			wg.Wait()
+			done(!failed.Load())
+		}()
+	}
+
+	// saveEntryMobile — мобильный аналог saveEntryDesktop: сохраняет каталог
+	// (деревом) или отдельный файл в назначение (каталогпикер или Download),
+	// сохраняя путь относительно корня корзины. На Android вместо os.MkdirAll
+	// создаём документы через SAF (пикер) или MediaStore relative_path (Download),
+	// поэтому структура вложенных каталогов сохраняется без zip.
+	saveEntryMobile = func(srcDir string, lu fyne.ListableURI, fe *fyne.Container, done func(ok bool)) {
+		// Соберём список файлов для сохранения. Для каталога — все файлы рекурсивно
+		// (lsr2), для файла — он сам.
+		var files []string
+		if isLinkDir(srcDir) {
+			files = lsr2(srcDir)
+			if len(files) == 0 {
+				// Пустой каталог: через Download создать пустую папку нельзя,
+				// через SAF можно, но файлов нет — считаем сохранение успешным.
+				done(true)
+				return
+			}
+		} else {
+			files = []string{srcDir}
+		}
+
+		go func() {
+			var (
+				wg     sync.WaitGroup
+				failed atomic.Bool
+			)
+			for _, f := range files {
+				f := f
+				rel := relFromRoot(f)
+				var (
+					u    fyne.URI
+					cl   = func() {}
+					uerr error
+				)
+				if lu != nil {
+					u, cl, uerr = ChildTreeNested(lu, rel)
+				} else {
+					u, cl, uerr = ChildDownload(rel)
+					if errors.Is(uerr, ErrPermissionPending) {
+						if isAndroid {
+							AddPendingSave(srcDir, filepath.Base(srcDir), lu, fe, w)
+						}
+						done(false)
+						return
+					}
+				}
+				if uerr != nil {
+					log.Errorf("%s: %v", rel, uerr)
+					failed.Store(true)
+					continue
+				}
+				destination, werr := storage.Writer(u)
+				if werr != nil {
+					cl()
+					log.Errorf("writer %s: %v", u, werr)
+					failed.Store(true)
+					continue
+				}
+				wg.Add(1)
+				feCopy := fe
+				if isLinkDir(srcDir) {
+					feCopy = addEntry(f, func(d *widget.Button, p *widget.ProgressBar, s *widget.Button, l *widget.Label) {
+						l.SetText(rel)
+					})
+				}
+				copyToUWCProgress(destination, f, feCopy, func(err error) {
+					defer wg.Done()
+					cl()
+					if err != nil {
+						failed.Store(true)
+						log.Errorf("copy %s %s: %v", f, destination.URI(), err)
+						removeEntry(f, feCopy, false)
+						return
+					}
+					log.Debugf("copy %s %s", f, destination.URI())
+					// только UI: исходный файл удалит RemoveAll(srcDir)
+					removeEntry(f, feCopy, false)
+				})
+			}
 			wg.Wait()
 			done(!failed.Load())
 		}()
@@ -1310,23 +1407,37 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 
 			// === Мобильные ===
-			child := filepath.Base(src)
+			// Каталог сохраняем деревом (как на десктопе), без zip
 			if isLinkDir(src) {
-				child += DOTZIP
+				saveEntryMobile(src, lu, fe, func(ok bool) {
+					if ok {
+						removeEntry(src, fe, true)
+						fyne.Do(func() {
+							if mapEmpty(&fileentries) {
+								if lu != nil {
+									topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), lu.Path()))
+								} else {
+									topline.SetText(lp("Saved all files to") + " Download")
+								}
+							}
+						})
+					}
+				})
+				return
 			}
+
+			// Одиночный файл — с относительным путём от корня корзины
+			child := relFromRoot(src)
 			var (
 				u    fyne.URI
 				cl   = func() {}
 				uerr error
 			)
 			if lu != nil {
-				u, cl, uerr = ChildViaMediaStore(lu, child)
+				u, cl, uerr = ChildTreeNested(lu, child)
 				if uerr != nil {
-					u, cl, uerr = Child(lu, child)
-					if uerr != nil {
-						log.Errorf("%s/%s: %v", lu, child, uerr)
-						u, cl, uerr = ChildDownload(child)
-					}
+					log.Errorf("%s/%s: %v", lu, child, uerr)
+					return
 				}
 			} else {
 				u, cl, uerr = ChildDownload(child)
@@ -1356,57 +1467,26 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 				return
 			}
 
-			copyFrom := func(src string) {
-				copyToUWCProgress(destination, src, fe, func(err error) {
-					cl()
-					if err != nil {
-						log.Errorf("copy %s %s: %v", src, destination.URI(), err)
-						fyne.Do(func() {
-							topline.SetText(fmt.Sprintf("Error saving %s: %v", child, err))
-						})
-						return
-					}
-					log.Debugf("copy %s %s", src, destination.URI())
-					removeEntry(src, fe, true)
-
-					if mapEmpty(&fileentries) {
-						name := uriBase(destination.URI())
-						parent := strings.TrimSuffix(destination.URI().String(), name)
-						fyne.Do(func() {
-							topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), parent))
-						})
-					}
-				})
-			}
-
-			if isLinkDir(src) {
-				// На Андроиде свернём каталог в файл
-				pathZip := src + DOTZIP
-				if _, err := os.Stat(pathZip); err == nil {
-					log.Errorf("exists %s", pathZip)
+			copyToUWCProgress(destination, src, fe, func(err error) {
+				cl()
+				if err != nil {
+					log.Errorf("copy %s %s: %v", src, destination.URI(), err)
+					fyne.Do(func() {
+						topline.SetText(fmt.Sprintf("Error saving %s: %v", child, err))
+					})
 					return
 				}
-				ZipDirectoryProgress(pathZip, src, fe, func(err error) {
-					if err != nil {
-						log.Errorf("zip %s %s: %v", src, pathZip, err)
-						removeEntry(pathZip, fe, true)
-						return
-					}
+				log.Debugf("copy %s %s", src, destination.URI())
+				removeEntry(src, fe, true)
 
-					if _, err := os.Stat(pathZip); err != nil {
-						log.Errorf("stat %s: %v", pathZip, err)
-						return
-					}
-					log.Debugf("zip %s %s", src, pathZip)
-
-					if feDir, ok := load(&fileentries, src); ok {
-						removeEntry(src, feDir, true)
-					}
-					copyFrom(pathZip)
-				})
-				return
-			}
-			copyFrom(src)
+				if mapEmpty(&fileentries) {
+					name := uriBase(destination.URI())
+					parent := strings.TrimSuffix(destination.URI().String(), name)
+					fyne.Do(func() {
+						topline.SetText(fmt.Sprintf("%s %s", lp("Saved all files to"), parent))
+					})
+				}
+			})
 		})
 	}
 
@@ -1461,6 +1541,23 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 		for _, ps := range snapshot {
 			log.Debug("Processing pending save: ", ps.Src)
+
+			// Каталог сохраняем деревом через Download (без zip)
+			if isLinkDir(ps.Src) {
+				saveEntryMobile(ps.Src, nil, ps.FE, func(ok bool) {
+					if ok {
+						if feDir, ok := load(&fileentries, ps.Src); ok {
+							removeEntry(ps.Src, feDir, true)
+						}
+						pendingSaves.Delete(ps.Src)
+						finishOne(true)
+						return
+					}
+					pendingSaves.Delete(ps.Src)
+					finishOne(false)
+				})
+				continue
+			}
 
 			uri, err := CreateFileInDownloads(ps.Dest, "")
 			if err != nil {
@@ -1517,20 +1614,7 @@ func recvTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 			}
 
 			if isLinkDir(ps.Src) {
-				pathZip := ps.Src + DOTZIP
-				ZipDirectoryProgress(pathZip, ps.Src, ps.FE, func(err error) {
-					if err != nil {
-						log.Errorf("Pending zip %s %s: %v", ps.Src, pathZip, err)
-						removeEntry(pathZip, ps.FE, true)
-						pendingSaves.Delete(ps.Src)
-						finishOne(false)
-						return
-					}
-					if feDir, ok := load(&fileentries, ps.Src); ok {
-						removeEntry(ps.Src, feDir, true)
-					}
-					copyFrom(pathZip)
-				})
+				// обрабатывается выше через saveEntryMobile
 				continue
 			}
 			copyFrom(ps.Src)

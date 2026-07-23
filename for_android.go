@@ -991,6 +991,37 @@ func Child(parent fyne.URI, component string) (child fyne.URI, cleanup func(), e
 	return
 }
 
+// ChildTreeNested создаёт файл по относительному пути relPath внутри SAF-дерева
+// parent, создавая все промежуточные каталоги. Позволяет сохранять структуру
+// вложенных каталогов через каталог-пикер (в отличие от Child, который создаёт
+// только один документ).
+func ChildTreeNested(parent fyne.URI, relPath string) (child fyne.URI, cleanup func(), err error) {
+	cleanup = func() {}
+
+	mimeType := detectMimeType(filepath.Base(relPath))
+	result, err := callStringStringString("createFileInTreeNested", parent.String(), relPath, mimeType)
+	if err != nil {
+		err = fmt.Errorf("createFileInTreeNested failed: %w", err)
+		return
+	}
+	if result == "" {
+		err = fmt.Errorf("empty result from createFileInTreeNested")
+		return
+	}
+	if strings.HasPrefix(result, "error:") {
+		err = fmt.Errorf("createFileInTreeNested: %s", result)
+		return
+	}
+
+	child, err = storage.ParseURI(result)
+	if err != nil {
+		err = fmt.Errorf("parse URI failed: %v", err)
+		return
+	}
+
+	return
+}
+
 // DownloadDir на Android неприменим: каталоги сохраняются как .zip через
 // createFileInDownloads, поэтому здесь возвращается ошибка.
 func DownloadDir() (fyne.URI, error) {

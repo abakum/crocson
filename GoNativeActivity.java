@@ -1212,10 +1212,12 @@ public class GoNativeActivity extends NativeActivity {
             if (lastSlash >= 0) {
                 dirPath = fileName.substring(0, lastSlash);
                 baseName = fileName.substring(lastSlash + 1);
-                createDirectoriesInMediaStore(resolver, dirPath);
             }
             values.put("_display_name", baseName);
             values.put("mime_type", mimeType);
+            // На API 29+ MediaStore сам создаёт промежуточные каталоги по relative_path,
+            // поэтому отдельная вставка directory-записей не нужна (и приводила к
+            // буквальным каталогам с именами вида "a/b/c").
             if (dirPath != null && !dirPath.isEmpty()) {
                 values.put("relative_path", "Download/" + dirPath);
             } else {
@@ -1229,31 +1231,14 @@ public class GoNativeActivity extends NativeActivity {
         }
     }
 
-    static void createDirectoriesInMediaStore(android.content.ContentResolver resolver, String relativePath) {
-        if (relativePath == null || relativePath.isEmpty()) return;
-        try {
-            String[] parts = relativePath.split("/");
-            StringBuilder currentPath = new StringBuilder();
-            for (String part : parts) {
-                if (currentPath.length() > 0) currentPath.append("/");
-                currentPath.append(part);
-                android.content.ContentValues values = new android.content.ContentValues();
-                values.put("_display_name", currentPath.toString());
-                values.put("mime_type", "vnd.android.document/directory");
-                values.put("relative_path", "Download");
-                try {
-                    resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                } catch (Exception ignored) {}
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Java: createDirectoriesInMediaStore failed: " + e.getMessage());
-        }
-    }
-
     static String createFileInDownloadsLegacy(String fileName) {
         try {
             java.io.File downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);
             java.io.File file = new java.io.File(downloadsDir, fileName);
+            java.io.File parent = file.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                Log.e(TAG, "Java: createFileInDownloadsLegacy mkdirs failed for " + parent.getAbsolutePath());
+            }
             file.createNewFile();
             return file.toURI().toString();
         } catch (Exception e) {
@@ -1423,6 +1408,81 @@ public class GoNativeActivity extends NativeActivity {
         } catch (Exception e) {
             String msg = e.getMessage();
             return msg != null ? "error: " + msg : "error: createFileInTree failed";
+        }
+    }
+
+    // Ищет документ с заданным именем среди детей parentDocId в дереве treeUri.
+    // Возвращает URI документа (через buildDocumentUriUsingTree) или null.
+    static String findChildDocumentInTree(android.net.Uri treeUri, String parentDocId, String name, boolean isDir) {
+        try {
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+            android.net.Uri childrenUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentDocId);
+            android.database.Cursor cursor = resolver.query(childrenUri,
+                new String[]{
+                    android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE},
+                android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME + " = ?",
+                new String[]{name}, null);
+            if (cursor != null) {
+                try {
+                    while (cursor.moveToNext()) {
+                        String docId = cursor.getString(0);
+                        String mime = cursor.getString(1);
+                        boolean match = !isDir || android.provider.DocumentsContract.Document.MIME_TYPE_DIR.equals(mime);
+                        if (match) {
+                            return android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, docId).toString();
+                        }
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Java: findChildDocumentInTree failed: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Создаёт файл по относительному пути relPath внутри SAF-дерева treeUri,
+    // создавая все промежуточные каталоги (find-or-create). Возвращает URI файла
+    // либо "error: ..." — формат совместим с createFileInTree.
+    static String createFileInTreeNested(String treeUriStr, String relPath, String mimeType) {
+        try {
+            if (mimeType == null || mimeType.isEmpty()) mimeType = "application/octet-stream";
+            android.net.Uri treeUri = android.net.Uri.parse(treeUriStr);
+            android.content.ContentResolver resolver = goNativeActivity.getContentResolver();
+
+            // Корневой документ дерева — стартовая точка спуска
+            String currentDocId = android.provider.DocumentsContract.getTreeDocumentId(treeUri);
+            android.net.Uri currentDocUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, currentDocId);
+
+            String[] parts = relPath.split("/");
+            for (int i = 0; i < parts.length; i++) {
+                String part = parts[i];
+                if (part.isEmpty()) continue;
+                boolean isLast = (i == parts.length - 1);
+                String desiredMime = isLast ? mimeType : android.provider.DocumentsContract.Document.MIME_TYPE_DIR;
+
+                // find-or-create: переиспользуем существующий документ, иначе создаём
+                String foundUri = findChildDocumentInTree(treeUri, currentDocId, part, !isLast);
+                if (foundUri != null) {
+                    currentDocUri = android.net.Uri.parse(foundUri);
+                    currentDocId = android.provider.DocumentsContract.getDocumentId(currentDocUri);
+                    continue;
+                }
+
+                android.net.Uri childrenUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, currentDocId);
+                android.net.Uri created = android.provider.DocumentsContract.createDocument(resolver, childrenUri, desiredMime, part);
+                if (created == null) {
+                    return "error: createDocument returned null at " + part;
+                }
+                currentDocUri = created;
+                currentDocId = android.provider.DocumentsContract.getDocumentId(created);
+            }
+            return currentDocUri.toString();
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            return msg != null ? "error: " + msg : "error: createFileInTreeNested failed";
         }
     }
 
