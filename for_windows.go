@@ -18,6 +18,7 @@ void __chk_fail(void) { exit(1); }
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
 	"sync/atomic"
 	"unsafe"
@@ -135,8 +136,31 @@ func hideConsole() {
 		uintptr(unsafe.Pointer(&buf[0])),
 		uintptr(len(buf)),
 	)
+	freed := false
 	if count == 1 {
 		procFreeConsole.Call()
+		freed = true
+	}
+	if freed || GUI {
+		redirectStdioToNull()
+	}
+}
+
+// redirectStdioToNull points the process standard handles at NUL so reads/writes
+// become harmless no-ops instead of failing on a detached console. Once the
+// console is gone (freed by hideConsole or never existed in a GUI-subsystem
+// build) the cached os.Stdin/Stdout/Stderr point at an INVALID_HANDLE; any
+// library write to them — notably croc's progress bar and
+// fmt.Fprintf(os.Stderr,…) inside client.Send — fails with
+// "write /dev/stderr: The handle is invalid." and surfaces in the UI. Marking
+// GUI=true also engages croc's Quiet/IgnoreStdin paths and routes logs to the
+// in-memory viewer.
+func redirectStdioToNull() {
+	if f, err := os.OpenFile(os.DevNull, os.O_RDWR, 0); err == nil {
+		os.Stdin = f
+		os.Stdout = f
+		os.Stderr = f
+		GUI = true
 	}
 }
 
