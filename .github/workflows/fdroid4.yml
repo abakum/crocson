@@ -13,6 +13,11 @@ on:
         required: false
         default: false
         type: boolean
+      status:
+        description: 'Status only: is the FyneApp.toml version in the fdroiddata recipe, and did its build succeed/fail? (read-only)'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -34,7 +39,7 @@ jobs:
         run: |
           VERSION=$(grep -E '^\s*Version\s*=' FyneApp.toml | sed -E 's/^\s*Version\s*=\s*"([^"]+)".*/\1/')
           BUILD=$(grep -E '^\s*Build\s*=' FyneApp.toml | sed -E 's/^\s*Build\s*=\s*([0-9]+).*/\1/')
-          COMMIT_SHA=$(git rev-list -n 1 "v${VERSION}")
+          COMMIT_SHA=$(git rev-list -n 1 "v${VERSION}" || true)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD" >> "$GITHUB_OUTPUT"
           echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
@@ -53,8 +58,60 @@ jobs:
           echo "=== Loaded recipe ==="
           cat "metadata/${APP_ID}.yml"
 
+      - name: Check F-Droid status
+        if: github.event.inputs.status == 'true'
+        run: |
+          set -u
+          VER="${{ steps.info.outputs.version }}"
+          RECIPE_URL="https://gitlab.com/fdroid/fdroiddata/-/raw/master/metadata/${APP_ID}.yml"
+          REPO="https://f-droid.org/repo"
+
+          # HEAD probe: 200 = present, 404 = absent
+          http() { curl -sI -o /dev/null -w "%{http_code}" "$1"; }
+
+          code=$(http "$RECIPE_URL")
+          if [ "$code" != "200" ]; then
+            echo "::notice::Recipe not found on fdroiddata master (HTTP ${code})."
+            {
+              echo "### F-Droid status for v${VER}"
+              echo "- New recipe: **not found** on master (HTTP ${code})"
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          curl -sf "$RECIPE_URL" -o recipe.yml
+
+          # Pair versionName/versionCode (versionName precedes versionCode per build block)
+          mapfile -t PAIRS < <(paste -d'|' \
+            <(grep -E '^\s*-\s*versionName:' recipe.yml | sed -E 's/[^:]*:\s*"?([^"]+)"?/\1/') \
+            <(grep -E '^\s*versionCode:' recipe.yml | sed -E 's/[^:]*:\s*([0-9]+).*/\1/'))
+
+          CODES=()
+          for p in "${PAIRS[@]}"; do [ "${p%%|*}" = "$VER" ] && CODES+=("${p##*|}"); done
+
+          {
+            echo "### F-Droid status for v${VER}"
+            if [ "${#CODES[@]}" -eq 0 ]; then
+              echo "- New recipe: **NOT detected** — v${VER} is absent from the recipe on master."
+              if [ "${#PAIRS[@]}" -gt 0 ]; then
+                echo "  (recipe newest version: ${PAIRS[-1]%%|*})"
+              fi
+            else
+              echo "- New recipe: **detected** — v${VER} is on master, codes: ${CODES[*]}"
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          for c in "${CODES[@]}"; do
+            apk="${REPO}/${APP_ID}_${c}.apk"
+            log="${REPO}/${APP_ID}_${c}.log.gz"
+            if [ "$(http "$apk")" = "200" ]; then st="SUCCESS";
+            elif [ "$(http "$log")" = "200" ]; then st="FAILED";
+            else st="PENDING"; fi
+            echo "- code ${c}: **${st}** — [apk](${apk}) · [log](${log})" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+          exit 0
+
       - name: Generate recipe from FyneApp.toml
-        if: github.event.inputs.first == 'true' || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure')
+        if: github.event.inputs.status != 'true' && (github.event.inputs.first == 'true' || (github.event.inputs.load == 'true' && steps.load.outcome == 'failure'))
         run: |
            bash metadata/generate_recipe.sh \
             "${{ steps.info.outputs.version }}" \
@@ -63,7 +120,7 @@ jobs:
             "metadata/${APP_ID}.yml"
 
       - name: Verify recipe exists
-        if: github.event.inputs.first != 'true' && github.event.inputs.load != 'true'
+        if: github.event.inputs.status != 'true' && github.event.inputs.first != 'true' && github.event.inputs.load != 'true'
         run: |
           if [ ! -f "metadata/${APP_ID}.yml" ]; then
             echo "ERROR: metadata/${APP_ID}.yml not found"
@@ -73,6 +130,7 @@ jobs:
           echo "Recipe found: metadata/${APP_ID}.yml"
 
       - name: Commit and push to GitHub
+        if: github.event.inputs.status != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -82,7 +140,7 @@ jobs:
           git push
 
       - name: Create Merge Request to fdroiddata
-        if: github.event.inputs.load != 'true' && env.GITLAB_TOKEN != ''
+        if: github.event.inputs.status != 'true' && github.event.inputs.load != 'true' && env.GITLAB_TOKEN != ''
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
