@@ -46,8 +46,7 @@ func addCurrentRelay(a fyne.App) {
 	relay.Address6 = a.Preferences().String("relay6")
 	relay.Ports = a.Preferences().String("relay-ports")
 	// relay.Password = a.Preferences().String("relay-password")
-	// relay.Socks5 = a.Preferences().String("socks5")
-	// relay.Connect = a.Preferences().String("connect")
+	// socks5/connect — глобальные, в профиль не сохраняются
 	if index < 0 {
 		relays = append(relays, relay)
 	} else {
@@ -60,15 +59,16 @@ func addCurrentRelay(a fyne.App) {
 	}
 }
 
-// Relay представляет посредника
+// Relay представляет посредника.
+// socks5/connect — глобальные настройки (preferences "socks5"/"connect"), в профиль релея не входят:
+// см. updateRelayValues/createRelaySelector (там их нет) и settings.go (поля-входы связаны с
+// preferences напрямую).
 type Relay struct {
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	Address6 string `json:"address6"`
 	Ports    string `json:"ports"`
 	Password string `json:"password"`
-	Socks5   string `json:"socks4"`
-	Connect  string `json:"connect"`
 }
 
 // Ключи для хранения посредников в настройках
@@ -135,22 +135,19 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 	addressBinding,
 	address6Binding,
 	portsBinding,
-	passwordBinding,
-	socks5Binding,
-	connectBinding binding.String) (relayControls *fyne.Container, updateRelaySelector func(), applyRelay func(relay Relay)) {
+	passwordBinding binding.String) (relayControls *fyne.Container, updateRelaySelector func(), applyRelay func(relay Relay)) {
 
 	var (
 		relaySelect *widget.Select
 		nameEntry   *widget.Entry
 	)
-	// updateRelayValues обновляет значения полей на основе выбранного посредника
+	// updateRelayValues обновляет значения полей на основе выбранного посредника.
+	// socks5/connect сюда НЕ входят — это глобальные настройки (см. коммент к type Relay).
 	updateRelayValues := func(relay Relay) {
 		addressBinding.Set(relay.Address)
 		address6Binding.Set(relay.Address6)
 		portsBinding.Set(relay.Ports)
 		passwordBinding.Set(relay.Password)
-		socks5Binding.Set(relay.Socks5)
-		connectBinding.Set(relay.Connect)
 	}
 	applyRelay = updateRelayValues
 	// Функция для обновления комбобокса из актуальных данных
@@ -223,8 +220,6 @@ func createRelaySelector(a fyne.App, w fyne.Window,
 		relay.Address6, _ = address6Binding.Get()
 		relay.Ports, _ = portsBinding.Get()
 		relay.Password, _ = passwordBinding.Get()
-		relay.Socks5, _ = socks5Binding.Get()
-		relay.Connect, _ = connectBinding.Get()
 
 		if index < 0 {
 			relay.Name = name

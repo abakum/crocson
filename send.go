@@ -2957,6 +2957,24 @@ func def(a fyne.App) (p, r, r6, ps, s, h string) {
 	ps = defs(a.Preferences().String("relay-ports"), ports0)
 	s = defs(socks5, a.Preferences().String("socks5"))
 	h = defs(connect, a.Preferences().String("connect"))
+	// Префикс "wss:" в поле socks5 => работа через WebSocket-мост.
+	// Мост перехватывает именно comm.Socks5Proxy (в которое маппится `s`), поэтому базу
+	// моста кладём в `s`, а RelayAddress направляем на хост моста — ensurePort ниже
+	// вшьёт meeting-порт из ports. Поле connect/HttpProxy не трогаем.
+	// Два вида значения: bare "wss:" — shorthand до публичного getcroc.com; либо явный
+	// "wss://<хост>" — свой webrelay/CDN (хост берём из URL). Путь всегда /ws (конвенция
+	// croc webrelay), так что "wss://getcroc2.com" работает без явного /ws.
+	if strings.HasPrefix(s, "wss:") {
+		registerWSBridgeDialer()
+		r = "getcroc.com"
+		if strings.HasPrefix(s, "wss://") {
+			if u, err := url.Parse(s); err == nil && u.Host != "" {
+				r = u.Hostname()
+			}
+		}
+		s = "wss://" + r + "/ws"
+		r6 = "" // единственный путь через мост; параллельный IPv6-TCP не нужен
+	}
 	// ensurePort вшивает meeting-порт (первый из relay-ports) в адрес релея,
 	// если тот без порта. croc берёт meeting-порт именно из RelayAddress и при
 	// отсутствии дефолит его до 9009 — поэтому кастомные порты (напр. 18909)

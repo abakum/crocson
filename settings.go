@@ -141,8 +141,6 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		relay6Binding,
 		relayPortsBinding,
 		relayPasswordBinding,
-		relaySocks5Binding,
-		relayConnectBinding,
 	)
 
 	// Создаем виджеты для полей
@@ -155,6 +153,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	relayPasswordEntry.SetPlaceHolder(DEFAULT_PASSPHRASE)
 
 	relaySocks5Entry := widget.NewEntryWithData(relaySocks5Binding)
+	relaySocks5Entry.SetPlaceHolder("host[:1080]|wss:[//getcroc.com]")
 	relayConnectEntry := widget.NewEntryWithData(relayConnectBinding)
 
 	disableLocalBinding := binding.BindPreferenceBool("disable-local", a.Preferences())
