@@ -27,6 +27,12 @@
    изолирует от getcroc-веб/свежего CLI).
 2. **Детекция версии пира — два сигнала, retry НЕ делаем:**
    - **Получатель** (initiator): по **формату введённого кода** (`fourLowercaseWords` → v11, иначе → v10).
+     Реализовано как `c.usePakekey = (codeComponents.Format == codephrase.FormatFourWord)`.
+     ⚠ **Расхождение с upstream:** в upstream `Components.Format` **не читается** в Go-пути
+     (`croc.go:262-263` берёт только `.RoomName`/`.PAKEPassphrase`; `Format` живёт лишь в тесте
+     `utils_test.go:310` и wasm-мосте `web/wasm/main.go:407`). Upstream-получатель **безусловно**
+     шлёт `Version: pakekey.ProtocolVersion` (`croc.go:1906`) — там v11-only, диспетчеризация не нужна.
+     В форке она **обязательна** для dual (иначе PIN-код от v10 не примется). Это НЕ мёртвый код.
    - **Отправитель** (responder): по полю **`Version`** входящего PAKE (2 → v11 `pakekey`, иначе → v10 `pake.InitCurve`).
    - **Без retry.** В форке получатель может занимать комнату **первым** (`roomInfo.first` + кастомная
      авторизация `f9bf52a`/`b487280` в `tcp.go`, **в отличие от апстрима**) → повторный PAKE после
@@ -87,12 +93,21 @@
    pseudo-version/тег форка после коммита правок. Детект версии пира и PAKE-dispatch живут **в форке**;
    **единственные crocson-правки** — UI-чекбокс «v11» + dispatch генерации кода (`settings.go:488` +
    `send.go:308`, задача 5).
+8. **Диагностическое логирование формата (debug-лог):** в `src/croc/croc.go` форка добавить `log.Debug`
+   на точках dual-диспетчеризации — пишется в crocson `debuglog.txt` через общий `schollz/logger`
+   (`main.go:288-293` `SetOutput(MultiWriter(crocdebuglog,…))`). Только диагностика, без UI/изменения
+   поведения:
+   - **Получатель** (init, ~`croc.go:1279`): `"recipient code format: four-word (v11)"` /
+     `"legacy (v10)"` по `c.usePakekey`/`codeComponents.Format`.
+   - **Отправитель** (responder, в `processMessagePake` после детекта `m.Version`):
+     `"peer PAKE version: v11"` (Version==2) / `"v10"` (иначе).
 
 ## Риски / edge-cases
 
 - **Прививка pakekey в кастомный croc.go:** форк +174 строк в croc.go (локальный relay, авторизация) —
   grafting требует ручной аккуратности, cherry-pick `623153d5` целиком **не** встанет чисто.
-- **Эвристика детекта:** ручной four-word `--code` от v10-пира → misdetection → retry-страховка (задача 6).
+- **Эвристика детекта:** ручной four-word `--code` от v10-пира → misdetection → передача падает, юзер
+  перезапускает вручную (retry убран, см. решение 2).
 - **Расхождение форка:** несём обе PAKE-ветки = постоянный tax до sunset v10. Каждое будущее upstream-
   изменение PAKE/протокола — реинтеграция против dual-форка.
 - **Безопасность v10-ноги:** для crocson↔crocson на PIN (v10-PAKE) — слабее (нет key confirmation/binding);

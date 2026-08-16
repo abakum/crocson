@@ -8,88 +8,88 @@
             "position": "crocson/about.go:80:38"
         },
         {
+            "id": "I agree to the Privacy Policy",
+            "message": "I agree to the Privacy Policy",
+            "translation": "Принимаю политику конфиденциальности",
+            "position": "crocson/about.go:93:35"
+        },
+        {
             "id": "App info",
             "message": "App info",
             "translation": "О приложении",
             "position": "crocson/about.go:125:40"
         },
         {
-            "id": "I agree to the Privacy Policy",
-            "message": "I agree to the Privacy Policy",
-            "translation": "Принимаю политику конфиденциальности",
-            "position": "crocson/about.go:131:35"
-        },
-        {
             "id": "Click the Deep Link above to test",
             "message": "Click the Deep Link above to test",
             "translation": "Нажмите Deep Link выше для проверки",
-            "position": "crocson/applinks.go:342:30"
+            "position": "crocson/applinks.go:344:30"
         },
         {
             "id": "If a browser opens then:",
             "message": "If a browser opens then:",
             "translation": "Если откроется браузер:",
-            "position": "crocson/applinks.go:347:30"
+            "position": "crocson/applinks.go:349:30"
         },
         {
             "id": "Allow",
             "message": "Allow",
             "translation": "Разрешите",
-            "position": "crocson/applinks.go:352:44"
+            "position": "crocson/applinks.go:354:44"
         },
         {
             "id": "Use",
             "message": "Use",
             "translation": "Используйте",
-            "position": "crocson/applinks.go:373:21"
+            "position": "crocson/applinks.go:375:21"
         },
         {
             "id": "on page",
             "message": "on page",
             "translation": "на странице",
-            "position": "crocson/applinks.go:375:21"
+            "position": "crocson/applinks.go:377:21"
         },
         {
             "id": "to",
             "message": "to",
             "translation": "для",
-            "position": "crocson/applinks.go:377:21"
+            "position": "crocson/applinks.go:379:21"
         },
         {
             "id": "Scan QRs",
             "message": "Scan QRs",
             "translation": "Чтения QR-кодов",
-            "position": "crocson/applinks.go:413:34"
+            "position": "crocson/applinks.go:416:34"
         },
         {
             "id": "with:",
             "message": "with:",
             "translation": "с:",
-            "position": "crocson/applinks.go:413:53"
+            "position": "crocson/applinks.go:416:53"
         },
         {
             "id": "Reset settings",
             "message": "Reset settings",
             "translation": "Сброс настроек",
-            "position": "crocson/applinks.go:1143:25"
+            "position": "crocson/applinks.go:1159:25"
         },
         {
             "id": "Export full log",
             "message": "Export full log",
             "translation": "Сохранить журнал",
-            "position": "crocson/log.go:217:45"
+            "position": "crocson/log.go:218:45"
         },
         {
             "id": "Saved all files to",
             "message": "Saved all files to",
             "translation": "Сохранил всё в",
-            "position": "crocson/log.go:270:7"
+            "position": "crocson/log.go:276:7"
         },
         {
             "id": "App closed. Tap to start.",
             "message": "App closed. Tap to start.",
             "translation": "Приложение закрыто. Нажми чтоб запустить.",
-            "position": "crocson/main.go:407:16"
+            "position": "crocson/main.go:423:16"
         },
         {
             "id": "Accept",
@@ -101,139 +101,145 @@
             "id": "Cancel",
             "message": "Cancel",
             "translation": "Отменить",
-            "position": "crocson/recv.go:84:44"
+            "position": "crocson/recv.go:104:44"
         },
         {
             "id": "Wait for them before pressing Download",
             "message": "Wait for them before pressing Download",
             "translation": "Ждите прежде чем нажать Получить",
-            "position": "crocson/recv.go:106:31"
+            "position": "crocson/recv.go:126:31"
         },
         {
             "id": "Relay",
             "message": "Relay",
             "translation": "Посредник",
-            "position": "crocson/recv.go:135:33"
+            "position": "crocson/recv.go:159:33"
         },
         {
             "id": "Download",
             "message": "Download",
             "translation": "Получить",
-            "position": "crocson/recv.go:722:42"
+            "position": "crocson/recv.go:840:42"
         },
         {
             "id": "Secret must be longer than 5 characters",
             "message": "Secret must be longer than 5 characters",
             "translation": "Секрет должен быть длиннее 5 символов",
-            "position": "crocson/recv.go:735:23"
+            "position": "crocson/recv.go:853:23"
         },
         {
             "id": "Use WebDAV for magic-wormhole relay",
             "message": "Use WebDAV for magic-wormhole relay",
             "translation": "Используйте WebDAV для релея magic-wormhole",
-            "position": "crocson/recv.go:764:24"
+            "position": "crocson/recv.go:882:24"
         },
         {
             "id": "Receive cancelled.",
             "message": "Receive cancelled.",
             "translation": "Отмена получения.",
-            "position": "crocson/recv.go:813:26"
+            "position": "crocson/recv.go:931:26"
         },
         {
             "id": "Connected via magic-wormhole",
             "message": "Connected via magic-wormhole",
             "translation": "Подключено через magic-wormhole",
-            "position": "crocson/recv.go:825:24"
+            "position": "crocson/recv.go:943:24"
         },
         {
             "id": "Use WebDAV for webwormhole relay",
             "message": "Use WebDAV for webwormhole relay",
             "translation": "Используйте WebDAV для релея webwormhole",
-            "position": "crocson/recv.go:842:24"
+            "position": "crocson/recv.go:960:24"
         },
         {
             "id": "Connected via webwormhole",
             "message": "Connected via webwormhole",
             "translation": "Подключено через webwormhole",
-            "position": "crocson/recv.go:901:24"
+            "position": "crocson/recv.go:1019:24"
         },
         {
             "id": "Change directory",
             "message": "Change directory",
             "translation": "Смена каталога",
-            "position": "crocson/recv.go:915:18"
+            "position": "crocson/recv.go:1033:18"
         },
         {
             "id": "Receiving file",
             "message": "Receiving file",
             "translation": "Получаю",
-            "position": "crocson/recv.go:1083:26"
+            "position": "crocson/recv.go:1201:27"
         },
         {
             "id": "Send cancelled.",
             "message": "Send cancelled.",
             "translation": "Отмена посылки.",
-            "position": "crocson/recv.go:1158:36"
+            "position": "crocson/recv.go:1276:36"
         },
         {
             "id": "Received",
             "message": "Received",
             "translation": "Получил",
-            "position": "crocson/recv.go:1165:46"
+            "position": "crocson/recv.go:1283:46"
         },
         {
             "id": "Receive",
             "message": "Receive",
             "translation": "Взять",
-            "position": "crocson/recv.go:1427:38"
+            "position": "crocson/recv.go:1656:38"
         },
         {
             "id": "Empty name",
             "message": "Empty name",
             "translation": "Пустое имя",
-            "position": "crocson/relays.go:215:18"
+            "position": "crocson/relays.go:212:18"
         },
         {
             "id": "Last item of list",
             "message": "Last item of list",
             "translation": "Последний элемент списка",
-            "position": "crocson/relays.go:289:18"
+            "position": "crocson/relays.go:284:18"
         },
         {
             "id": "Pick a file to send",
             "message": "Pick a file to send",
             "translation": "Что послать",
-            "position": "crocson/send.go:289:31"
+            "position": "crocson/send.go:301:31"
         },
         {
             "id": "Send",
             "message": "Send",
             "translation": "Дать",
-            "position": "crocson/send.go:978:42"
+            "position": "crocson/send.go:990:42"
         },
         {
             "id": "Have them press the Download now",
             "message": "Have them press the Download now",
             "translation": "Теперь пусть нажмут Получить",
-            "position": "crocson/send.go:1013:23"
+            "position": "crocson/send.go:1025:23"
         },
         {
             "id": "Have them not press the Download yet",
             "message": "Have them not press the Download yet",
             "translation": "Пока пусть не нажимают Получить",
-            "position": "crocson/send.go:1463:24"
+            "position": "crocson/send.go:1475:24"
         },
         {
             "id": "Sending file",
             "message": "Sending file",
             "translation": "Посылаю",
-            "position": "crocson/send.go:1548:57"
+            "position": "crocson/send.go:1560:57"
         },
         {
             "id": "Sent file",
             "message": "Sent file",
             "translation": "Послал",
-            "position": "crocson/send.go:1600:47"
+            "position": "crocson/send.go:1612:47"
+        },
+        {
+            "id": "Storage permission required",
+            "message": "Storage permission required",
+            "translation": "",
+            "position": "crocson/send.go:1662:22"
         },
         {
             "id": "Hide",
@@ -245,127 +251,133 @@
             "id": "Disable local relay when sending",
             "message": "Disable local relay when sending",
             "translation": "Не давать локально",
-            "position": "crocson/settings.go:161:49"
+            "position": "crocson/settings.go:160:49"
         },
         {
             "id": "Ask the sender for their address",
             "message": "Ask the sender for their address",
             "translation": "Спросить адрес у отправителя",
-            "position": "crocson/settings.go:164:44"
+            "position": "crocson/settings.go:163:44"
         },
         {
             "id": "Force to use only local connections",
             "message": "Force to use only local connections",
             "translation": "Без внешнего посредника",
-            "position": "crocson/settings.go:167:46"
+            "position": "crocson/settings.go:166:46"
         },
         {
             "id": "Overwrite",
             "message": "Overwrite",
             "translation": "Перезаписать",
-            "position": "crocson/settings.go:173:46"
+            "position": "crocson/settings.go:172:46"
         },
         {
             "id": "Restore",
             "message": "Restore",
             "translation": "Восстановить",
-            "position": "crocson/settings.go:354:44"
+            "position": "crocson/settings.go:353:44"
         },
         {
             "id": "Language",
             "message": "Language",
             "translation": "Язык",
-            "position": "crocson/settings.go:373:24"
+            "position": "crocson/settings.go:372:24"
         },
         {
             "id": "Theme",
             "message": "Theme",
             "translation": "Тема",
-            "position": "crocson/settings.go:374:24"
+            "position": "crocson/settings.go:373:24"
         },
         {
             "id": "Font",
             "message": "Font",
             "translation": "Шрифт",
-            "position": "crocson/settings.go:375:24"
+            "position": "crocson/settings.go:374:24"
         },
         {
             "id": "Logo",
             "message": "Logo",
             "translation": "Логотип",
-            "position": "crocson/settings.go:376:24"
+            "position": "crocson/settings.go:375:24"
         },
         {
             "id": "Configs",
             "message": "Configs",
             "translation": "Конфиги",
-            "position": "crocson/settings.go:381:24"
+            "position": "crocson/settings.go:380:24"
         },
         {
             "id": "Config",
             "message": "Config",
             "translation": "Конфиг",
-            "position": "crocson/settings.go:386:24"
+            "position": "crocson/settings.go:385:24"
         },
         {
             "id": "Value may be file with value",
             "message": "Value may be file with value",
             "translation": "Значение может быть файлом",
-            "position": "crocson/settings.go:397:21"
+            "position": "crocson/settings.go:396:21"
         },
         {
             "id": "If value like 0IP then it used as --ip IP",
             "message": "If value like 0IP then it used as --ip IP",
             "translation": "Значение типа 0IP значит --ip IP",
-            "position": "crocson/settings.go:407:24"
+            "position": "crocson/settings.go:406:24"
         },
         {
             "id": "Name",
             "message": "Name",
             "translation": "Имя",
-            "position": "crocson/settings.go:411:24"
+            "position": "crocson/settings.go:410:24"
         },
         {
             "id": "Check new desktop version",
             "message": "Check new desktop version",
             "translation": "Проверка новой версии",
-            "position": "crocson/settings.go:463:59"
+            "position": "crocson/settings.go:462:59"
         },
         {
             "id": "Use built-in DNS resolver",
             "message": "Use built-in DNS resolver",
             "translation": "Встроенный DNS-резолвер",
-            "position": "crocson/settings.go:464:64"
+            "position": "crocson/settings.go:463:64"
         },
         {
             "id": "UnZip files",
             "message": "UnZip files",
             "translation": "UnZip Файлы",
-            "position": "crocson/settings.go:468:8"
+            "position": "crocson/settings.go:467:8"
         },
         {
             "id": "Zip folders",
             "message": "Zip folders",
             "translation": "Zip каталоги",
-            "position": "crocson/settings.go:470:9"
+            "position": "crocson/settings.go:469:9"
         },
         {
             "id": "File path CSV parts",
             "message": "File path CSV parts",
             "translation": "CSV части путей файлов",
-            "position": "crocson/settings.go:480:16"
+            "position": "crocson/settings.go:479:16"
         },
         {
             "id": "Disable Multiplexing",
             "message": "Disable Multiplexing",
             "translation": "Без мультиплексирования",
-            "position": "crocson/settings.go:488:60"
+            "position": "crocson/settings.go:487:60"
         },
         {
             "id": "Disable Compression",
             "message": "Disable Compression",
             "translation": "Без сжатия",
-            "position": "crocson/settings.go:489:63"
+            "position": "crocson/settings.go:488:63"
+        },
+        {
+            "id": "Use four-word code",
+            "message": "Use four-word code",
+            "translation": "Секрет из 4 слов",
+            "position": "crocson/settings.go:489:55"
         },
         {
             "id": "speed e.g. 500k",

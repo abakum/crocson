@@ -486,6 +486,7 @@ func settingsTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 		widget.NewFormItem("hash", hashSelect),
 		widget.NewFormItem("no-multi", widget.NewCheckWithData(lp("Disable Multiplexing"), binding.BindPreferenceBool("disable-multiplexing", a.Preferences()))),
 		widget.NewFormItem("no-compress", widget.NewCheckWithData(lp("Disable Compression"), binding.BindPreferenceBool("disable-compression", a.Preferences()))),
+		widget.NewFormItem("v11", widget.NewCheckWithData(lp("Use four-word code"), binding.BindPreferenceBool("v11-code", a.Preferences()))),
 		// widget.NewFormItem("throttleUpload", widget.NewEntryWithData(binding.BindPreferenceString("upload-throttle", a.Preferences()))),
 		&widget.FormItem{
 			Text:     "throttleUpload",

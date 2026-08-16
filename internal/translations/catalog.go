@@ -45,39 +45,39 @@ var messageKeyToIndex = map[string]int{
 	"Accept":                                    15,
 	"Allow":                                     5,
 	"App closed. Tap to start.":                 14,
-	"App info":                                  1,
-	"Appearance":                                62,
-	"Ask the sender for their address":          41,
+	"App info":                                  2,
+	"Appearance":                                64,
+	"Ask the sender for their address":          42,
 	"Cancel":                                    16,
 	"Change directory":                          26,
-	"Check new desktop version":                 54,
+	"Check new desktop version":                 55,
 	"Click the Deep Link above to test":         3,
-	"Config":                                    50,
-	"Configs":                                   49,
+	"Config":                                    51,
+	"Configs":                                   50,
 	"Connected via magic-wormhole":              23,
 	"Connected via webwormhole":                 25,
-	"Disable Compression":                       60,
-	"Disable Multiplexing":                      59,
-	"Disable local relay when sending":          40,
+	"Disable Compression":                       61,
+	"Disable Multiplexing":                      60,
+	"Disable local relay when sending":          41,
 	"Download":                                  19,
 	"Empty name":                                31,
 	"Export full log":                           12,
-	"File path CSV parts":                       58,
-	"Font":                                      47,
-	"Force to use only local connections":       42,
+	"File path CSV parts":                       59,
+	"Font":                                      48,
+	"Force to use only local connections":       43,
 	"Have them not press the Download yet":      36,
 	"Have them press the Download now":          35,
-	"Hide":                                      39,
-	"I agree to the Privacy Policy":             2,
+	"Hide":                                      40,
+	"I agree to the Privacy Policy":             1,
 	"If a browser opens then:":                  4,
-	"If value like 0IP then it used as --ip IP": 52,
-	"Language":                                  45,
+	"If value like 0IP then it used as --ip IP": 53,
+	"Language":                                  46,
 	"Last item of list":                         32,
 	"License Info":                              0,
-	"Logo":                                      48,
-	"Name":                                      53,
-	"Network":                                   63,
-	"Overwrite":                                 43,
+	"Logo":                                      49,
+	"Name":                                      54,
+	"Network":                                   65,
+	"Overwrite":                                 44,
 	"Pick a file to send":                       33,
 	"Receive":                                   30,
 	"Receive cancelled.":                        22,
@@ -85,7 +85,7 @@ var messageKeyToIndex = map[string]int{
 	"Receiving file":                            27,
 	"Relay":                                     18,
 	"Reset settings":                            11,
-	"Restore":                                   44,
+	"Restore":                                   45,
 	"Saved all files to":                        13,
 	"Scan QRs":                                  9,
 	"Secret must be longer than 5 characters": 20,
@@ -93,26 +93,28 @@ var messageKeyToIndex = map[string]int{
 	"Send cancelled.":                        28,
 	"Sending file":                           37,
 	"Sent file":                              38,
-	"Storage Options":                        64,
-	"Theme":                                  46,
-	"Transfer Options":                       65,
-	"UnZip files":                            56,
+	"Storage Options":                        66,
+	"Storage permission required":            39,
+	"Theme":                                  47,
+	"Transfer Options":                       67,
+	"UnZip files":                            57,
 	"Use":                                    6,
 	"Use WebDAV for magic-wormhole relay":    21,
 	"Use WebDAV for webwormhole relay":       24,
-	"Use built-in DNS resolver":              55,
-	"Value may be file with value":           51,
+	"Use built-in DNS resolver":              56,
+	"Use four-word code":                     62,
+	"Value may be file with value":           52,
 	"Wait for them before pressing Download": 17,
-	"Zip folders":                            57,
+	"Zip folders":                            58,
 	"on page":                                7,
-	"speed e.g. 500k":                        61,
+	"speed e.g. 500k":                        63,
 	"to":                                     8,
 	"with:":                                  10,
 }
 
-var en_USIndex = []uint32{ // 67 elements
+var en_USIndex = []uint32{ // 69 elements
 	// Entry 0 - 1F
-	0x00000000, 0x0000000d, 0x00000016, 0x00000034,
+	0x00000000, 0x0000000d, 0x0000002b, 0x00000034,
 	0x00000056, 0x0000006f, 0x00000075, 0x00000079,
 	0x00000081, 0x00000084, 0x0000008d, 0x00000093,
 	0x000000a2, 0x000000b2, 0x000000c5, 0x000000df,
@@ -123,18 +125,19 @@ var en_USIndex = []uint32{ // 67 elements
 	// Entry 20 - 3F
 	0x00000226, 0x00000238, 0x0000024c, 0x00000251,
 	0x00000272, 0x00000297, 0x000002a4, 0x000002ae,
-	0x000002b3, 0x000002d4, 0x000002f5, 0x00000319,
-	0x00000323, 0x0000032b, 0x00000334, 0x0000033a,
-	0x0000033f, 0x00000344, 0x0000034c, 0x00000353,
-	0x00000370, 0x0000039a, 0x0000039f, 0x000003b9,
-	0x000003d3, 0x000003df, 0x000003eb, 0x000003ff,
-	0x00000414, 0x00000428, 0x00000438, 0x00000443,
+	0x000002ca, 0x000002cf, 0x000002f0, 0x00000311,
+	0x00000335, 0x0000033f, 0x00000347, 0x00000350,
+	0x00000356, 0x0000035b, 0x00000360, 0x00000368,
+	0x0000036f, 0x0000038c, 0x000003b6, 0x000003bb,
+	0x000003d5, 0x000003ef, 0x000003fb, 0x00000407,
+	0x0000041b, 0x00000430, 0x00000444, 0x00000457,
 	// Entry 40 - 5F
-	0x0000044b, 0x0000045b, 0x0000046c,
-} // Size: 292 bytes
+	0x00000467, 0x00000472, 0x0000047a, 0x0000048a,
+	0x0000049b,
+} // Size: 300 bytes
 
-const en_USData string = "" + // Size: 1132 bytes
-	"\x02License Info\x02App info\x02I agree to the Privacy Policy\x02Click t" +
+const en_USData string = "" + // Size: 1179 bytes
+	"\x02License Info\x02I agree to the Privacy Policy\x02App info\x02Click t" +
 	"he Deep Link above to test\x02If a browser opens then:\x02Allow\x02Use" +
 	"\x02on page\x02to\x02Scan QRs\x02with:\x02Reset settings\x02Export full " +
 	"log\x02Saved all files to\x02App closed. Tap to start.\x02Accept\x02Canc" +
@@ -145,18 +148,19 @@ const en_USData string = "" + // Size: 1132 bytes
 	"\x02Receiving file\x02Send cancelled.\x02Received\x02Receive\x02Empty na" +
 	"me\x02Last item of list\x02Pick a file to send\x02Send\x02Have them pres" +
 	"s the Download now\x02Have them not press the Download yet\x02Sending fi" +
-	"le\x02Sent file\x02Hide\x02Disable local relay when sending\x02Ask the s" +
-	"ender for their address\x02Force to use only local connections\x02Overwr" +
-	"ite\x02Restore\x02Language\x02Theme\x02Font\x02Logo\x02Configs\x02Config" +
-	"\x02Value may be file with value\x02If value like 0IP then it used as --" +
-	"ip IP\x02Name\x02Check new desktop version\x02Use built-in DNS resolver" +
-	"\x02UnZip files\x02Zip folders\x02File path CSV parts\x02Disable Multipl" +
-	"exing\x02Disable Compression\x02speed e.g. 500k\x02Appearance\x02Network" +
-	"\x02Storage Options\x02Transfer Options"
+	"le\x02Sent file\x02Storage permission required\x02Hide\x02Disable local " +
+	"relay when sending\x02Ask the sender for their address\x02Force to use o" +
+	"nly local connections\x02Overwrite\x02Restore\x02Language\x02Theme\x02Fo" +
+	"nt\x02Logo\x02Configs\x02Config\x02Value may be file with value\x02If va" +
+	"lue like 0IP then it used as --ip IP\x02Name\x02Check new desktop versio" +
+	"n\x02Use built-in DNS resolver\x02UnZip files\x02Zip folders\x02File pat" +
+	"h CSV parts\x02Disable Multiplexing\x02Disable Compression\x02Use four-w" +
+	"ord code\x02speed e.g. 500k\x02Appearance\x02Network\x02Storage Options" +
+	"\x02Transfer Options"
 
-var ja_JPIndex = []uint32{ // 67 elements
+var ja_JPIndex = []uint32{ // 69 elements
 	// Entry 0 - 1F
-	0x00000000, 0x00000016, 0x00000026, 0x00000057,
+	0x00000000, 0x00000016, 0x00000047, 0x00000057,
 	0x0000009d, 0x000000bf, 0x000000d8, 0x000000df,
 	0x000000ec, 0x000000f0, 0x0000010b, 0x0000010f,
 	0x00000125, 0x0000014a, 0x00000179, 0x000001c5,
@@ -167,18 +171,19 @@ var ja_JPIndex = []uint32{ // 67 elements
 	// Entry 20 - 3F
 	0x000003c4, 0x000003e0, 0x00000402, 0x00000409,
 	0x0000043d, 0x0000047a, 0x00000493, 0x000004b5,
-	0x000004bf, 0x000004f3, 0x00000518, 0x00000546,
-	0x00000550, 0x00000557, 0x0000055e, 0x00000568,
-	0x00000575, 0x0000057c, 0x00000586, 0x0000058d,
-	0x000005c4, 0x000005fe, 0x00000605, 0x00000636,
-	0x00000657, 0x00000669, 0x00000679, 0x00000698,
-	0x000006b4, 0x000006c7, 0x000006dd, 0x000006e4,
+	0x000004b5, 0x000004bf, 0x000004f3, 0x00000518,
+	0x00000546, 0x00000550, 0x00000557, 0x0000055e,
+	0x00000568, 0x00000575, 0x0000057c, 0x00000586,
+	0x0000058d, 0x000005c4, 0x000005fe, 0x00000605,
+	0x00000636, 0x00000657, 0x00000669, 0x00000679,
+	0x00000698, 0x000006b4, 0x000006c7, 0x000006e7,
 	// Entry 40 - 5F
-	0x000006f7, 0x0000070d, 0x00000723,
-} // Size: 292 bytes
+	0x000006fd, 0x00000704, 0x00000717, 0x0000072d,
+	0x00000743,
+} // Size: 300 bytes
 
-const ja_JPData string = "" + // Size: 1827 bytes
-	"\x02ライセンス情報\x02アプリ情報\x02プライバシーポリシーに同意します\x02テストするには上のDeep Linkをクリックしてくださ" +
+const ja_JPData string = "" + // Size: 1859 bytes
+	"\x02ライセンス情報\x02プライバシーポリシーに同意します\x02アプリ情報\x02テストするには上のDeep Linkをクリックしてくださ" +
 	"い\x02ブラウザが開いた場合：\x02許可してください\x02使用\x02ページで\x02を\x02QRコード読み取りに\x02：\x02" +
 	"設定をリセット\x02完全なログをエクスポート\x02すべてのファイルを保存しました:\x02アプリが終了しました。タップして起動してくださ" +
 	"い。\x02同意する\x02キャンセル\x02「ダウンロード」を押す前に待ってください\x02リレー\x02ダウンロード\x02シークレット" +
@@ -190,12 +195,12 @@ const ja_JPData string = "" + // Size: 1827 bytes
 	"送信者にアドレスを尋ねる\x02ローカル接続のみを強制的に使用\x02上書き\x02復元\x02言語\x02テーマ\x02フォント\x02ロ" +
 	"ゴ\x02設定群\x02設定\x02値はファイルパスを含む場合があります\x020IPのような値は --ip IP として使用されます" +
 	"\x02名前\x02デスクトップの新バージョンを確認\x02組み込み DNS リゾルバー\x02UnZipファイル\x02Zipフォルダ\x02" +
-	"ファイルパスCSVパーツ\x02多重化を無効にする\x02圧縮を無効化\x02速度（例: 500k）\x02外観\x02ネットワーク\x02" +
-	"保存オプション\x02転送オプション"
+	"ファイルパスCSVパーツ\x02多重化を無効にする\x02圧縮を無効化\x024語のコードを使用する\x02速度（例: 500k）\x02外" +
+	"観\x02ネットワーク\x02保存オプション\x02転送オプション"
 
-var ru_RUIndex = []uint32{ // 67 elements
+var ru_RUIndex = []uint32{ // 69 elements
 	// Entry 0 - 1F
-	0x00000000, 0x0000002e, 0x00000046, 0x0000008d,
+	0x00000000, 0x0000002e, 0x00000075, 0x0000008d,
 	0x000000c7, 0x000000f3, 0x00000106, 0x0000011d,
 	0x00000133, 0x0000013a, 0x00000155, 0x00000159,
 	0x00000175, 0x00000195, 0x000001b0, 0x000001fd,
@@ -206,24 +211,25 @@ var ru_RUIndex = []uint32{ // 67 elements
 	// Entry 20 - 3F
 	0x00000430, 0x0000045f, 0x00000475, 0x0000047e,
 	0x000004b4, 0x000004ef, 0x000004fe, 0x0000050b,
-	0x00000518, 0x0000053b, 0x00000571, 0x0000059e,
-	0x000005b7, 0x000005d0, 0x000005d9, 0x000005e2,
-	0x000005ed, 0x000005fc, 0x0000060b, 0x00000618,
-	0x0000064a, 0x0000067d, 0x00000684, 0x000006ad,
-	0x000006d7, 0x000006e8, 0x000006fd, 0x00000724,
-	0x00000752, 0x00000766, 0x000007a0, 0x000007a7,
+	0x0000050b, 0x00000518, 0x0000053b, 0x00000571,
+	0x0000059e, 0x000005b7, 0x000005d0, 0x000005d9,
+	0x000005e2, 0x000005ed, 0x000005fc, 0x0000060b,
+	0x00000618, 0x0000064a, 0x0000067d, 0x00000684,
+	0x000006ad, 0x000006d7, 0x000006e8, 0x000006fd,
+	0x00000724, 0x00000752, 0x00000766, 0x00000783,
 	// Entry 40 - 5F
-	0x000007b0, 0x000007c3, 0x000007ce,
-} // Size: 292 bytes
+	0x000007bd, 0x000007c4, 0x000007cd, 0x000007e0,
+	0x000007eb,
+} // Size: 300 bytes
 
-const ru_RUData string = "" + // Size: 1998 bytes
-	"\x02Лицензионная информация\x02О приложении\x02Принимаю политику конфиде" +
-	"нциальности\x02Нажмите Deep Link выше для проверки\x02Если откроется бр" +
-	"аузер:\x02Разрешите\x02Используйте\x02на странице\x02для\x02Чтения QR-к" +
-	"одов\x02с:\x02Сброс настроек\x02Сохранить журнал\x02Сохранил всё в\x02П" +
-	"риложение закрыто. Нажми чтоб запустить.\x02Принять\x02Отменить\x02Ждит" +
-	"е прежде чем нажать Получить\x02Посредник\x02Получить\x02Секрет должен " +
-	"быть длиннее 5 символов\x02Используйте WebDAV для релея magic-wormhole" +
+const ru_RUData string = "" + // Size: 2027 bytes
+	"\x02Лицензионная информация\x02Принимаю политику конфиденциальности\x02О" +
+	" приложении\x02Нажмите Deep Link выше для проверки\x02Если откроется бра" +
+	"узер:\x02Разрешите\x02Используйте\x02на странице\x02для\x02Чтения QR-ко" +
+	"дов\x02с:\x02Сброс настроек\x02Сохранить журнал\x02Сохранил всё в\x02Пр" +
+	"иложение закрыто. Нажми чтоб запустить.\x02Принять\x02Отменить\x02Ждите" +
+	" прежде чем нажать Получить\x02Посредник\x02Получить\x02Секрет должен бы" +
+	"ть длиннее 5 символов\x02Используйте WebDAV для релея magic-wormhole" +
 	"\x02Отмена получения.\x02Подключено через magic-wormhole\x02Используйте " +
 	"WebDAV для релея webwormhole\x02Подключено через webwormhole\x02Смена ка" +
 	"талога\x02Получаю\x02Отмена посылки.\x02Получил\x02Взять\x02Пустое имя" +
@@ -234,12 +240,12 @@ const ru_RUData string = "" + // Size: 1998 bytes
 	"фт\x02Логотип\x02Конфиги\x02Конфиг\x02Значение может быть файлом\x02Зна" +
 	"чение типа 0IP значит --ip IP\x02Имя\x02Проверка новой версии\x02Встрое" +
 	"нный DNS-резолвер\x02UnZip Файлы\x02Zip каталоги\x02CSV части путей фай" +
-	"лов\x02Без мультиплексирования\x02Без сжатия\x02скорость передачи (напр" +
-	"имер 500k)\x02Вид\x02Сеть\x02Хранилище\x02Обмен"
+	"лов\x02Без мультиплексирования\x02Без сжатия\x02Секрет из 4 слов\x02ско" +
+	"рость передачи (например 500k)\x02Вид\x02Сеть\x02Хранилище\x02Обмен"
 
-var tr_TRIndex = []uint32{ // 67 elements
+var tr_TRIndex = []uint32{ // 69 elements
 	// Entry 0 - 1F
-	0x00000000, 0x00000011, 0x00000022, 0x0000004a,
+	0x00000000, 0x00000011, 0x00000039, 0x0000004a,
 	0x0000007e, 0x0000009a, 0x000000a6, 0x000000ad,
 	0x000000bb, 0x000000bf, 0x000000d8, 0x000000da,
 	0x000000ee, 0x00000104, 0x00000126, 0x00000153,
@@ -250,19 +256,20 @@ var tr_TRIndex = []uint32{ // 67 elements
 	// Entry 20 - 3F
 	0x000002c4, 0x000002d9, 0x000002f7, 0x000002ff,
 	0x0000031a, 0x00000337, 0x0000034b, 0x0000035d,
-	0x00000363, 0x00000393, 0x000003af, 0x000003e0,
-	0x000003ed, 0x000003f9, 0x000003fd, 0x00000402,
-	0x0000040d, 0x00000414, 0x00000426, 0x00000435,
-	0x00000453, 0x00000483, 0x00000489, 0x000004ae,
-	0x000004cb, 0x000004dc, 0x000004ec, 0x00000507,
-	0x0000052b, 0x00000552, 0x00000564, 0x0000056f,
+	0x0000035d, 0x00000363, 0x00000393, 0x000003af,
+	0x000003e0, 0x000003ed, 0x000003f9, 0x000003fd,
+	0x00000402, 0x0000040d, 0x00000414, 0x00000426,
+	0x00000435, 0x00000453, 0x00000483, 0x00000489,
+	0x000004ae, 0x000004cb, 0x000004dc, 0x000004ec,
+	0x00000507, 0x0000052b, 0x00000552, 0x0000056c,
 	// Entry 40 - 5F
-	0x00000573, 0x00000589, 0x0000059f,
-} // Size: 292 bytes
+	0x0000057e, 0x00000589, 0x0000058d, 0x000005a3,
+	0x000005b9,
+} // Size: 300 bytes
 
-const tr_TRData string = "" + // Size: 1439 bytes
-	"\x02Lisans Bilgileri\x02Uygulama bilgisi\x02Gizlilik Politikası'nı kabul" +
-	" ediyorum\x02Test etmek için yukarıdaki Deep Link'e tıklayın\x02Bir tara" +
+const tr_TRData string = "" + // Size: 1465 bytes
+	"\x02Lisans Bilgileri\x02Gizlilik Politikası'nı kabul ediyorum\x02Uygulam" +
+	"a bilgisi\x02Test etmek için yukarıdaki Deep Link'e tıklayın\x02Bir tara" +
 	"yıcı açılırsa:\x02İzin verin\x02Kullan\x02sayfasındaki\x02ile\x02QR kodl" +
 	"arı okumak için\x02:\x02Ayarları sıfırla\x02Tam logu dışa aktar\x02Tüm d" +
 	"osyalar şuraya kaydedildi:\x02Uygulama kapandı. Başlatmak için dokunun." +
@@ -280,13 +287,13 @@ const tr_TRData string = "" + // Size: 1439 bytes
 	"\x02Değer dosya yolu içerebilir\x020IP gibi bir değer --ip IP olarak kul" +
 	"lanılır\x02İsim\x02Yeni masaüstü sürümünü denetle\x02Yerleşik DNS çözüml" +
 	"eyici\x02UnZip Dosyaları\x02Zip Klasörleri\x02Dosya Yolu CSV Parçaları" +
-	"\x02Çoğullamayı Devre Dışı Bırak\x02Sıkıştırmayı Devre Dışı Bırak\x02hız" +
-	" (örn: 500k)\x02Görünüm\x02Ağ\x02Depolama Seçenekleri\x02Transfer Seçene" +
-	"kleri"
+	"\x02Çoğullamayı Devre Dışı Bırak\x02Sıkıştırmayı Devre Dışı Bırak\x02Dör" +
+	"t kelimeli kod kullan\x02hız (örn: 500k)\x02Görünüm\x02Ağ\x02Depolama Se" +
+	"çenekleri\x02Transfer Seçenekleri"
 
-var zh_CNIndex = []uint32{ // 67 elements
+var zh_CNIndex = []uint32{ // 69 elements
 	// Entry 0 - 1F
-	0x00000000, 0x00000010, 0x0000001d, 0x00000033,
+	0x00000000, 0x00000010, 0x00000026, 0x00000033,
 	0x00000058, 0x00000077, 0x0000007e, 0x00000085,
 	0x0000008f, 0x00000093, 0x000000a3, 0x000000ad,
 	0x000000ba, 0x000000cd, 0x000000e6, 0x00000108,
@@ -297,18 +304,19 @@ var zh_CNIndex = []uint32{ // 67 elements
 	// Entry 20 - 3F
 	0x00000248, 0x0000025b, 0x00000274, 0x0000027b,
 	0x00000296, 0x000002b4, 0x000002c7, 0x000002d7,
-	0x000002de, 0x000002fa, 0x00000313, 0x0000032f,
-	0x00000336, 0x0000033d, 0x00000344, 0x0000034b,
-	0x00000352, 0x00000359, 0x00000363, 0x0000036a,
-	0x00000386, 0x000003a9, 0x000003b0, 0x000003c6,
-	0x000003db, 0x000003e8, 0x000003f6, 0x0000040e,
-	0x00000421, 0x0000042e, 0x00000444, 0x0000044b,
+	0x000002d7, 0x000002de, 0x000002fa, 0x00000313,
+	0x0000032f, 0x00000336, 0x0000033d, 0x00000344,
+	0x0000034b, 0x00000352, 0x00000359, 0x00000363,
+	0x0000036a, 0x00000386, 0x000003a9, 0x000003b0,
+	0x000003c6, 0x000003db, 0x000003e8, 0x000003f6,
+	0x0000040e, 0x00000421, 0x0000042e, 0x00000441,
 	// Entry 40 - 5F
-	0x00000452, 0x0000045f, 0x0000046c,
-} // Size: 292 bytes
+	0x00000457, 0x0000045e, 0x00000465, 0x00000472,
+	0x0000047f,
+} // Size: 300 bytes
 
-const zh_CNData string = "" + // Size: 1132 bytes
-	"\x02许可证信息\x02应用信息\x02我同意隐私政策\x02点击上方的Deep Link进行测试\x02如果浏览器打开，则：\x02允许" +
+const zh_CNData string = "" + // Size: 1151 bytes
+	"\x02许可证信息\x02我同意隐私政策\x02应用信息\x02点击上方的Deep Link进行测试\x02如果浏览器打开，则：\x02允许" +
 	"\x02使用\x02在页面\x02以\x02扫描二维码\x02使用：\x02重置设置\x02导出完整日志\x02所有文件已保存至\x02应用已关" +
 	"闭。点击启动。\x02接受\x02取消\x02在按\x22下载\x22之前等待他们\x02中继\x02下载\x02密码必须长于5个字符" +
 	"\x02为 magic-wormhole 中继使用 WebDAV\x02接收已取消。\x02通过 magic-wormhole 连接\x02为 " +
@@ -317,7 +325,7 @@ const zh_CNData string = "" + // Size: 1132 bytes
 	"\x02让他们先不要按\x22下载\x22\x02正在发送文件\x02已发送文件\x02隐藏\x02发送时禁用本地中继\x02向发送者询问地址" +
 	"\x02强制仅使用本地连接\x02覆盖\x02恢复\x02语言\x02主题\x02字体\x02徽标\x02配置集\x02配置\x02值可能包含文" +
 	"件路径\x02如果值为 0IP 则用作 --ip IP\x02名称\x02检查桌面新版本\x02内置 DNS 解析器\x02UnZip 文件" +
-	"\x02Zip 文件夹\x02文件路径 CSV 部分\x02禁用多路复用\x02禁用压缩\x02速度 (例如: 500k)\x02外观\x02网" +
-	"络\x02存储选项\x02传输选项"
+	"\x02Zip 文件夹\x02文件路径 CSV 部分\x02禁用多路复用\x02禁用压缩\x02使用四词代码\x02速度 (例如: 500k)" +
+	"\x02外观\x02网络\x02存储选项\x02传输选项"
 
-	// Total table size 8988 bytes (8KiB); checksum: 5C953758
+	// Total table size 9181 bytes (8KiB); checksum: 978A78A0

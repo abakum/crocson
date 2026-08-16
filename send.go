@@ -37,6 +37,7 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/schollz/croc/v10/src/codephrase"
 	"github.com/schollz/croc/v10/src/comm"
 	"github.com/schollz/croc/v10/src/croc"
 	"github.com/schollz/croc/v10/src/message"
@@ -209,6 +210,17 @@ func wsChat(ctx context.Context, httpURL string, onMessage func()) {
 	}
 }
 
+// genSecret returns a fresh croc receive code, honoring the "v11-code"
+// preference (four-word / pakekey); falls back to the legacy PIN format.
+func genSecret(a fyne.App) string {
+	if a.Preferences().Bool("v11-code") {
+		if c, err := codephrase.Generate(); err == nil {
+			return c
+		}
+	}
+	return utils.GetRandomName()
+}
+
 func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 	var (
 		cosED,
@@ -305,7 +317,7 @@ func sendTabItem(a fyne.App, w fyne.Window) (ti *container.TabItem) {
 
 	secretButton := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
 		fyne.Do(func() {
-			entry.SetText(utils.GetRandomName())
+			entry.SetText(genSecret(a))
 		})
 	})
 	cosED = append(cosED, secretButton)

@@ -2,7 +2,7 @@ module crocson
 
 go 1.25.0
 
-replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260704080127-24111f72b04b
+replace github.com/schollz/croc/v10 => github.com/abakCroc/croc/v10 v10.0.0-20260816111821-067dad53fdc1
 
 replace github.com/psanford/wormhole-william => github.com/abakum/wormhole-william v0.0.0-20260529222605-d6c525669d4e
 
@@ -25,7 +25,7 @@ require (
 	github.com/schollz/croc/v10 v10.0.0-00010101000000-000000000000
 	github.com/schollz/logger v1.2.0
 	github.com/schollz/mnemonicode v1.0.1
-	github.com/schollz/pake/v3 v3.1.1
+	github.com/schollz/pake/v3 v3.2.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/ulikunitz/xz v0.5.12
 	github.com/wlynxg/anet v0.0.5
